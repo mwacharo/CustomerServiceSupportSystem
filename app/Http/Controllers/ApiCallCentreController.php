@@ -9,12 +9,17 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
 
+use Illuminate\Support\Facades\Validator;
 
 
 namespace App\Http\Controllers;
 
 use AfricasTalking\SDK\AfricasTalking;
+use App\Models\CallQueue;
+use App\Models\Officer;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Validator;
 
 class ApiCallCentreController extends Controller
 {
@@ -23,43 +28,65 @@ class ApiCallCentreController extends Controller
     // public $apiKey = "atsk_7ffe8c424b8befc58aaaed4682b51dbca631135eddbcfbc7038a403daba5070fb44fe124";
 
 
-
-
     public function makeCall(Request $request)
     {
-        $phone = $request->input('phone');
-        $from = $request->input('from', '+25409924432'); 
+        Log::info('Received request to initiate call.', ['request_data' => $request->all()]);
 
+        // Validate request input
+        $validator = Validator::make($request->all(), [
+            'phone' => 'required|string',
+        ]);
 
-        // Validate the phone number
-        if (empty($phone)) {
-            return response()->json(['error' => 'Phone number is required.'], 400);
+        if ($validator->fails()) {
+            Log::warning('Validation failed for makeCall request.', ['errors' => $validator->errors()]);
+            return response()->json(['error' => $validator->errors()], 400);
         }
 
-        // Set up Africa's Talking API
-        $username = config('services.africastalking.username');
-        $apiKey = config('services.africastalking.api_key');
+        $phone = $request->input('phone');
 
-        // Initialize Africa's Talking API
+        $username = trim(config('services.africastalking.username'));
+        $apiKey = trim(config('services.africastalking.api_key'));
+        $from = trim(config('services.africastalking.phone'));
+
+        Log::info('AFRICASTALKING Config', [
+            'username' => config('services.africastalking.username'),
+            'api_key'  => config('services.africastalking.api_key'),
+            'phone'    => config('services.africastalking.phone'),
+        ]);
+
+
+        if (!$username || !$apiKey || !$from) {
+            Log::error('Africa’s Talking API credentials or phone number are missing.');
+            return response()->json(['error' => 'Internal Server Error.'], 500);
+        }
+
+        Log::info('Initializing Africa’s Talking API.', ['from' => $from, 'to' => $phone]);
         $africastalking = new AfricasTalking($username, $apiKey);
 
         // Set the call parameters
         $callParams = [
-            'from' => $request->input('from', '25409924432'),  
-            'to' => $phone,
+            'from' => $from,
+            'to'   => $phone,
         ];
 
         try {
+            Log::info('Attempting to make a call.', ['call_params' => $callParams]);
+
             // Make the call
             $response = $africastalking->voice()->call($callParams);
 
-            // Return a success response
+            Log::info('Call initiated successfully.', ['response' => $response]);
+
             return response()->json([
                 'message' => 'Call initiated successfully',
                 'data' => $response,
             ], 200);
         } catch (\Exception $e) {
-            // Handle any errors
+            Log::error('Failed to initiate the call.', [
+                'error_message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
             return response()->json([
                 'error' => 'Failed to initiate the call',
                 'message' => $e->getMessage(),
@@ -67,21 +94,19 @@ class ApiCallCentreController extends Controller
         }
     }
 
-   
 
+    // Get all queued calls
+    public function getQueuedCalls()
+    {
+        try {
+            // Fetch all queued calls (you can filter by status, if needed)
+            $queuedCalls = CallQueue::where('status', 'queued')->get();
 
-      // Get all queued calls
-      public function getQueuedCalls()
-      {
-          try {
-              // Fetch all queued calls (you can filter by status, if needed)
-              $queuedCalls = CallQueue::where('status', 'queued')->get();
-  
-              return response()->json($queuedCalls, 200);
-          } catch (\Exception $e) {
-              return response()->json(['error' => 'Failed to fetch queued calls', 'message' => $e->getMessage()], 500);
-          }
-      }
+            return response()->json($queuedCalls, 200);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Failed to fetch queued calls', 'message' => $e->getMessage()], 500);
+        }
+    }
 
 
     // Dequeue a call when an agent is available
@@ -116,44 +141,44 @@ class ApiCallCentreController extends Controller
     }
 
 
-     // Enqueue incoming calls when agents are busy
-     public function enqueueCall(Request $request)
-     {
-         $phone = $request->input('phone');
-         $virtualNumber = '+254741821113'; // Virtual number for incoming calls
- 
-         // Check if there are available agents or all are busy
-         $agentsBusy = $this->checkIfAgentsAreBusy();
- 
-         if ($agentsBusy) {
-             // If agents are busy, enqueue the call
-             $queuedCall = CallQueue::create(['phone_number' => $phone]);
- 
-             // Add the call to the queue (using Africa's Talking Voice API)
-             $username = config('services.africastalking.username');
-             $apiKey = config('services.africastalking.api_key');
-             $africastalking = new AfricasTalking($username, $apiKey);
-             $voice = $africastalking->voice();
- 
-             // Enqueue the call with a hold music or message
-             $response = $voice->enqueue([
-                 'from' => $virtualNumber,
-                 'to' => $phone,
-                 'url' => 'http://www.mymediaserver.com/audio/callWaiting.wav',  // Optional: Music or message URL
-             ]);
- 
-             return response()->json(['message' => 'Call added to queue', 'data' => $response], 200);
-         }
- 
-         return response()->json(['message' => 'Agents are available, call can be answered immediately'], 200);
-     }
+    // Enqueue incoming calls when agents are busy
+    public function enqueueCall(Request $request)
+    {
+        $phone = $request->input('phone');
+        $virtualNumber = '+254741821113'; // Virtual number for incoming calls
+
+        // Check if there are available agents or all are busy
+        $agentsBusy = $this->checkIfAgentsAreBusy();
+
+        if ($agentsBusy) {
+            // If agents are busy, enqueue the call
+            $queuedCall = CallQueue::create(['phone_number' => $phone]);
+
+            // Add the call to the queue (using Africa's Talking Voice API)
+            $username = config('services.africastalking.username');
+            $apiKey = config('services.africastalking.api_key');
+            $africastalking = new AfricasTalking($username, $apiKey);
+            $voice = $africastalking->voice();
+
+            // Enqueue the call with a hold music or message
+            $response = $voice->enqueue([
+                'from' => $virtualNumber,
+                'to' => $phone,
+                'url' => 'http://www.mymediaserver.com/audio/callWaiting.wav',  // Optional: Music or message URL
+            ]);
+
+            return response()->json(['message' => 'Call added to queue', 'data' => $response], 200);
+        }
+
+        return response()->json(['message' => 'Agents are available, call can be answered immediately'], 200);
+    }
 
     // Function to check if all agents are busy
     private function checkIfAgentsAreBusy()
     {
         // For simplicity, let's assume we check the agent's status in the database.
         // This logic can be customized depending on how you track agent activity.
-        $agents = Agent::where('status', 'busy')->count();
+        $agents = Officer::where('status', 'busy')->count();
 
         return $agents >= 10;  // Assume we have 10 agents
     }
@@ -165,7 +190,7 @@ class ApiCallCentreController extends Controller
         $callId = $request->input('callId');  // Assuming you pass callId for the active call
 
         // Find the agent details
-        $agent = Agent::find($agentId);
+        $agent = Officer::find($agentId);
 
         if ($agent && !$agent->isInCall) {
             // Transfer the call to the agent (this can be customized based on your API integration)
@@ -190,11 +215,12 @@ class ApiCallCentreController extends Controller
         return response()->json(['error' => 'Agent not found or is busy'], 400);
     }
 
-    public function handleEventCallback(Request $request){
+    public function handleEventCallback(Request $request)
+    {
 
         Log::info($request);
         $callSessionState = $request->callSessionState;
-        if($callSessionState == 'Transferred' || $callSessionState == 'TransferCompleted'){
+        if ($callSessionState == 'Transferred' || $callSessionState == 'TransferCompleted') {
 
             $callTransferredToNumber = $request->callTransferredToNumber;
             $sessionId = $request->sessionId;
@@ -205,7 +231,7 @@ class ApiCallCentreController extends Controller
                 ->where('deleted_at', null)
                 ->first();
 
-            if($call_history){
+            if ($call_history) {
 
                 // Update current agent
                 $update_call_agent = DB::table('call_agents')
@@ -221,7 +247,7 @@ class ApiCallCentreController extends Controller
                     ->where('deleted_at', null)
                     ->first();
 
-                if($call_agent){
+                if ($call_agent) {
 
                     // Update next agent
                     $update_call_agent = DB::table('call_agents')
@@ -233,13 +259,12 @@ class ApiCallCentreController extends Controller
                         ]);
                 }
             }
+        } elseif ($callSessionState == 'Active') {
 
-        }elseif ($callSessionState == 'Active'){
-
-            if($request->has('callTransferState')){
+            if ($request->has('callTransferState')) {
 
                 $callTransferState = $request->callTransferState;
-                if($callTransferState == 'CallerHangup'){
+                if ($callTransferState == 'CallerHangup') {
 
                     $sessionId = $request->sessionId;
                     $call_history = DB::table('call_histories')
@@ -248,7 +273,7 @@ class ApiCallCentreController extends Controller
                         ->where('deleted_at', null)
                         ->first();
 
-                    if($call_history){
+                    if ($call_history) {
 
                         // Update current agent
                         $update_call_agent = DB::table('call_agents')
@@ -259,14 +284,14 @@ class ApiCallCentreController extends Controller
                                 'updated_at' => date('Y-m-d H:i:s'),
                             ]);
 
-                        if($update_call_agent){
+                        if ($update_call_agent) {
 
                             $call_agent = DB::table('call_agents')
                                 ->where('sessionId', $sessionId)
                                 ->where('deleted_at', null)
                                 ->first();
 
-                            if($call_agent){
+                            if ($call_agent) {
 
                                 $update_call_history = DB::table('call_histories')
                                     ->where('id', $call_history->id)
@@ -276,13 +301,10 @@ class ApiCallCentreController extends Controller
                                         'nextCallStep' => 'in_progress',
                                         'updated_at' => date('Y-m-d H:i:s')
                                     ]);
-
                             }
                         }
-
                     }
-
-                }elseif ($callTransferState == 'CalleeHangup'){
+                } elseif ($callTransferState == 'CalleeHangup') {
 
                     $sessionId = $request->sessionId;
                     $call_history = DB::table('call_histories')
@@ -291,16 +313,16 @@ class ApiCallCentreController extends Controller
                         ->where('deleted_at', null)
                         ->first();
 
-                    if($call_history){
+                    if ($call_history) {
 
                         $call_agent = DB::table('call_agents')
                             ->where('sessionId', $sessionId)
                             ->where('deleted_at', null)
                             ->first();
 
-                        if($call_agent){
+                        if ($call_agent) {
 
-                            if($call_history->agentId != $call_agent->client_name){
+                            if ($call_history->agentId != $call_agent->client_name) {
 
                                 $update_call_agent = DB::table('call_agents')
                                     ->where('id', $call_agent->id)
@@ -310,15 +332,11 @@ class ApiCallCentreController extends Controller
                                         'updated_at' => date('Y-m-d H:i:s'),
                                     ]);
                             }
-
                         }
-
                     }
-
                 }
             }
         }
-
     }
 
     public function handleVoiceCallback(Request $request)
@@ -332,6 +350,8 @@ class ApiCallCentreController extends Controller
 
         if ($isActive == 1) {
 
+
+//  Inbound calls are initiated by a phone user
             if ($direction == 'Inbound') {
 
                 $check_call_agent_count = DB::table('call_agents')
@@ -347,7 +367,7 @@ class ApiCallCentreController extends Controller
                         ->first();
 
                     $clientDialedNumber = $request->clientDialedNumber;
-                    if ($clientDialedNumber == '+254730731433' || $clientDialedNumber == '+254730731433' ) {
+                    if ($clientDialedNumber == '+254730731433' || $clientDialedNumber == '+254730731433') {
 
                         $call_history_count = DB::table('call_histories')
                             ->where('isActive', 1)
@@ -368,7 +388,7 @@ class ApiCallCentreController extends Controller
 
                             if ($call_history) {
 
-                                    DB::table('call_agents')
+                                DB::table('call_agents')
                                     ->where('id', $call_agent->id)
                                     ->update([
                                         'status' => 'busy',
@@ -394,7 +414,6 @@ class ApiCallCentreController extends Controller
                             header('Content-type: text/plain');
                             echo $response;
                             exit();
-
                         } else {
 
                             $text = "Sorry, there are no calls in the waiting queue";
@@ -407,7 +426,6 @@ class ApiCallCentreController extends Controller
                             echo $response;
                             exit();
                         }
-
                     } else {
 
                         $call_history = new CallHistory();
@@ -421,7 +439,7 @@ class ApiCallCentreController extends Controller
                             'agentId' => $call_agent->client_name,
                         ]);
 
-                            DB::table('call_agents')
+                        DB::table('call_agents')
                             ->where('id', $call_agent->id)
                             ->update([
                                 'status' => 'busy',
@@ -440,7 +458,6 @@ class ApiCallCentreController extends Controller
                         echo $response;
                         exit();
                     }
-
                 } else {
 
                     // Get call history
@@ -458,7 +475,6 @@ class ApiCallCentreController extends Controller
                                 'callerNumber' => $callerNumber,
                                 'destinationNumber' => $destinationNumber,
                             ]);
-
                     } else {
 
                         $call_history = new CallHistory();
@@ -470,7 +486,6 @@ class ApiCallCentreController extends Controller
                             'sessionId' => $sessionId,
                             'nextCallStep' => 'welcome',
                         ]);
-
                     }
 
                     $call_history = DB::table('call_histories')
@@ -491,7 +506,7 @@ class ApiCallCentreController extends Controller
                         if ($update_call_history) {
 
                             $milliseconds = round(microtime(true) * 1000);
-                            $generated_conference_name = 'ca'.$milliseconds;
+                            $generated_conference_name = 'ca' . $milliseconds;
 
                             $call_agents_check = DB::table('call_agents')
                                 ->where('status', 'available')
@@ -508,7 +523,7 @@ class ApiCallCentreController extends Controller
 
                                 if ($call_agent) {
 
-                                        DB::table('call_agents')
+                                    DB::table('call_agents')
                                         ->where('id', $call_agent->id)
                                         ->update([
                                             'status' => 'busy',
@@ -540,7 +555,6 @@ class ApiCallCentreController extends Controller
                                     header('Content-type: application/xml');
                                     echo $response;
                                     exit();
-
                                 } else {
 
                                     $update_call_history = DB::table('call_histories')
@@ -556,14 +570,12 @@ class ApiCallCentreController extends Controller
                                     $response = '<?xml version="1.0" encoding="UTF-8"?>';
                                     $response .= '<Response>';
                                     $response .= '<Say voice="en-US-Wavenet-F">' . $say_busy_text . '</Say>';
-                                    $response .= '<Conference maxParticipants="2" record="true" startOnEnter="true" endOnExit="true"  waitUrl="https://boxleocourier.com/dashboard/api/v1/get-audio/playMusic.wav">'.$generated_conference_name.'</Conference>';
+                                    $response .= '<Conference maxParticipants="2" record="true" startOnEnter="true" endOnExit="true"  waitUrl="https://boxleocourier.com/dashboard/api/v1/get-audio/playMusic.wav">' . $generated_conference_name . '</Conference>';
                                     $response .= '</Response>';
                                     header('Content-type: text/plain');
                                     echo $response;
                                     exit();
-
                                 }
-
                             } else {
 
                                 $update_call_history = DB::table('call_histories')
@@ -581,19 +593,15 @@ class ApiCallCentreController extends Controller
                                 $response .= '<Response>';
                                 $response .= '<Say voice="en-US-Wavenet-F">' . $say_welcome_text . '</Say>';
                                 $response .= '<Say voice="en-US-Wavenet-F">' . $say_busy_text . '</Say>';
-                                $response .= '<Conference maxParticipants="2" record="true" startOnEnter="true" endOnExit="true"  waitUrl="https://boxleocourier.com/dashboard/api/v1/get-audio/playMusic.wav">'.$generated_conference_name.'</Conference>';
+                                $response .= '<Conference maxParticipants="2" record="true" startOnEnter="true" endOnExit="true"  waitUrl="https://boxleocourier.com/dashboard/api/v1/get-audio/playMusic.wav">' . $generated_conference_name . '</Conference>';
                                 $response .= '</Response>';
                                 header('Content-type: text/plain');
                                 echo $response;
                                 exit();
                             }
-
                         }
-
                     }
-
                 }
-
             } else {
 
                 $response = '<?xml version="1.0" encoding="UTF-8"?>';
@@ -605,9 +613,7 @@ class ApiCallCentreController extends Controller
                 header('Content-type: text/plain');
                 echo $response;
                 exit();
-
             }
-
         } else {
 
             $recordingUrl = $request->recordingUrl;
@@ -620,7 +626,7 @@ class ApiCallCentreController extends Controller
                 ->where('sessionId', $sessionId)
                 ->first();
 
-            if($call_history){
+            if ($call_history) {
 
                 $update_call_history = DB::table('call_histories')
                     ->where('sessionId', $sessionId)
@@ -635,19 +641,15 @@ class ApiCallCentreController extends Controller
                     ]);
 
 
-                    DB::table('call_agents')
+                DB::table('call_agents')
                     ->where('sessionId', $sessionId)
                     ->update([
                         'status' => 'available',
                         'sessionId' => null,
                         'updated_at' => date('Y-m-d H:i:s'),
                     ]);
-
             }
-
-
         }
-
     }
 
     public function uploadMediaFile()
@@ -665,7 +667,6 @@ class ApiCallCentreController extends Controller
             ]);
 
             print_r($result);
-
         } catch (Exception $e) {
             echo "Error: " . $e->getMessage();
         }
@@ -708,11 +709,9 @@ class ApiCallCentreController extends Controller
                     'token' => $content['token'],
                     'updated_at' => date('Y-m-d H:i:s'),
                 ]);
-
         }
 
         return $content['token'];
-
     }
 
     // public function transferCall(Request $request)
@@ -852,7 +851,6 @@ class ApiCallCentreController extends Controller
             ->get();
 
         return json_encode($call_histories);
-
     }
 
     public function getAgentCallHistory(Request $request)
@@ -868,7 +866,6 @@ class ApiCallCentreController extends Controller
             ->get();
 
         return json_encode($call_histories);
-
     }
 
     public function getCallOngoingHistory()
@@ -883,7 +880,7 @@ class ApiCallCentreController extends Controller
             ->get();
 
         $json_results = array();
-        foreach ($call_histories as $call_history){
+        foreach ($call_histories as $call_history) {
 
             $admin_name = "";
             $admin = DB::table('admins')
@@ -891,11 +888,12 @@ class ApiCallCentreController extends Controller
                 ->where('deleted_at', null)
                 ->first();
 
-            if($admin){
+            if ($admin) {
                 $admin_name = $admin->first_name . ' ' . $admin->last_name;
             }
 
-            array_push($json_results,
+            array_push(
+                $json_results,
                 array(
                     'id' => $call_history->id,
                     'isActive' => $call_history->isActive,
@@ -916,13 +914,11 @@ class ApiCallCentreController extends Controller
                     'conference' => $call_history->conference,
                     'created_at' => $call_history->created_at,
                     'updated_at' => $call_history->updated_at,
-                ));
-
-
+                )
+            );
         }
 
         return json_encode($json_results);
-
     }
 
     public function getAgentListSummary()
@@ -934,7 +930,7 @@ class ApiCallCentreController extends Controller
             ->get();
 
         $json_results = array();
-        foreach ($call_agents as $call_agent){
+        foreach ($call_agents as $call_agent) {
 
             $admin_name = "";
             $admin = DB::table('admins')
@@ -942,7 +938,7 @@ class ApiCallCentreController extends Controller
                 ->where('deleted_at', null)
                 ->first();
 
-            if($admin){
+            if ($admin) {
                 $admin_name = $admin->first_name . ' ' . $admin->last_name;
             }
 
@@ -1013,12 +1009,13 @@ class ApiCallCentreController extends Controller
                 ->count();
 
             $summary_delivery_rate = "-";
-            if($summary_delivery_order + $summary_scheduled_order > 0){
+            if ($summary_delivery_order + $summary_scheduled_order > 0) {
                 $summary_delivery_rate = $summary_delivery_order / ($summary_delivery_order + $summary_scheduled_order);
                 $summary_delivery_rate = $summary_delivery_rate * 100;
             }
 
-            array_push($json_results,
+            array_push(
+                $json_results,
                 array(
                     'id' => $call_agent->id,
                     'phone_number' => $call_agent->phone_number,
@@ -1039,13 +1036,11 @@ class ApiCallCentreController extends Controller
                     'summary_delivery_rate' => $summary_delivery_rate,
                     'summary_delivery_order' => $summary_delivery_order,
                     'updated_at' => $call_agent->updated_at,
-                ));
-
-
+                )
+            );
         }
 
         return json_encode($json_results);
-
     }
 
     public function getAgentListSummaryFilter(Request $request)
@@ -1061,7 +1056,7 @@ class ApiCallCentreController extends Controller
             ->get();
 
         $json_results = array();
-        foreach ($call_agents as $call_agent){
+        foreach ($call_agents as $call_agent) {
 
             $admin_name = "";
             $admin = DB::table('admins')
@@ -1069,7 +1064,7 @@ class ApiCallCentreController extends Controller
                 ->where('deleted_at', null)
                 ->first();
 
-            if($admin){
+            if ($admin) {
                 $admin_name = $admin->first_name . ' ' . $admin->last_name;
             }
 
@@ -1134,7 +1129,6 @@ class ApiCallCentreController extends Controller
                     $summary_scheduled_order->whereDate('created_at', Carbon::today());
                     $summary_cancelled_order->whereDate('created_at', Carbon::today());
                     $summary_delivery_order->whereDate('created_at', Carbon::today());
-
                 } elseif ($call_date == 'current_week') {
 
                     $summary_call_completed->whereBetween('created_at', [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()]);
@@ -1146,7 +1140,6 @@ class ApiCallCentreController extends Controller
                     $summary_scheduled_order->whereBetween('created_at', [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()]);
                     $summary_cancelled_order->whereBetween('created_at', [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()]);
                     $summary_delivery_order->whereBetween('created_at', [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()]);
-
                 } elseif ($call_date == 'last_week') {
 
                     $previous_week = strtotime("-1 week +1 day");
@@ -1164,7 +1157,6 @@ class ApiCallCentreController extends Controller
                     $summary_scheduled_order->whereBetween('created_at', [$start_week, $end_week]);
                     $summary_cancelled_order->whereBetween('created_at', [$start_week, $end_week]);
                     $summary_delivery_order->whereBetween('created_at', [$start_week, $end_week]);
-
                 } elseif ($call_date == 'current_month') {
 
                     $summary_call_completed->whereMonth('created_at', Carbon::now()->month);
@@ -1176,7 +1168,6 @@ class ApiCallCentreController extends Controller
                     $summary_scheduled_order->whereMonth('created_at', Carbon::now()->month);
                     $summary_cancelled_order->whereMonth('created_at', Carbon::now()->month);
                     $summary_delivery_order->whereMonth('created_at', Carbon::now()->month);
-
                 } elseif ($call_date == 'current_year') {
 
                     $summary_call_completed->whereYear('created_at', Carbon::now()->year);
@@ -1188,7 +1179,6 @@ class ApiCallCentreController extends Controller
                     $summary_scheduled_order->whereYear('created_at', Carbon::now()->year);
                     $summary_cancelled_order->whereYear('created_at', Carbon::now()->year);
                     $summary_delivery_order->whereYear('created_at', Carbon::now()->year);
-
                 } elseif ($call_date == 'custom_date') {
 
                     $custom_date = date("Y-m-d", strtotime($custom_date));
@@ -1201,7 +1191,6 @@ class ApiCallCentreController extends Controller
                     $summary_scheduled_order->whereDate('created_at', '=', $custom_date);
                     $summary_cancelled_order->whereDate('created_at', '=', $custom_date);
                     $summary_delivery_order->whereDate('created_at', '=', $custom_date);
-
                 } elseif ($call_date == 'custom_range') {
 
                     $start_date = date("Y-m-d", strtotime($custom_start_date));
@@ -1217,7 +1206,6 @@ class ApiCallCentreController extends Controller
                     $summary_cancelled_order->whereBetween('created_at', [$start_date, $end_date]);
                     $summary_delivery_order->whereBetween('created_at', [$start_date, $end_date]);
                 }
-
             }
 
 
@@ -1233,12 +1221,13 @@ class ApiCallCentreController extends Controller
 
 
             $summary_delivery_rate = "-";
-            if($summary_delivery_order + $summary_scheduled_order > 0){
+            if ($summary_delivery_order + $summary_scheduled_order > 0) {
                 $summary_delivery_rate = $summary_delivery_order / ($summary_delivery_order + $summary_scheduled_order);
                 $summary_delivery_rate = $summary_delivery_rate * 100;
             }
 
-            array_push($json_results,
+            array_push(
+                $json_results,
                 array(
                     'id' => $call_agent->id,
                     'phone_number' => $call_agent->phone_number,
@@ -1259,12 +1248,11 @@ class ApiCallCentreController extends Controller
                     'summary_delivery_rate' => $summary_delivery_rate,
                     'summary_delivery_order' => $summary_delivery_order,
                     'updated_at' => $call_agent->updated_at,
-                ));
-
+                )
+            );
         }
 
         return json_encode($json_results);
-
     }
 
     public function getCallHistory()
@@ -1277,7 +1265,7 @@ class ApiCallCentreController extends Controller
             ->get();
 
         $json_results = array();
-        foreach ($call_histories as $call_history){
+        foreach ($call_histories as $call_history) {
 
             $admin_name = "";
             $admin = DB::table('admins')
@@ -1285,11 +1273,12 @@ class ApiCallCentreController extends Controller
                 ->where('deleted_at', null)
                 ->first();
 
-            if($admin){
+            if ($admin) {
                 $admin_name = $admin->first_name . ' ' . $admin->last_name;
             }
 
-            array_push($json_results,
+            array_push(
+                $json_results,
                 array(
                     'id' => $call_history->id,
                     'isActive' => $call_history->isActive,
@@ -1310,13 +1299,11 @@ class ApiCallCentreController extends Controller
                     'conference' => $call_history->conference,
                     'created_at' => $call_history->created_at,
                     'updated_at' => $call_history->updated_at,
-                ));
-
-
+                )
+            );
         }
 
         return json_encode($json_results);
-
     }
 
     public function getCallHistoryFilter(Request $request)
@@ -1339,11 +1326,9 @@ class ApiCallCentreController extends Controller
             if ($call_date == 'today') {
 
                 $call_histories->whereDate('created_at', Carbon::today());
-
             } elseif ($call_date == 'current_week') {
 
                 $call_histories->whereBetween('created_at', [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()]);
-
             } elseif ($call_date == 'last_week') {
 
                 $previous_week = strtotime("-1 week +1 day");
@@ -1352,20 +1337,16 @@ class ApiCallCentreController extends Controller
                 $start_week = date("Y-m-d", $start_week);
                 $end_week = date("Y-m-d", $end_week);
                 $call_histories->whereBetween('created_at', [$start_week, $end_week]);
-
             } elseif ($call_date == 'current_month') {
 
                 $call_histories->whereMonth('created_at', Carbon::now()->month);
-
             } elseif ($call_date == 'current_year') {
 
                 $call_histories->whereYear('created_at', Carbon::now()->year);
-
             } elseif ($call_date == 'custom_date') {
 
                 $custom_date = date("Y-m-d", strtotime($custom_date));
                 $call_histories->whereDate('created_at', '=', $custom_date);
-
             } elseif ($call_date == 'custom_range') {
 
                 $start_date = date("Y-m-d", strtotime($custom_start_date));
@@ -1373,7 +1354,6 @@ class ApiCallCentreController extends Controller
 
                 $call_histories->whereBetween('created_at', [$start_date, $end_date]);
             }
-
         }
 
         if ($agentId != 'all') {
@@ -1381,18 +1361,18 @@ class ApiCallCentreController extends Controller
         }
 
         if ($destination_number != '') {
-            $call_histories->where('destinationNumber', 'LIKE', "%{$destination_number}%") ;
+            $call_histories->where('destinationNumber', 'LIKE', "%{$destination_number}%");
         }
 
         if ($caller_number != '') {
-            $call_histories->where('callerNumber', 'LIKE', "%{$caller_number}%") ;
+            $call_histories->where('callerNumber', 'LIKE', "%{$caller_number}%");
         }
 
 
         $call_histories = $call_histories->get();
         $json_results = array();
 
-        foreach ($call_histories as $call_history){
+        foreach ($call_histories as $call_history) {
 
             $admin_name = "";
             $admin = DB::table('admins')
@@ -1400,11 +1380,12 @@ class ApiCallCentreController extends Controller
                 ->where('deleted_at', null)
                 ->first();
 
-            if($admin){
+            if ($admin) {
                 $admin_name = $admin->first_name . ' ' . $admin->last_name;
             }
 
-            array_push($json_results,
+            array_push(
+                $json_results,
                 array(
                     'id' => $call_history->id,
                     'isActive' => $call_history->isActive,
@@ -1425,14 +1406,11 @@ class ApiCallCentreController extends Controller
                     'conference' => $call_history->conference,
                     'created_at' => $call_history->created_at,
                     'updated_at' => $call_history->updated_at,
-                ));
-
-
-
+                )
+            );
         }
 
         return json_encode($json_results);
-
     }
 
     public function getSummaryReport()
@@ -1508,14 +1486,14 @@ class ApiCallCentreController extends Controller
 
         $response = $json_array;
         return json_encode($response);
-
     }
 
-    public function callOrderHistory(Request $request){
+    public function callOrderHistory(Request $request)
+    {
 
         $phone_number = $request->phone_number;
-        if(substr($phone_number,0, 1) == "+"){
-            $phone_number = substr_replace($phone_number,"",0, 1);
+        if (substr($phone_number, 0, 1) == "+") {
+            $phone_number = substr_replace($phone_number, "", 0, 1);
         }
 
         $orders = DB::table('orders')
@@ -1525,9 +1503,5 @@ class ApiCallCentreController extends Controller
             ->get();
 
         return json_encode($orders);
-
     }
-
 }
-
-

@@ -72,73 +72,56 @@
 
                 <v-card>
 
-<!-- Tabs at the top -->
-<v-tabs v-model="tab" color="primary">
-  <v-tab value="calls">Calls</v-tab>
-  <v-tab value="orders">Orders</v-tab>
-</v-tabs>
+                    <!-- Tabs at the top -->
+                    <v-tabs v-model="tab" color="primary">
+                        <v-tab value="calls">Calls</v-tab>
+                        <v-tab value="orders">Orders</v-tab>
+                    </v-tabs>
 
-<!-- Tab content -->
-<v-tabs-items v-model="tab">
+                    <!-- Tab content -->
+                    <v-tabs-items v-model="tab">
 
-  <!-- Calls Tab -->
-  <v-tab-item value="calls">
-    <v-data-table
-      :headers="callsheaders"
-      :items="calls"
-      item-value="id"
-      class="elevation-1 mt-4"
-      :items-per-page="10"
-    >
-      <!-- Example of a custom slot for an actions column -->
-      <template #item.actions="{ item }">
-        <v-btn icon color="red">
-          <v-icon>mdi-record-circle</v-icon>
-        </v-btn>
-      </template>
-    </v-data-table>
-  </v-tab-item>
+                        <!-- Calls Tab -->
+                        <v-tab-item value="calls">
+                            <v-data-table :headers="callsheaders" :items="calls" item-value="id"
+                                class="elevation-1 mt-4" :items-per-page="10">
+                                <!-- Example of a custom slot for an actions column -->
+                                <template #item.actions="{ item }">
+                                    <v-btn icon color="red">
+                                        <v-icon>mdi-record-circle</v-icon>
+                                    </v-btn>
+                                </template>
+                            </v-data-table>
+                        </v-tab-item>
 
-  <!-- Orders Tab -->
-  <v-tab-item value="orders">
-    <v-data-table
-      :headers="headers"
-      :items="serverItems"
-      :loading="loading"
-      class="elevation-1 mt-4"
-    >
-      <!-- Example of customizing the table body -->
-      <template #body="{ items }">
-        <tr v-for="item in items" :key="item.product">
-          <td>{{ item.product }}</td>
-          <td>
-            <span class="clickable" @click="openStatusModal(item)">
-              {{ item.status }}
-            </span>
-          </td>
-          <td>{{ item.COD }}</td>
-          <td>{{ item.client }}</td>
-          <td>
-            <span class="clickable" @click="openPhonePopup(item)">
-              {{ item.phone }}
-            </span>
-          </td>
-        </tr>
-      </template>
-    </v-data-table>
-  </v-tab-item>
+                        <!-- Orders Tab -->
+                        <v-tab-item value="orders">
+                            <v-data-table :headers="headers" :items="serverItems" :loading="loading"
+                                class="elevation-1 mt-4">
+                                <!-- Example of customizing the table body -->
+                                <template #body="{ items }">
+                                    <tr v-for="item in items" :key="item.product">
+                                        <td>{{ item.product }}</td>
+                                        <td>
+                                            <span class="clickable" @click="openStatusModal(item)">
+                                                {{ item.status }}
+                                            </span>
+                                        </td>
+                                        <td>{{ item.COD }}</td>
+                                        <td>{{ item.client }}</td>
+                                        <td>
+                                            <span class="clickable" @click="openPhonePopup(item)">
+                                                {{ item.phone }}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                </template>
+                            </v-data-table>
+                        </v-tab-item>
 
-</v-tabs-items>
+                    </v-tabs-items>
 
-</v-card>
-
-
-
-
-
-
-
-
+                </v-card>
                 <!-- Dialog for Calling an Agent -->
                 <v-dialog v-model="callAgentDialog" max-width="400">
                     <v-card>
@@ -407,7 +390,7 @@ export default {
     components: { AppLayout },
     data: () => ({
         itemsPerPage: 5,
-     tab: "calls",
+        tab: "calls",
 
         isCalling: false,
         queueDialog: false,
@@ -661,7 +644,38 @@ export default {
             this.callAgentDialog = false;
             console.log('Calling agent:', agent);
         },
+
+
+        formatPhoneNumber(phone) {
+    if (!phone) return '';
+
+    // Remove all non-numeric characters
+    phone = phone.replace(/\D/g, '');
+
+    // If the number starts with '0' (e.g., 0712345678), replace it with '+254'
+    if (phone.startsWith('0')) {
+        phone = '+254' + phone.substring(1);
+    }
+    // If the number starts with '254' but missing '+', add it
+    else if (phone.startsWith('254')) {
+        phone = '+254' + phone.substring(3);
+    }
+    // If it's already in the correct format, return as is
+    else if (phone.startsWith('+254')) {
+        return phone;
+    }
+    // If none of the above, it's invalid
+    else {
+        this.$toastr.error('Invalid phone number format');
+        return '';
+    }
+
+    return phone;
+},
         callClient(phone) {
+
+            phone = this.formatPhoneNumber(phone);
+
             if (!phone) {
                 this.phone = '';
                 this.newCall = false;
@@ -701,4 +715,3 @@ export default {
     cursor: pointer;
 }
 </style>
-
