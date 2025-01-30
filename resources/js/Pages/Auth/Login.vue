@@ -36,10 +36,10 @@ const submit = () => {
     <v-container fluid class="fill-height">
       <v-row>
         <!-- Left Side (Documentation Info) -->
-        <v-col cols="12" md="6" class="green--text text-white" style="background-color: #4CAF50;">
+        <v-col cols="12" md="6" class="green--text text-white" style="background-color: #2596be">
           <div class="pa-10">
             <h1>Boxleo Courier</h1>
-            <h2>Customer Service Support System</h2>
+            <h2>Customer Service Support </h2>
             <v-btn class="mt-5" color="white" text to="#">
               Make Your Business Better →
             </v-btn>
@@ -49,7 +49,7 @@ const submit = () => {
         <!-- Right Side (Login Form) -->
         <v-col cols="12" md="6" class="d-flex justify-center align-center">
           <v-card class="pa-5" width="400">
-            <v-card-title>Log in to your account</v-card-title>
+            <v-card-title>Log in </v-card-title>
             <v-card-text>
               <v-form @submit.prevent="submit">
                 <!-- Email Field -->
@@ -64,7 +64,7 @@ const submit = () => {
                 <!-- <Checkbox id="remember" v-model="form.remember" label="Remember me" class="mt-2" /> -->
 
                 <!-- Submit Button -->
-                <v-btn @click="submit" color="success" block class="mt-3" :loading="form.processing">
+                <v-btn @click="submit" color="#2596be" block class="mt-3" :loading="form.processing">
                   Log In
                 </v-btn>
            <div>     <Link :href="route('register')" class="text-decoration-none" >
@@ -88,7 +88,7 @@ const submit = () => {
 
 <style scoped>
 .my-card {
-  margin: 250px;
+  margin: 100px;
 }
 
 .fill-height {
