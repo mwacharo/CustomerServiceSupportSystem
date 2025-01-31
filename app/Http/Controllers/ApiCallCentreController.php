@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Validator;
 namespace App\Http\Controllers;
 
 use AfricasTalking\SDK\AfricasTalking;
+use App\Models\CallHistory;
 use App\Models\CallQueue;
 use App\Models\Officer;
 use Illuminate\Http\Request;
@@ -215,6 +216,88 @@ class ApiCallCentreController extends Controller
         return response()->json(['error' => 'Agent not found or is busy'], 400);
     }
 
+
+
+    public function handleVoiceCallback(Request $request)
+{
+    Log::info('Received voice callback', $request->all());
+
+    $isActive = $request->input('isActive');
+    $sessionId = $request->input('sessionId');
+    $direction = $request->input('direction');
+    $callerNumber = $request->input('callerNumber');
+    $destinationNumber = $request->input('destinationNumber');
+    
+    if ($isActive) {
+        Log::info("Call is active. Direction: $direction, Caller: $callerNumber, Destination: $destinationNumber");
+        
+        if ($direction === 'Inbound') {
+            $clientName = substr($callerNumber, strpos($callerNumber, '.') + 1);
+            $callAgent = Officer::where('client_name', $clientName)->whereNull('deleted_at')->first();
+
+            if ($callAgent) {
+                Log::info("Call agent found: {$callAgent->id}");
+                $clientDialedNumber = $request->input('clientDialedNumber');
+
+                if (in_array($clientDialedNumber, ['+254730731433', '+254730731433'])) {
+                    $callHistory = CallHistory::where('isActive', 1)
+                        ->where('nextCallStep', 'enqueue')
+                        ->whereNotNull('conference')
+                        ->whereNull('deleted_at')
+                        ->orderBy('created_at', 'ASC')
+                        ->first();
+
+                    if ($callHistory) {
+                        Log::info("Redirecting call to conference: {$callHistory->conference}");
+
+                        $callAgent->update(['status' => 'busy', 'sessionId' => $sessionId]);
+                        $callHistory->update(['adminId' => $callAgent->admin_id, 'agentId' => $callAgent->client_name, 'nextCallStep' => 'in_progress']);
+
+                        return response()->xml([ 'Response' => [ 'Conference' => [ '_attributes' => [ 'maxParticipants' => 2, 'record' => 'true', 'startOnEnter' => 'true', 'endOnExit' => 'true' ], '_value' => $callHistory->conference ] ]]);
+                    }
+
+                    Log::info("No active call in queue");
+                    return response()->xml(['Response' => ['Say' => 'Sorry, there are no calls in the waiting queue', 'Reject' => []]]);
+                }
+                
+                Log::info("New outbound call initiated");
+                CallHistory::create([
+                    'isActive' => $isActive,
+                    'callerNumber' => $callerNumber,
+                    'destinationNumber' => $clientDialedNumber,
+                    'direction' => 'outbound',
+                    'sessionId' => $sessionId,
+                    'adminId' => $callAgent->admin_id,
+                    'agentId' => $callAgent->client_name,
+                ]);
+
+                $callAgent->update(['status' => 'busy', 'sessionId' => $sessionId]);
+                return response()->xml(['Response' => ['Dial' => [ '_attributes' => [ 'record' => 'true', 'sequential' => 'true', 'phoneNumbers' => $clientDialedNumber, 'ringbackTone' => 'https://boxleocourier.com/dashboard/api/v1/get-audio/playMusic.wav' ] ], 'Record' => [] ]]);
+            }
+
+            Log::info("No call agent found, updating call history");
+            CallHistory::updateOrCreate(['sessionId' => $sessionId], ['isActive' => $isActive, 'callerNumber' => $callerNumber, 'destinationNumber' => $destinationNumber]);
+        }
+
+    } else {
+        Log::info("Call is inactive. Updating call history for session: $sessionId");
+        $callHistory = CallHistory::where('sessionId', $sessionId)->first();
+
+        if ($callHistory) {
+            $callHistory->update([
+                'isActive' => $isActive,
+                'recordingUrl' => $request->input('recordingUrl'),
+                'durationInSeconds' => $request->input('durationInSeconds'),
+                'currencyCode' => $request->input('currencyCode'),
+                'amount' => $request->input('amount'),
+                'hangupCause' => $request->input('hangupCause'),
+            ]);
+
+            Officer::where('sessionId', $sessionId)->update(['status' => 'available', 'sessionId' => null]);
+        }
+    }
+}
+
     public function handleEventCallback(Request $request)
     {
 
@@ -339,318 +422,7 @@ class ApiCallCentreController extends Controller
         }
     }
 
-    public function handleVoiceCallback(Request $request)
-    {
 
-        $isActive = $request->isActive;
-        $sessionId = $request->sessionId;
-        $direction = $request->direction;
-        $callerNumber = $request->callerNumber;
-        $destinationNumber = $request->destinationNumber;
-
-        if ($isActive == 1) {
-
-
-//  Inbound calls are initiated by a phone user
-            if ($direction == 'Inbound') {
-
-                $check_call_agent_count = DB::table('call_agents')
-                    ->where('client_name', substr($callerNumber, strpos($callerNumber, ".") + 1))
-                    ->where('deleted_at', null)
-                    ->count();
-
-                if ($check_call_agent_count > 0) {
-
-                    $call_agent = DB::table('call_agents')
-                        ->where('client_name', substr($callerNumber, strpos($callerNumber, ".") + 1))
-                        ->where('deleted_at', null)
-                        ->first();
-
-                    $clientDialedNumber = $request->clientDialedNumber;
-                    if ($clientDialedNumber == '+254730731433' || $clientDialedNumber == '+254730731433') {
-
-                        $call_history_count = DB::table('call_histories')
-                            ->where('isActive', 1)
-                            ->where('nextCallStep', 'enqueue')
-                            ->where('conference', '!=', null)
-                            ->where('deleted_at', null)
-                            ->count();
-
-                        if ($call_history_count > 0) {
-
-                            $call_history = DB::table('call_histories')
-                                ->where('isActive', 1)
-                                ->where('nextCallStep', 'enqueue')
-                                ->where('conference', '!=', null)
-                                ->where('deleted_at', null)
-                                ->orderBy('created_at', 'ASC')
-                                ->first();
-
-                            if ($call_history) {
-
-                                DB::table('call_agents')
-                                    ->where('id', $call_agent->id)
-                                    ->update([
-                                        'status' => 'busy',
-                                        'sessionId' => $sessionId,
-                                        'updated_at' => date('Y-m-d H:i:s'),
-                                    ]);
-
-                                $update_call_history = DB::table('call_histories')
-                                    ->where('id', $call_history->id)
-                                    ->update([
-                                        'adminId' => $call_agent->admin_id,
-                                        'agentId' => $call_agent->client_name,
-                                        'nextCallStep' => 'in_progress',
-                                        'updated_at' => date('Y-m-d H:i:s')
-                                    ]);
-                            }
-
-                            $conference_name = $call_history->conference;
-                            $response = '<?xml version="1.0" encoding="UTF-8"?>';
-                            $response .= '<Response>';
-                            $response .= '<Conference maxParticipants="2" record="true" startOnEnter="true" endOnExit="true">' . $conference_name . '</Conference>';
-                            $response .= '</Response>';
-                            header('Content-type: text/plain');
-                            echo $response;
-                            exit();
-                        } else {
-
-                            $text = "Sorry, there are no calls in the waiting queue";
-                            $response = '<?xml version="1.0" encoding="UTF-8"?>';
-                            $response .= '<Response>';
-                            $response .= '<Say voice="en-US-Wavenet-F">' . $text . '</Say>';
-                            $response .= '<Reject/>';
-                            $response .= '</Response>';
-                            header('Content-type: text/plain');
-                            echo $response;
-                            exit();
-                        }
-                    } else {
-
-                        $call_history = new CallHistory();
-                        $call_history->create([
-                            'isActive' => $isActive,
-                            'callerNumber' => $callerNumber,
-                            'destinationNumber' => $clientDialedNumber,
-                            'direction' => 'outbound',
-                            'sessionId' => $sessionId,
-                            'adminId' => $call_agent->admin_id,
-                            'agentId' => $call_agent->client_name,
-                        ]);
-
-                        DB::table('call_agents')
-                            ->where('id', $call_agent->id)
-                            ->update([
-                                'status' => 'busy',
-                                'sessionId' => $sessionId,
-                                'updated_at' => date('Y-m-d H:i:s'),
-                            ]);
-
-                        $response = '<?xml version="1.0" encoding="UTF-8"?>';
-                        $response .= '<Response>';
-                        $response .= '<Dial record="true" sequential="true" phoneNumbers="' . $clientDialedNumber . '" ringbackTone="https://boxleocourier.com/dashboard/api/v1/get-audio/playMusic.wav" />';
-                        $response .= '<Record trimSilence="true"></Record>';
-                        $response .= '</Response>';
-
-                        // Print the response onto the page so that our gateway can read it
-                        header('Content-type: application/xml');
-                        echo $response;
-                        exit();
-                    }
-                } else {
-
-                    // Get call history
-                    $call_history_count = DB::table('call_histories')
-                        ->where('sessionId', $sessionId)
-                        ->where('deleted_at', null)
-                        ->count();
-
-                    if ($call_history_count > 0) {
-
-                        $update_call_history = DB::table('call_histories')
-                            ->where('sessionId', $sessionId)
-                            ->update([
-                                'isActive' => $isActive,
-                                'callerNumber' => $callerNumber,
-                                'destinationNumber' => $destinationNumber,
-                            ]);
-                    } else {
-
-                        $call_history = new CallHistory();
-                        $call_history->create([
-                            'isActive' => $isActive,
-                            'callerNumber' => $callerNumber,
-                            'destinationNumber' => $destinationNumber,
-                            'direction' => $direction,
-                            'sessionId' => $sessionId,
-                            'nextCallStep' => 'welcome',
-                        ]);
-                    }
-
-                    $call_history = DB::table('call_histories')
-                        ->where('sessionId', $sessionId)
-                        ->where('deleted_at', null)
-                        ->first();
-
-                    // Get steps
-                    if ($call_history->nextCallStep === 'welcome') {
-
-                        $update_call_history = DB::table('call_histories')
-                            ->where('sessionId', $sessionId)
-                            ->update([
-                                'nextCallStep' => 'agent_speak',
-                                'updated_at' => date('Y-m-d H:i:s'),
-                            ]);
-
-                        if ($update_call_history) {
-
-                            $milliseconds = round(microtime(true) * 1000);
-                            $generated_conference_name = 'ca' . $milliseconds;
-
-                            $call_agents_check = DB::table('call_agents')
-                                ->where('status', 'available')
-                                ->where('deleted_at', null)
-                                ->count();
-
-                            if ($call_agents_check > 0) {
-
-                                $call_agent = DB::table('call_agents')
-                                    ->where('status', 'available')
-                                    ->where('deleted_at', null)
-                                    ->orderBy('updated_at', 'ASC')
-                                    ->first();
-
-                                if ($call_agent) {
-
-                                    DB::table('call_agents')
-                                        ->where('id', $call_agent->id)
-                                        ->update([
-                                            'status' => 'busy',
-                                            'sessionId' => $sessionId,
-                                            'updated_at' => date('Y-m-d H:i:s'),
-                                        ]);
-
-                                    $update_call_history = DB::table('call_histories')
-                                        ->where('sessionId', $sessionId)
-                                        ->update([
-                                            'adminId' => $call_agent->admin_id,
-                                            'agentId' => $call_agent->client_name,
-                                            'nextCallStep' => 'in_progress',
-                                            'updated_at' => date('Y-m-d H:i:s'),
-                                        ]);
-
-                                    $say_welcome_text = "Welcome to Boxleo Courier and Fulfillment Services Limited.";
-                                    $say_quality_text = "Please wait while we transfer your call to the next available agent.This call may be recorded for internal training and quality purposes.";
-                                    $call_agent_phone = "BoxleoKenya." . $call_agent->client_name;
-                                    $response = '<?xml version="1.0" encoding="UTF-8"?>';
-                                    $response .= '<Response>';
-                                    $response .= '<Say voice="en-US-Wavenet-F">' . $say_welcome_text . '</Say>';
-                                    $response .= '<Say voice="en-US-Wavenet-F">' . $say_quality_text . '</Say>';
-                                    $response .= '<Dial record="true" sequential="true" phoneNumbers="' . $call_agent_phone . '" ringbackTone="https://boxleocourier.com/dashboard/api/v1/get-audio/playMusic.wav" />';
-                                    $response .= '<Record trimSilence="true"></Record>';
-                                    $response .= '</Response>';
-
-                                    // Print the response onto the page so that our gateway can read it
-                                    header('Content-type: application/xml');
-                                    echo $response;
-                                    exit();
-                                } else {
-
-                                    $update_call_history = DB::table('call_histories')
-                                        ->where('sessionId', $sessionId)
-                                        ->update([
-                                            'nextCallStep' => 'enqueue',
-                                            'conference' => $generated_conference_name,
-                                            'updated_at' => date('Y-m-d H:i:s'),
-                                        ]);
-
-                                    // Pick up agent queue
-                                    $say_busy_text = "All our customer service representatives are currently busy, please hold and we will attend to you shortly";
-                                    $response = '<?xml version="1.0" encoding="UTF-8"?>';
-                                    $response .= '<Response>';
-                                    $response .= '<Say voice="en-US-Wavenet-F">' . $say_busy_text . '</Say>';
-                                    $response .= '<Conference maxParticipants="2" record="true" startOnEnter="true" endOnExit="true"  waitUrl="https://boxleocourier.com/dashboard/api/v1/get-audio/playMusic.wav">' . $generated_conference_name . '</Conference>';
-                                    $response .= '</Response>';
-                                    header('Content-type: text/plain');
-                                    echo $response;
-                                    exit();
-                                }
-                            } else {
-
-                                $update_call_history = DB::table('call_histories')
-                                    ->where('sessionId', $sessionId)
-                                    ->update([
-                                        'nextCallStep' => 'enqueue',
-                                        'conference' => $generated_conference_name,
-                                        'updated_at' => date('Y-m-d H:i:s'),
-                                    ]);
-
-                                // Pick up agent queue
-                                $say_welcome_text = "Welcome to Boxleo Courier and Fulfillment Services Limited.";
-                                $say_busy_text = "All our customer service representatives are currently not available, please hold and we will attend to you shortly";
-                                $response = '<?xml version="1.0" encoding="UTF-8"?>';
-                                $response .= '<Response>';
-                                $response .= '<Say voice="en-US-Wavenet-F">' . $say_welcome_text . '</Say>';
-                                $response .= '<Say voice="en-US-Wavenet-F">' . $say_busy_text . '</Say>';
-                                $response .= '<Conference maxParticipants="2" record="true" startOnEnter="true" endOnExit="true"  waitUrl="https://boxleocourier.com/dashboard/api/v1/get-audio/playMusic.wav">' . $generated_conference_name . '</Conference>';
-                                $response .= '</Response>';
-                                header('Content-type: text/plain');
-                                echo $response;
-                                exit();
-                            }
-                        }
-                    }
-                }
-            } else {
-
-                $response = '<?xml version="1.0" encoding="UTF-8"?>';
-                $response .= '<Response>';
-                $response .= '<Dial record="true" sequential="true" phoneNumbers="' . $callerNumber . '" ringbackTone="https://boxleocourier.com/dashboard/api/v1/get-audio/playMusic.wav" />';
-                $response .= '</Response>';
-
-                // Print the response onto the page so that our gateway can read it
-                header('Content-type: text/plain');
-                echo $response;
-                exit();
-            }
-        } else {
-
-            $recordingUrl = $request->recordingUrl;
-            $durationInSeconds = $request->durationInSeconds;
-            $currencyCode = $request->currencyCode;
-            $amount = $request->amount;
-            $hangupCause = $request->hangupCause;
-
-            $call_history = DB::table('call_histories')
-                ->where('sessionId', $sessionId)
-                ->first();
-
-            if ($call_history) {
-
-                $update_call_history = DB::table('call_histories')
-                    ->where('sessionId', $sessionId)
-                    ->update([
-                        'isActive' => $isActive,
-                        'recordingUrl' => $recordingUrl,
-                        'durationInSeconds' => $durationInSeconds,
-                        'currencyCode' => $currencyCode,
-                        'amount' => $amount,
-                        'hangupCause' => $hangupCause,
-                        'updated_at' => date('Y-m-d H:i:s'),
-                    ]);
-
-
-                DB::table('call_agents')
-                    ->where('sessionId', $sessionId)
-                    ->update([
-                        'status' => 'available',
-                        'sessionId' => null,
-                        'updated_at' => date('Y-m-d H:i:s'),
-                    ]);
-            }
-        }
-    }
 
     public function uploadMediaFile()
     {
