@@ -79,25 +79,21 @@
         <v-col cols="12" md="4">
           <!-- Outbound Call Metrics -->
           <v-card class="elevation-3 card-style">
-    <v-card-title class="title-style">
-      <v-icon class="icon-style">mdi-phone-forward</v-icon>
-      Outbound Call Metrics
-    </v-card-title>
-    <v-card-text>
-      <v-list>
-        <v-list-item
-          v-for="(item, index) in outboundCallMetrics.items"
-          :key="index"
-          class="metric-item"
-        >
-          <v-icon class="metric-icon">
-            {{ getIcon(index) }}
-          </v-icon>
-          <span class="metric-text">{{ item }}</span>
-        </v-list-item>
-      </v-list>
-    </v-card-text>
-  </v-card>
+            <v-card-title class="title-style">
+              <v-icon class="icon-style">mdi-phone-forward</v-icon>
+              Outbound Call Metrics
+            </v-card-title>
+            <v-card-text>
+              <v-list>
+                <v-list-item v-for="(item, index) in outboundCallMetrics.items" :key="index" class="metric-item">
+                  <v-icon class="metric-icon">
+                    {{ getIcon(index) }}
+                  </v-icon>
+                  <span class="metric-text">{{ item }}</span>
+                </v-list-item>
+              </v-list>
+            </v-card-text>
+          </v-card>
 
           <!-- Outbound Call Metrics  -->
         </v-col>
@@ -151,9 +147,9 @@ export default {
         // { name: "Trey B", status: "engaged" },
         // { name: "Gabby T", status: "engaged" }
       ],
-     
+
     };
-  
+
   },
 
   methods: {
@@ -197,8 +193,10 @@ export default {
 }
 
 .card-style {
-  background-color: #e3f2fd; /* Light Blue */
-  color: #0d47a1; /* Dark Blue */
+  background-color: #e3f2fd;
+  /* Light Blue */
+  color: #0d47a1;
+  /* Dark Blue */
   padding: 16px;
   border-radius: 12px;
 }
@@ -209,11 +207,13 @@ export default {
   display: flex;
   align-items: center;
   gap: 8px;
-  color: #1565c0; /* Blue accent */
+  color: #1565c0;
+  /* Blue accent */
 }
 
 .icon-style {
-  color: #1e88e5; /* Medium Blue */
+  color: #1e88e5;
+  /* Medium Blue */
 }
 
 .metric-item {
@@ -224,7 +224,8 @@ export default {
 }
 
 .metric-icon {
-  color: #4caf50; /* Green */
+  color: #4caf50;
+  /* Green */
 }
 
 .metric-text {

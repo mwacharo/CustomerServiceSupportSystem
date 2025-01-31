@@ -14,18 +14,21 @@ return new class extends Migration
         Schema::create('officers', function (Blueprint $table) {
            
             $table->id();
-            $table->string('name');
+            $table->string('client_name');
             $table->string('phone_number', 15)->unique();
             $table->string('alt_number', 15)->unique();
             $table->string('email')->unique();
             $table->string('status');
-            // $table->enum('department', ['business', 'exchange', 'refund', 'undelivered']);
-            $table->boolean('availability')->default(true);
-
+            // $table->department('department', ['business', 'exchange', 'refund', 'undelivered']);
+            // $table->boolean('status')->default('inactive');
+            $table->foreignId('department_id')->nullable()->constrained()->onDelete('cascade');
+            $table->foreignId('country_id')->nullable()->constrained()->onDelete('set null');
             $table->string('officer_title');
             $table->string('user_id')->nullable();
-            // $table->string('sessionId')->nullable();
-            // $table->string('token')->nullable();
+            // $table->string('status')->default('inactive'); // inactive, busy, available
+            $table->string('sessionId')->nullable();
+            $table->string('token')->nullable();
+            
             $table->timestamps();
             $table->softDeletes();
         });
