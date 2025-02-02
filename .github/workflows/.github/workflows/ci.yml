@@ -1,0 +1,29 @@
+name: Laravel CI
+
+on:
+  pull_request:
+    branches:
+      - main  # Runs tests before merging to the main branch
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Set Up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: mbstring, xml, bcmath, curl, zip, mysql
+
+      - name: Install Dependencies
+        run: composer install --no-dev --prefer-dist
+
+      - name: Set Up Environment File
+        run: cp .env.example .env && php artisan key:generate
+
+      - name: Run Tests
+        run: php artisan test
