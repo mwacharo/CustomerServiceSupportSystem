@@ -334,11 +334,21 @@ public function handleVoiceCallback(Request $request)
  */
 private function xmlResponse(array $data)
 {
-    $xml = new \SimpleXMLElement('<Response/>');
-    $this->arrayToXml($data, $xml);
-    
-    return response($xml->asXML(), 200)->header('Content-Type', 'application/xml');
+    if (empty($data)) {
+        Log::error("XML Response is empty. Returning default error message.");
+        return response('<Response><Say>Invalid response</Say></Response>', 200)->header('Content-Type', 'application/xml');
+    }
+
+    try {
+        $xml = new \SimpleXMLElement('<Response/>');
+        $this->arrayToXml($data, $xml);
+        return response($xml->asXML(), 200)->header('Content-Type', 'application/xml');
+    } catch (\Exception $e) {
+        Log::error("Error while generating XML: " . $e->getMessage());
+        return response('<Response><Say>Error processing request</Say></Response>', 500)->header('Content-Type', 'application/xml');
+    }
 }
+
 
 /**
  * Convert an array to XML recursively.
@@ -346,15 +356,18 @@ private function xmlResponse(array $data)
 private function arrayToXml(array $data, \SimpleXMLElement &$xml)
 {
     foreach ($data as $key => $value) {
+        // Ensure key is a valid XML tag
+        $key = preg_replace('/[^a-zA-Z0-9_]/', '', $key);
+
         if (is_array($value)) {
             if (isset($value['_attributes'])) {
                 $child = $xml->addChild($key);
                 foreach ($value['_attributes'] as $attrKey => $attrValue) {
-                    $child->addAttribute($attrKey, $attrValue);
+                    $child->addAttribute($attrKey, htmlspecialchars($attrValue));
                 }
 
                 if (isset($value['_value'])) {
-                    $child[0] = $value['_value'];
+                    $child[0] = htmlspecialchars($value['_value']);
                 }
             } else {
                 $subnode = $xml->addChild($key);
@@ -365,7 +378,6 @@ private function arrayToXml(array $data, \SimpleXMLElement &$xml)
         }
     }
 }
-
 
 
     public function uploadMediaFile()
