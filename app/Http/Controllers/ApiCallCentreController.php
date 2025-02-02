@@ -21,6 +21,7 @@ use App\Models\Officer;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Http;
 
 class ApiCallCentreController extends Controller
 {
