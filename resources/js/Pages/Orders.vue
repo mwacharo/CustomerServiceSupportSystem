@@ -68,8 +68,6 @@
                 </v-row>
 
 
-
-
                 <v-card>
 
                     <!-- Tabs at the top -->
@@ -186,7 +184,6 @@
                         </v-card-actions>
                     </v-card>
                 </v-dialog>
-
 
 
                 <!-- Dialog for Displaying Queued Calls -->
@@ -347,9 +344,9 @@
 
 <script>
 import AppLayout from "@/Layouts/AppLayout.vue";
+import Africastalking from 'africastalking-client';
 
-
-
+const AfricastalkingWebRTCClient = window.ATWebRTC;
 const orders = [
     {
         product: "Phone",
@@ -507,6 +504,50 @@ export default {
     }),
 
     methods: {
+
+       
+       
+        async callClient(phone) {
+    try {
+        console.log("Attempting to fetch a capability token from the backend...");
+
+        // Step 1: Get a capability token from the backend
+        let response = await axios.post('/api/v1/generate-webrtc-token');
+        console.log("Token response received:", response.data);
+
+        let { token, clientName } = response.data;
+
+        if (!token) {
+            console.warn("No valid token received.");
+            this.$toastr.error("Failed to get a valid token");
+            return;
+        }
+
+        console.log("Token and client name retrieved successfully:", { token, clientName });
+
+        // Step 2: Initialize Africa's Talking WebRTC client
+        const client = new AfricastalkingWebRTCClient(token, clientName);
+        console.log("WebRTC client initialized.");
+
+        // Step 3: Make the call
+        console.log(`Initiating call to ${phone}...`);
+        client.call(phone)
+            .then(() => {
+                console.log("Call initiated successfully.");
+                this.isCalling = true;
+            })
+            .catch(err => {
+                console.error("Call failed", err);
+                this.$toastr.error("Call failed: " + err.message);
+            });
+
+    } catch (error) {
+        console.error("Error fetching token", error);
+        this.$toastr.error("Error fetching token: " + error.message);
+    }
+}
+
+,
 
         closeDialog() {
             this.callAgentDialog = false;

@@ -81,6 +81,7 @@ const filteredMenuItems = computed(() => {
 });
 </script>
 
+
 <template>
   <v-app>
     <v-navigation-drawer v-model="drawer" app color="black">

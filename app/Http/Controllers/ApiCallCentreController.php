@@ -564,47 +564,92 @@ class ApiCallCentreController extends Controller
         }
     }
 
-    public function getToken(Request $request)
-    {
 
-        $clientName = $request->clientName;
-        $curl = curl_init();
-        curl_setopt_array($curl, array(
-            CURLOPT_URL => "https://webrtc.africastalking.com/capability-token/request",
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_ENCODING => "",
-            CURLOPT_MAXREDIRS => 10,
-            CURLOPT_TIMEOUT => 0,
-            CURLOPT_FOLLOWLOCATION => true,
-            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-            CURLOPT_CUSTOMREQUEST => "POST",
-            CURLOPT_POSTFIELDS => "{\n    \"username\": \"BoxleoKenya\",\n    \"phoneNumber\": \"+254730731433\",\n    \"clientName\": \"$clientName\",\n    \"incoming\": \"true\",\n    \"lifeTimeSec\": \"864000\",\n    \"outgoing\": \"true\",\n    \"token\": \"ATCAPtkn_206675b68efaff83d1ac2d027dd5bff18fd7cb64fgjhd5d0bdcsac44a883678afe7\"\n}",
-            CURLOPT_HTTPHEADER => array(
-                "apikey: 0fbf70babd408769207a740119b305da1c5505f72c9e91dce8031f7515a94255",
-                "Content-Type: application/json"
-            ),
-        ));
+    public function generateToken(Request $request)
+{
+    $apiKey = config('services.africastalking.api_key');
+    $username = config('services.africastalking.username');
 
-        $response = curl_exec($curl);
-        curl_close($curl);
+    if (!$username || !$apiKey) {
+        return response()->json(['error' => 'Africa’s Talking credentials are missing.'], 500);
+    }
 
-        $content = json_decode($response, true);
-        $call_agent = DB::table('call_agents')
-            ->where('client_name', $clientName)
-            ->first();
+    // Define the client name for WebRTC (can be dynamic per user)
+    $clientName = 'browser-client-' . uniqid(); 
 
-        if ($call_agent) {
+    // Define token permissions (canCall means it can make outbound calls)
+    $payload = [
+        'username' => $username,
+        'clientName' => $clientName,
+        'incoming' => true,  // Allow receiving calls
+        'outgoing' => true   // Allow making calls
+    ];
 
-            $update = DB::table('call_agents')
-                ->where('id', $call_agent->id)
-                ->update([
-                    'token' => $content['token'],
-                    'updated_at' => date('Y-m-d H:i:s'),
-                ]);
+    try {
+        // Generate token by making a POST request to Africa's Talking API
+        $response = Http::withHeaders([
+            'apiKey' => $apiKey,
+            'Accept' => 'application/json'
+        ])->post('https://webrtc.africastalking.com/capability-token/request', $payload);
+
+        if ($response->failed()) {
+            return response()->json(['error' => 'Failed to generate token', 'details' => $response->json()], 500);
         }
 
-        return $content['token'];
+        return response()->json([
+            'token' => $response->json()['token'],
+            'clientName' => $clientName
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'error' => 'Failed to generate token',
+            'message' => $e->getMessage()
+        ], 500);
     }
+}
+
+
+    // public function getToken(Request $request)
+    // {
+
+    //     $clientName = $request->clientName;
+    //     $curl = curl_init();
+    //     curl_setopt_array($curl, array(
+    //         CURLOPT_URL => "https://webrtc.africastalking.com/capability-token/request",
+    //         CURLOPT_RETURNTRANSFER => true,
+    //         CURLOPT_ENCODING => "",
+    //         CURLOPT_MAXREDIRS => 10,
+    //         CURLOPT_TIMEOUT => 0,
+    //         CURLOPT_FOLLOWLOCATION => true,
+    //         CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+    //         CURLOPT_CUSTOMREQUEST => "POST",
+    //         CURLOPT_POSTFIELDS => "{\n    \"username\": \"BoxleoKenya\",\n    \"phoneNumber\": \"+254730731433\",\n    \"clientName\": \"$clientName\",\n    \"incoming\": \"true\",\n    \"lifeTimeSec\": \"864000\",\n    \"outgoing\": \"true\",\n    \"token\": \"ATCAPtkn_206675b68efaff83d1ac2d027dd5bff18fd7cb64fgjhd5d0bdcsac44a883678afe7\"\n}",
+    //         CURLOPT_HTTPHEADER => array(
+    //             "apikey: 0fbf70babd408769207a740119b305da1c5505f72c9e91dce8031f7515a94255",
+    //             "Content-Type: application/json"
+    //         ),
+    //     ));
+
+    //     $response = curl_exec($curl);
+    //     curl_close($curl);
+
+    //     $content = json_decode($response, true);
+    //     $call_agent = DB::table('call_agents')
+    //         ->where('client_name', $clientName)
+    //         ->first();
+
+    //     if ($call_agent) {
+
+    //         $update = DB::table('call_agents')
+    //             ->where('id', $call_agent->id)
+    //             ->update([
+    //                 'token' => $content['token'],
+    //                 'updated_at' => date('Y-m-d H:i:s'),
+    //             ]);
+    //     }
+
+    //     return $content['token'];
+    // }
 
     // public function transferCall(Request $request)
     // {
@@ -691,7 +736,7 @@ class ApiCallCentreController extends Controller
     //         $response = $json_array;
     //         return json_encode($response);
     //     }
-    // }
+    //  }
 
     public function hangupCall($sessionId)
     {
@@ -724,13 +769,7 @@ class ApiCallCentreController extends Controller
     }
 
 
-    // public function dequeueCall(Request $request){
-
-    // }
-
-
-
-
+    
 
     public function getCallWaitingHistory()
     {
@@ -1396,4 +1435,5 @@ class ApiCallCentreController extends Controller
 
         return json_encode($orders);
     }
+
 }

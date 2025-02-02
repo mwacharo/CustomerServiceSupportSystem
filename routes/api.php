@@ -90,6 +90,8 @@ Route::post('v1/africastalking-handle-event', [ApiCallCentreController::class, '
 
 // make a new call
 Route::post('/v1/call-centre-make-call', [ApiCallCentreController::class, 'makeCall']);
+Route::get('v1/voice-token', [ApiCallCentreController::class, 'generateToken']);
+
 
 Route::get('/v1/queued-calls', [ApiCallCentreController::class, 'getQueuedCalls']);
 Route::post('/v1/dequeue-call', [ApiCallCentreController::class, 'dequeueCall']);
