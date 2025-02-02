@@ -68,8 +68,6 @@
                 </v-row>
 
 
-
-
                 <v-card>
 
                     <!-- Tabs at the top -->
@@ -186,7 +184,6 @@
                         </v-card-actions>
                     </v-card>
                 </v-dialog>
-
 
 
                 <!-- Dialog for Displaying Queued Calls -->
@@ -347,9 +344,9 @@
 
 <script>
 import AppLayout from "@/Layouts/AppLayout.vue";
+import Africastalking from 'africastalking-client';
 
-
-
+const AfricastalkingWebRTCClient = window.ATWebRTC;
 const orders = [
     {
         product: "Phone",
@@ -508,6 +505,56 @@ export default {
 
     methods: {
 
+    
+        async callClient(phone) {
+    try {
+        console.log("Attempting to fetch a capability token from the backend...");
+
+        // Step 1: Get a capability token from the backend
+        let response = await axios.post('/api/v1/voice-token');
+
+        console.log("Token response received:", response.data);
+        let { token, clientName } = response.data;
+
+        if (!token) {
+            console.warn("No valid token received.");
+            this.$toastr.error("Failed to get a valid token");
+            return;
+        }
+
+        console.log("Token and client name retrieved successfully:", { token, clientName });
+
+        // Step 2: Ensure ATWebRTC is available
+        if (!window.ATWebRTC) {
+            console.error("ATWebRTC is not defined. Ensure the script is loaded.");
+            this.$toastr.error("WebRTC client is unavailable.");
+            return;
+        }
+
+        // Step 3: Initialize Africa's Talking WebRTC client
+        const client = new window.ATWebRTC(token, clientName);
+        console.log("WebRTC client initialized:", client);
+
+        // Step 4: Make the call
+        console.log(`Initiating call to ${phone}...`);
+
+        client.call(phone)
+            .then(() => {
+                console.log("Call initiated successfully.");
+                this.$toastr.success("Call initiated successfully.");
+                this.isCalling = true;
+            })
+            .catch(err => {
+                console.error("Call failed", err);
+                this.$toastr.error("Call failed: " + err.message);
+            });
+
+    } catch (error) {
+        console.error("Error fetching token", error);
+        this.$toastr.error("Error fetching token: " + error.message);
+    }
+}
+,
         closeDialog() {
             this.callAgentDialog = false;
         },
@@ -672,28 +719,28 @@ export default {
 
     return phone;
 },
-        callClient(phone) {
+        // callClient(phone) {
 
-            phone = this.formatPhoneNumber(phone);
+        //     phone = this.formatPhoneNumber(phone);
 
-            if (!phone) {
-                this.phone = '';
-                this.newCall = false;
-                return;
-            }
-            this.isCalling = true;
-            this.$toastr.error('Please enter a valid phone number');
-            console.log(`Calling ${phone}...`);
+        //     if (!phone) {
+        //         this.phone = '';
+        //         this.newCall = false;
+        //         return;
+        //     }
+        //     this.isCalling = true;
+        //     this.$toastr.error('Please enter a valid phone number');
+        //     console.log(`Calling ${phone}...`);
 
-            axios.post('/api/v1/call-centre-make-call', { phone })
-                .then(response => {
-                    console.log('Call initiated', response);
-                    this.newCall = false;
-                })
-                .catch(error => {
-                    console.error('Error initiating call', error);
-                });
-        },
+        //     axios.post('/api/v1/call-centre-make-call', { phone })
+        //         .then(response => {
+        //             console.log('Call initiated', response);
+        //             this.newCall = false;
+        //         })
+        //         .catch(error => {
+        //             console.error('Error initiating call', error);
+        //         });
+        // },
         watch: {
             // Watch for any change in the agents and filter again if needed
             availableAgents(newAgents) {
