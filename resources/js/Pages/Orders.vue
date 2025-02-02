@@ -344,9 +344,11 @@
 
 <script>
 import AppLayout from "@/Layouts/AppLayout.vue";
-import Africastalking from 'africastalking-client';
+// import Africastalking from 'africastalking-client';
 
-const AfricastalkingWebRTCClient = window.ATWebRTC;
+// const client = new Africastalking.Client(token, params);
+
+// const AfricastalkingWebRTCClient = window.ATWebRTC;
 const orders = [
     {
         product: "Phone",
@@ -505,6 +507,16 @@ export default {
 
     methods: {
 
+
+//         client.on('incomingcall', function (params) {
+//       this.$toastr.success(`${params.from} is calling you`)
+// }, false);
+ 
+ 
+// client.on('hangup', function (hangupCause) {
+//       this.$toastr.sucess(`Call hung up (${hangupCause.code} - ${hangupCause.reason})`)
+// }, false);
+
     
         async callClient(phone) {
     try {
@@ -522,7 +534,7 @@ export default {
             return;
         }
 
-        console.log("Token and client name retrieved successfully:", { token, clientName });
+        // console.log("Token and client name retrieved successfully:", { token, clientName });
 
         // Step 2: Ensure ATWebRTC is available
         if (!window.ATWebRTC) {
@@ -532,7 +544,7 @@ export default {
         }
 
         // Step 3: Initialize Africa's Talking WebRTC client
-        const client = new window.ATWebRTC(token, clientName);
+        // const client = new window.ATWebRTC(token, clientName);
         console.log("WebRTC client initialized:", client);
 
         // Step 4: Make the call
