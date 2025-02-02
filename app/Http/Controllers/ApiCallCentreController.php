@@ -298,129 +298,267 @@ class ApiCallCentreController extends Controller
     }
 }
 
-    public function handleEventCallback(Request $request)
-    {
+    // public function handleEventCallback(Request $request)
+    // {
 
-        Log::info($request);
-        $callSessionState = $request->callSessionState;
-        if ($callSessionState == 'Transferred' || $callSessionState == 'TransferCompleted') {
+    //     Log::info($request);
+    //     $callSessionState = $request->callSessionState;
+    //     if ($callSessionState == 'Transferred' || $callSessionState == 'TransferCompleted') {
 
-            $callTransferredToNumber = $request->callTransferredToNumber;
-            $sessionId = $request->sessionId;
+    //         $callTransferredToNumber = $request->callTransferredToNumber;
+    //         $sessionId = $request->sessionId;
 
-            $call_history = DB::table('call_histories')
-                ->where('isActive', 1)
-                ->where('sessionId', $sessionId)
-                ->where('deleted_at', null)
-                ->first();
+    //         $call_history = DB::table('call_histories')
+    //             ->where('isActive', 1)
+    //             ->where('sessionId', $sessionId)
+    //             ->where('deleted_at', null)
+    //             ->first();
 
-            if ($call_history) {
+    //         if ($call_history) {
 
-                // Update current agent
-                $update_call_agent = DB::table('call_agents')
-                    ->where('admin_id', $call_history->adminId)
-                    ->update([
-                        'status' => 'busy',
-                        'sessionId' => $sessionId,
-                        'updated_at' => date('Y-m-d H:i:s'),
-                    ]);
+    //             // Update current agent
+    //             $update_call_agent = DB::table('call_agents')
+    //                 ->where('admin_id', $call_history->adminId)
+    //                 ->update([
+    //                     'status' => 'busy',
+    //                     'sessionId' => $sessionId,
+    //                     'updated_at' => date('Y-m-d H:i:s'),
+    //                 ]);
 
-                $call_agent = DB::table('call_agents')
-                    ->where('client_name', substr($callTransferredToNumber, strpos($callTransferredToNumber, ".") + 1))
-                    ->where('deleted_at', null)
-                    ->first();
+    //             $call_agent = DB::table('call_agents')
+    //                 ->where('client_name', substr($callTransferredToNumber, strpos($callTransferredToNumber, ".") + 1))
+    //                 ->where('deleted_at', null)
+    //                 ->first();
 
-                if ($call_agent) {
+    //             if ($call_agent) {
 
-                    // Update next agent
-                    $update_call_agent = DB::table('call_agents')
-                        ->where('id', $call_agent->id)
-                        ->update([
-                            'status' => 'busy',
-                            'sessionId' => $sessionId,
-                            'updated_at' => date('Y-m-d H:i:s'),
-                        ]);
-                }
-            }
-        } elseif ($callSessionState == 'Active') {
+    //                 // Update next agent
+    //                 $update_call_agent = DB::table('call_agents')
+    //                     ->where('id', $call_agent->id)
+    //                     ->update([
+    //                         'status' => 'busy',
+    //                         'sessionId' => $sessionId,
+    //                         'updated_at' => date('Y-m-d H:i:s'),
+    //                     ]);
+    //             }
+    //         }
+    //     } elseif ($callSessionState == 'Active') {
 
-            if ($request->has('callTransferState')) {
+    //         if ($request->has('callTransferState')) {
 
-                $callTransferState = $request->callTransferState;
-                if ($callTransferState == 'CallerHangup') {
+    //             $callTransferState = $request->callTransferState;
+    //             if ($callTransferState == 'CallerHangup') {
 
-                    $sessionId = $request->sessionId;
-                    $call_history = DB::table('call_histories')
-                        ->where('isActive', 1)
-                        ->where('sessionId', $sessionId)
-                        ->where('deleted_at', null)
-                        ->first();
+    //                 $sessionId = $request->sessionId;
+    //                 $call_history = DB::table('call_histories')
+    //                     ->where('isActive', 1)
+    //                     ->where('sessionId', $sessionId)
+    //                     ->where('deleted_at', null)
+    //                     ->first();
 
-                    if ($call_history) {
+    //                 if ($call_history) {
 
-                        // Update current agent
-                        $update_call_agent = DB::table('call_agents')
-                            ->where('admin_id', $call_history->adminId)
-                            ->update([
-                                'status' => 'available',
-                                'sessionId' => $sessionId,
-                                'updated_at' => date('Y-m-d H:i:s'),
-                            ]);
+    //                     // Update current agent
+    //                     $update_call_agent = DB::table('call_agents')
+    //                         ->where('admin_id', $call_history->adminId)
+    //                         ->update([
+    //                             'status' => 'available',
+    //                             'sessionId' => $sessionId,
+    //                             'updated_at' => date('Y-m-d H:i:s'),
+    //                         ]);
 
-                        if ($update_call_agent) {
+    //                     if ($update_call_agent) {
 
-                            $call_agent = DB::table('call_agents')
-                                ->where('sessionId', $sessionId)
-                                ->where('deleted_at', null)
-                                ->first();
+    //                         $call_agent = DB::table('call_agents')
+    //                             ->where('sessionId', $sessionId)
+    //                             ->where('deleted_at', null)
+    //                             ->first();
 
-                            if ($call_agent) {
+    //                         if ($call_agent) {
 
-                                $update_call_history = DB::table('call_histories')
-                                    ->where('id', $call_history->id)
-                                    ->update([
-                                        'adminId' => $call_agent->admin_id,
-                                        'agentId' => $call_agent->client_name,
-                                        'nextCallStep' => 'in_progress',
-                                        'updated_at' => date('Y-m-d H:i:s')
-                                    ]);
-                            }
-                        }
-                    }
-                } elseif ($callTransferState == 'CalleeHangup') {
+    //                             $update_call_history = DB::table('call_histories')
+    //                                 ->where('id', $call_history->id)
+    //                                 ->update([
+    //                                     'adminId' => $call_agent->admin_id,
+    //                                     'agentId' => $call_agent->client_name,
+    //                                     'nextCallStep' => 'in_progress',
+    //                                     'updated_at' => date('Y-m-d H:i:s')
+    //                                 ]);
+    //                         }
+    //                     }
+    //                 }
+    //             } elseif ($callTransferState == 'CalleeHangup') {
 
-                    $sessionId = $request->sessionId;
-                    $call_history = DB::table('call_histories')
-                        ->where('isActive', 1)
-                        ->where('sessionId', $sessionId)
-                        ->where('deleted_at', null)
-                        ->first();
+    //                 $sessionId = $request->sessionId;
+    //                 $call_history = DB::table('call_histories')
+    //                     ->where('isActive', 1)
+    //                     ->where('sessionId', $sessionId)
+    //                     ->where('deleted_at', null)
+    //                     ->first();
 
-                    if ($call_history) {
+    //                 if ($call_history) {
 
-                        $call_agent = DB::table('call_agents')
-                            ->where('sessionId', $sessionId)
-                            ->where('deleted_at', null)
-                            ->first();
+    //                     $call_agent = DB::table('call_agents')
+    //                         ->where('sessionId', $sessionId)
+    //                         ->where('deleted_at', null)
+    //                         ->first();
 
-                        if ($call_agent) {
+    //                     if ($call_agent) {
 
-                            if ($call_history->agentId != $call_agent->client_name) {
+    //                         if ($call_history->agentId != $call_agent->client_name) {
 
-                                $update_call_agent = DB::table('call_agents')
-                                    ->where('id', $call_agent->id)
-                                    ->update([
-                                        'status' => 'available',
-                                        'sessionId' => '',
-                                        'updated_at' => date('Y-m-d H:i:s'),
-                                    ]);
-                            }
-                        }
-                    }
-                }
+    //                             $update_call_agent = DB::table('call_agents')
+    //                                 ->where('id', $call_agent->id)
+    //                                 ->update([
+    //                                     'status' => 'available',
+    //                                     'sessionId' => '',
+    //                                     'updated_at' => date('Y-m-d H:i:s'),
+    //                                 ]);
+    //                         }
+    //                     }
+    //                 }
+    //             }
+    //         }
+    //     }
+    // }
+
+
+
+    public function handleVoiceCallback(Request $request)
+{
+    Log::info("Received voice callback", $request->all());
+
+    $callSessionState = $request->input('callSessionState');
+    $direction = $request->input('direction');
+    $callerNumber = $request->input('callerNumber');
+    $destinationNumber = $request->input('destinationNumber');
+    $sessionId = $request->input('sessionId');
+    $isActive = $request->input('isActive');
+
+    Log::info("Call Details: SessionID: $sessionId, Direction: $direction, Caller: $callerNumber, Destination: $destinationNumber, State: $callSessionState, Active: $isActive");
+
+    if ($isActive == "1") {
+        Log::info("Call is active. Processing...");
+
+        if ($direction === 'Inbound') {
+            Log::info("Processing inbound call");
+
+            // Find the agent who should answer
+            $callAgent = Officer::where('status', 'available')->first();
+
+            if ($callAgent) {
+                Log::info("Routing inbound call to agent: " . $callAgent->phone_number);
+
+                // Assign session to agent
+                $callAgent->update([
+                    'status' => 'busy',
+                    'sessionId' => $sessionId,
+                ]);
+
+                // Log call history
+                CallHistory::updateOrCreate(
+                    ['sessionId' => $sessionId],
+                    [
+                        'callerNumber' => $callerNumber,
+                        'destinationNumber' => $callAgent->phone_number,
+                        'direction' => 'inbound',
+                        'callStartTime' => $request->input('callStartTime'),
+                        'isActive' => $isActive
+                    ]
+                );
+
+                return response()->xml([
+                    'Response' => [
+                        'Dial' => [
+                            '_attributes' => [
+                                'record' => 'true',
+                                'sequential' => 'true',
+                                'phoneNumbers' => $callAgent->phone_number,
+                                // 'ringbackTone' => 'https://boxleocourier.com/dashboard/api/v1/get-audio/playMusic.wav'
+                            ]
+                        ],
+                        'Record' => []
+                    ]
+                ]);
+            } else {
+                Log::warning("No available agent found. Playing hold music.");
+
+                return response()->xml([
+                    'Response' => [
+                        'Play' => [
+                            '_attributes' => [
+                                // 'url' => 'https://boxleocourier.com/dashboard/api/v1/get-audio/playMusic.wav'
+                            ]
+                        ]
+                    ]
+                ]);
             }
         }
+
+        if ($direction === 'Outbound') {
+            Log::info("Processing outbound call");
+
+            // Log outbound call
+            CallHistory::updateOrCreate(
+                ['sessionId' => $sessionId],
+                [
+                    'callerNumber' => $callerNumber,
+                    'destinationNumber' => $destinationNumber,
+                    'direction' => 'outbound',
+                    'callStartTime' => $request->input('callStartTime'),
+                    'isActive' => $isActive
+                ]
+            );
+
+            return response()->xml([
+                'Response' => [
+                    'Dial' => [
+                        '_attributes' => [
+                            'record' => 'true',
+                            'sequential' => 'true',
+                            'phoneNumbers' => $destinationNumber,
+                            // 'ringbackTone' => 'https://boxleocourier.com/dashboard/api/v1/get-audio/playMusic.wav'
+                        ]
+                    ],
+                    'Record' => []
+                ]
+            ]);
+        }
     }
+
+    if ($isActive == "0") {
+        Log::info("Call is inactive. Updating call history...");
+
+        $callHistory = CallHistory::where('sessionId', $sessionId)->first();
+
+        if ($callHistory) {
+            Log::info("Updating call history for session: $sessionId");
+
+            $callHistory->update([
+                'isActive' => $isActive,
+                'recordingUrl' => $request->input('recordingUrl'),
+                'durationInSeconds' => $request->input('durationInSeconds'),
+                'currencyCode' => $request->input('currencyCode'),
+                'amount' => $request->input('amount'),
+                'hangupCause' => $request->input('hangupCause'),
+                'status' => $request->input('status'),
+            ]);
+
+            // Reset agent status
+            Officer::where('sessionId', $sessionId)->update([
+                'status' => 'available',
+                'sessionId' => null
+            ]);
+
+            Log::info("Call history updated successfully.");
+        } else {
+            Log::warning("Call history not found for session: $sessionId");
+        }
+    }
+
+    return response()->json(['message' => 'Callback processed']);
+}
+
 
 
 
