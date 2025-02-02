@@ -217,102 +217,84 @@ class ApiCallCentreController extends Controller
     }
 
 
+public function handleVoiceCallback(Request $request)
+{
+    Log::info('Received voice callback', $request->all());
 
+    $isActive = $request->input('isActive');
+    $sessionId = $request->input('sessionId');
+    $direction = $request->input('direction');
+    $callerNumber = $request->input('callerNumber');
+    $destinationNumber = $request->input('destinationNumber');
 
+    if ($isActive) {
+        Log::info("Call is active. Direction: $direction, Caller: $callerNumber, Destination: $destinationNumber");
 
-    public function handleVoiceCallback(Request $request)
-    {
-        Log::info("Received voice callback", $request->all());
-    
-        $callSessionState = $request->input('callSessionState');
-        $direction = $request->input('direction');
-        $callerNumber = $request->input('callerNumber');
-        $destinationNumber = $request->input('destinationNumber');
-        $sessionId = $request->input('sessionId');
-        $isActive = $request->input('isActive');
-    
-        Log::info("Call Details: SessionID: $sessionId, Direction: $direction, Caller: $callerNumber, Destination: $destinationNumber, State: $callSessionState, Active: $isActive");
-    
-        if ($isActive == "1") {
-            Log::info("Call is active. Processing...");
-    
-            if ($direction === 'Inbound') {
-                Log::info("Processing inbound call");
-    
-                // Find the agent who should answer
-                $callAgent = Officer::where('status', 'available')->first();
-    
-                if ($callAgent) {
-                    Log::info("Routing inbound call to agent: " . $callAgent->phone_number);
-    
-                    // Assign session to agent
-                    $callAgent->update([
-                        'status' => 'busy',
-                        'sessionId' => $sessionId,
-                    ]);
-    
-                    // Log call history
-                    CallHistory::updateOrCreate(
-                        ['sessionId' => $sessionId],
-                        [
-                            'callerNumber' => $callerNumber,
-                            'destinationNumber' => $callAgent->phone_number,
-                            'direction' => 'inbound',
-                            'callStartTime' => $request->input('callStartTime'),
-                            'isActive' => $isActive
-                        ]
-                    );
-    
-                    return response()->xml([
-                        'Response' => [
-                            'Dial' => [
-                                '_attributes' => [
-                                    'record' => 'true',
-                                    'sequential' => 'true',
-                                    'phoneNumbers' => $callAgent->phone_number,
-                                    'ringbackTone' => 'https://boxleocourier.com/dashboard/api/v1/get-audio/playMusic.wav'
-                                ]
-                            ],
-                            'Record' => []
-                        ]
-                    ]);
-                } else {
-                    Log::warning("No available agent found. Playing hold music.");
-    
-                    return response()->xml([
-                        'Response' => [
-                            'Play' => [
-                                '_attributes' => [
-                                    'url' => 'https://boxleocourier.com/dashboard/api/v1/get-audio/playMusic.wav'
+        if ($direction === 'Inbound') {
+            $clientName = substr($callerNumber, strpos($callerNumber, '.') + 1);
+            $callAgent = Officer::where('client_name', $clientName)->whereNull('deleted_at')->first();
+
+            if ($callAgent) {
+                Log::info("Call agent found: {$callAgent->id}");
+                $clientDialedNumber = $request->input('clientDialedNumber');
+
+                if (in_array($clientDialedNumber, ['+254730731433', '+254730731433'])) {
+                    $callHistory = CallHistory::where('isActive', 1)
+                        ->where('nextCallStep', 'enqueue')
+                        ->whereNotNull('conference')
+                        ->whereNull('deleted_at')
+                        ->orderBy('created_at', 'ASC')
+                        ->first();
+
+                    if ($callHistory) {
+                        Log::info("Redirecting call to conference: {$callHistory->conference}");
+
+                        $callAgent->update(['status' => 'busy', 'sessionId' => $sessionId]);
+                        $callHistory->update(['adminId' => $callAgent->admin_id, 'agentId' => $callAgent->client_name, 'nextCallStep' => 'in_progress']);
+
+                        return $this->xmlResponse([
+                            'Response' => [
+                                'Conference' => [
+                                    '_attributes' => [
+                                        'maxParticipants' => 2,
+                                        'record' => 'true',
+                                        'startOnEnter' => 'true',
+                                        'endOnExit' => 'true'
+                                    ],
+                                    '_value' => $callHistory->conference
                                 ]
                             ]
+                        ]);
+                    }
+
+                    Log::info("No active call in queue");
+                    return $this->xmlResponse([
+                        'Response' => [
+                            'Say' => 'Sorry, there are no calls in the waiting queue',
+                            'Reject' => []
                         ]
                     ]);
                 }
-            }
-    
-            if ($direction === 'Outbound') {
-                Log::info("Processing outbound call");
-    
-                // Log outbound call
-                CallHistory::updateOrCreate(
-                    ['sessionId' => $sessionId],
-                    [
-                        'callerNumber' => $callerNumber,
-                        'destinationNumber' => $destinationNumber,
-                        'direction' => 'outbound',
-                        'callStartTime' => $request->input('callStartTime'),
-                        'isActive' => $isActive
-                    ]
-                );
-    
-                return response()->xml([
+
+                Log::info("New outbound call initiated");
+                CallHistory::create([
+                    'isActive' => $isActive,
+                    'callerNumber' => $callerNumber,
+                    'destinationNumber' => $clientDialedNumber,
+                    'direction' => 'outbound',
+                    'sessionId' => $sessionId,
+                    'adminId' => $callAgent->admin_id,
+                    'agentId' => $callAgent->client_name,
+                ]);
+
+                $callAgent->update(['status' => 'busy', 'sessionId' => $sessionId]);
+                return $this->xmlResponse([
                     'Response' => [
                         'Dial' => [
                             '_attributes' => [
                                 'record' => 'true',
                                 'sequential' => 'true',
-                                'phoneNumbers' => $destinationNumber,
+                                'phoneNumbers' => $clientDialedNumber,
                                 'ringbackTone' => 'https://boxleocourier.com/dashboard/api/v1/get-audio/playMusic.wav'
                             ]
                         ],
@@ -320,42 +302,69 @@ class ApiCallCentreController extends Controller
                     ]
                 ]);
             }
-        }
-    
-        if ($isActive == "0") {
-            Log::info("Call is inactive. Updating call history...");
-    
-            $callHistory = CallHistory::where('sessionId', $sessionId)->first();
-    
-            if ($callHistory) {
-                Log::info("Updating call history for session: $sessionId");
-    
-                $callHistory->update([
-                    'isActive' => $isActive,
-                    'recordingUrl' => $request->input('recordingUrl'),
-                    'durationInSeconds' => $request->input('durationInSeconds'),
-                    'currencyCode' => $request->input('currencyCode'),
-                    'amount' => $request->input('amount'),
-                    'hangupCause' => $request->input('hangupCause'),
-                    'status' => $request->input('status'),
-                ]);
-    
-                // Reset agent status
-                Officer::where('sessionId', $sessionId)->update([
-                    'status' => 'available',
-                    'sessionId' => null
-                ]);
-    
-                Log::info("Call history updated successfully.");
-            } else {
-                Log::warning("Call history not found for session: $sessionId");
-            }
-        }
-    
-        return response()->json(['message' => 'Callback processed']);
-    }
-    
 
+            Log::info("No call agent found, updating call history");
+            CallHistory::updateOrCreate(['sessionId' => $sessionId], [
+                'isActive' => $isActive,
+                'callerNumber' => $callerNumber,
+                'destinationNumber' => $destinationNumber
+            ]);
+        }
+    } else {
+        Log::info("Call is inactive. Updating call history for session: $sessionId");
+        $callHistory = CallHistory::where('sessionId', $sessionId)->first();
+
+        if ($callHistory) {
+            $callHistory->update([
+                'isActive' => $isActive,
+                'recordingUrl' => $request->input('recordingUrl'),
+                'durationInSeconds' => $request->input('durationInSeconds'),
+                'currencyCode' => $request->input('currencyCode'),
+                'amount' => $request->input('amount'),
+                'hangupCause' => $request->input('hangupCause'),
+            ]);
+
+            Officer::where('sessionId', $sessionId)->update(['status' => 'available', 'sessionId' => null]);
+        }
+    }
+}
+
+/**
+ * Generate an XML response.
+ */
+private function xmlResponse(array $data)
+{
+    $xml = new \SimpleXMLElement('<Response/>');
+    $this->arrayToXml($data, $xml);
+    
+    return response($xml->asXML(), 200)->header('Content-Type', 'application/xml');
+}
+
+/**
+ * Convert an array to XML recursively.
+ */
+private function arrayToXml(array $data, \SimpleXMLElement &$xml)
+{
+    foreach ($data as $key => $value) {
+        if (is_array($value)) {
+            if (isset($value['_attributes'])) {
+                $child = $xml->addChild($key);
+                foreach ($value['_attributes'] as $attrKey => $attrValue) {
+                    $child->addAttribute($attrKey, $attrValue);
+                }
+
+                if (isset($value['_value'])) {
+                    $child[0] = $value['_value'];
+                }
+            } else {
+                $subnode = $xml->addChild($key);
+                $this->arrayToXml($value, $subnode);
+            }
+        } else {
+            $xml->addChild($key, htmlspecialchars($value));
+        }
+    }
+}
 
 
 
