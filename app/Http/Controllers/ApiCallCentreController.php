@@ -567,89 +567,106 @@ class ApiCallCentreController extends Controller
 
 
     public function generateToken(Request $request)
-    {
-        // Fetching the API credentials
-        $apiKey = config('services.africastalking.api_key');
-        $username = config('services.africastalking.username');
-        $phoneNumber = trim(config('services.africastalking.phone'));
+{
+    // Fetching the API credentials
+    $apiKey = config('services.africastalking.api_key');
+    $username = config('services.africastalking.username');
+    $phoneNumber = trim(config('services.africastalking.phone'));
 
-    
-        if (!$username || !$apiKey) {
-            Log::error('Africa’s Talking credentials are missing.', [
-                'username' => $username,
-                'apiKey' => $apiKey
-            ]);
-    
-            return response()->json(['error' => 'Africa’s Talking credentials are missing.'], 500);
-        }
-    
-        // Set the client name for WebRTC, can be dynamic per user
-        $clientName = 'browser-client-' . uniqid();
-    
-        Log::info('Generating token for client', ['clientName' => $clientName]);
-    
-        // Fetch phone number from the request data
-      
-        if (!$phoneNumber) {
-            return response()->json(['error' => 'Phone number is required.'], 400);
-        }
-    
-        // Define token permissions (canCall means it can make outbound calls)
-        $payload = [
+    // Check if credentials are set
+    if (!$username || !$apiKey) {
+        Log::error('Africa’s Talking credentials are missing.', [
             'username' => $username,
-            'clientName' => $clientName,
-            'phoneNumber' => $phoneNumber,  // Add the phone number
-            'incoming' => true,  // Allow receiving calls
-            'outgoing' => true   // Allow making calls
-        ];
-    
-        try {
-            // Sending request to Africa's Talking API for token generation
-            Log::info('Sending request to Africa’s Talking API for token generation', [
-                'url' => 'https://webrtc.africastalking.com/capability-token/request',
-                'payload' => $payload
-            ]);
-    
-            // Make the POST request
-            $response = Http::withHeaders([
-                'apiKey' => $apiKey,
-                'Accept' => 'application/json',
-                'Content-Type' => 'application/json'
-            ])->post('https://webrtc.africastalking.com/capability-token/request', $payload);
-    
-            // Check if request failed
-            if ($response->failed()) {
-                Log::error('Failed to generate token', [
-                    'response' => $response->json(),
-                    'status' => $response->status()
-                ]);
-    
-                return response()->json(['error' => 'Failed to generate token', 'details' => $response->json()], 500);
-            }
-    
-            // Log successful token generation
-            Log::info('Token generated successfully', [
-                'token' => $response->json()['token'],
-                'clientName' => $clientName
-            ]);
-    
-            // Return the generated token
-            return response()->json([
-                'token' => $response->json()['token'],
-                'clientName' => $clientName
-            ]);
-        } catch (\Exception $e) {
-            Log::error('Exception occurred while generating token', [
-                'message' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
-    
-            return response()->json([
-                'error' => 'Failed to generate token',
-                'message' => $e->getMessage()
-            ], 500);
-        }
+            'apiKey' => $apiKey
+        ]);
+
+        return response()->json(['error' => 'Africa’s Talking credentials are missing.'], 500);
     }
+
+    // Set the client name for WebRTC (can be dynamic per user)
+    $clientName = 'browser-client-' . uniqid();
+
+    Log::info('Generating token for client', ['clientName' => $clientName]);
+
+    // If no phone number is provided in the config, return an error
+    if (!$phoneNumber) {
+        return response()->json(['error' => 'Phone number is required.'], 400);
+    }
+
+    // Define token permissions (canCall means it can make outbound calls)
+    $payload = json_encode([
+        'username' => $username,
+        'clientName' => $clientName,
+        'phoneNumber' => $phoneNumber,  // Add the phone number
+        'incoming' => true,  // Allow receiving calls
+        'outgoing' => true   // Allow making calls
+    ]);
+
+    // Africa's Talking API URL
+    $url = 'https://webrtc.africastalking.com/capability-token/request';
+
+    // cURL setup
+    $ch = curl_init();
+
+    // cURL options
+    curl_setopt($ch, CURLOPT_URL, $url);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_POST, true);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);  // Send JSON-encoded data
+    curl_setopt($ch, CURLOPT_HTTPHEADER, [
+        'apiKey: ' . $apiKey,
+        'Accept: application/json',
+        'Content-Type: application/json'
+    ]);
+
+    try {
+        // Execute the cURL request
+        $response = curl_exec($ch);
+
+        // Check if there was an error with cURL
+        if (curl_errno($ch)) {
+            Log::error('cURL Error: ' . curl_error($ch));
+
+            return response()->json(['error' => 'Failed to generate token via cURL'], 500);
+        }
+
+        // Close the cURL resource
+        curl_close($ch);
+
+        // Decode the response
+        $responseData = json_decode($response, true);
+
+        // If the response contains a token, return it
+        if (isset($responseData['token'])) {
+            Log::info('Token generated successfully', [
+                'token' => $responseData['token'],
+                'clientName' => $clientName
+            ]);
+
+            return response()->json([
+                'token' => $responseData['token'],
+                'clientName' => $clientName
+            ]);
+        } else {
+            // If no token is found, log the error
+            Log::error('Failed to generate token', ['response' => $responseData]);
+
+            return response()->json(['error' => 'Failed to generate token', 'details' => $responseData], 500);
+        }
+    } catch (\Exception $e) {
+        // Log any exceptions
+        Log::error('Exception occurred while generating token', [
+            'message' => $e->getMessage(),
+            'trace' => $e->getTraceAsString()
+        ]);
+
+        return response()->json([
+            'error' => 'Failed to generate token',
+            'message' => $e->getMessage()
+        ], 500);
+    }
+}
+
     
     // public function getToken(Request $request)
     // {
