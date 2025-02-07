@@ -344,11 +344,10 @@
 
 <script>
 import AppLayout from "@/Layouts/AppLayout.vue";
-// import Africastalking from 'africastalking-client';
+import { onMounted } from 'vue';
 
-// const client = new Africastalking.Client(token, params);
 
-// const AfricastalkingWebRTCClient = window.ATWebRTC;
+
 const orders = [
     {
         product: "Phone",
@@ -505,68 +504,48 @@ export default {
         },
     }),
 
+
+    // onMounted() {
+    //     if (window.ATWebRTC) {
+    //         console.log("ATWebRTC is ready:", window.ATWebRTC);
+    //     } else {
+    //         console.error("ATWebRTC is not available.");
+    //     }
+    // },
+
     methods: {
 
-
-//         client.on('incomingcall', function (params) {
-//       this.$toastr.success(`${params.from} is calling you`)
-// }, false);
- 
- 
-// client.on('hangup', function (hangupCause) {
-//       this.$toastr.sucess(`Call hung up (${hangupCause.code} - ${hangupCause.reason})`)
-// }, false);
-
-    
         async callClient(phone) {
-    try {
-        console.log("Attempting to fetch a capability token from the backend...");
+            try {
+                // Check if the global WebRTC client is available
+                if (!window.ATWebRTC) {
+                    this.$toastr.error("WebRTC client is unavailable.");
+                    return;
+                }
 
-        // Step 1: Get a capability token from the backend
-        let response = await axios.post('/api/v1/voice-token');
+                console.log("Initiating call with client:", window.ATWebRTC);
 
-        console.log("Token response received:", response.data);
-        let { token, clientName } = response.data;
+                // Use the globally available client to make the call.
+                // Adjust the options as needed (e.g., add callFrom if required).
+                ATWebRTC.call({
+                    callTo: phone
+                })
+                    .then(() => {
+                        this.$toastr.success("Call initiated successfully.");
+                        this.isCalling = true;
+                    })
+                    .catch(err => {
+                        console.error("Call failed", err);
+                        this.$toastr.error("Call failed: " + err.message);
+                    });
 
-        if (!token) {
-            console.warn("No valid token received.");
-            this.$toastr.error("Failed to get a valid token");
-            return;
+            } catch (error) {
+                console.error("Error initiating call", error);
+                this.$toastr.error("Error initiating call: " + error.message);
+            }
         }
-
-        // console.log("Token and client name retrieved successfully:", { token, clientName });
-
-        // Step 2: Ensure ATWebRTC is available
-        if (!window.ATWebRTC) {
-            console.error("ATWebRTC is not defined. Ensure the script is loaded.");
-            this.$toastr.error("WebRTC client is unavailable.");
-            return;
-        }
-
-        // Step 3: Initialize Africa's Talking WebRTC client
-        // const client = new window.ATWebRTC(token, clientName);
-        console.log("WebRTC client initialized:", client);
-
-        // Step 4: Make the call
-        console.log(`Initiating call to ${phone}...`);
-
-        client.call(phone)
-            .then(() => {
-                console.log("Call initiated successfully.");
-                this.$toastr.success("Call initiated successfully.");
-                this.isCalling = true;
-            })
-            .catch(err => {
-                console.error("Call failed", err);
-                this.$toastr.error("Call failed: " + err.message);
-            });
-
-    } catch (error) {
-        console.error("Error fetching token", error);
-        this.$toastr.error("Error fetching token: " + error.message);
-    }
-}
-,
+        ,
+        // Close the dialog
         closeDialog() {
             this.callAgentDialog = false;
         },
@@ -706,31 +685,31 @@ export default {
 
 
         formatPhoneNumber(phone) {
-    if (!phone) return '';
+            if (!phone) return '';
 
-    // Remove all non-numeric characters
-    phone = phone.replace(/\D/g, '');
+            // Remove all non-numeric characters
+            phone = phone.replace(/\D/g, '');
 
-    // If the number starts with '0' (e.g., 0712345678), replace it with '+254'
-    if (phone.startsWith('0')) {
-        phone = '+254' + phone.substring(1);
-    }
-    // If the number starts with '254' but missing '+', add it
-    else if (phone.startsWith('254')) {
-        phone = '+254' + phone.substring(3);
-    }
-    // If it's already in the correct format, return as is
-    else if (phone.startsWith('+254')) {
-        return phone;
-    }
-    // If none of the above, it's invalid
-    else {
-        this.$toastr.error('Invalid phone number format');
-        return '';
-    }
+            // If the number starts with '0' (e.g., 0712345678), replace it with '+254'
+            if (phone.startsWith('0')) {
+                phone = '+254' + phone.substring(1);
+            }
+            // If the number starts with '254' but missing '+', add it
+            else if (phone.startsWith('254')) {
+                phone = '+254' + phone.substring(3);
+            }
+            // If it's already in the correct format, return as is
+            else if (phone.startsWith('+254')) {
+                return phone;
+            }
+            // If none of the above, it's invalid
+            else {
+                this.$toastr.error('Invalid phone number format');
+                return '';
+            }
 
-    return phone;
-},
+            return phone;
+        },
         // callClient(phone) {
 
         //     phone = this.formatPhoneNumber(phone);
