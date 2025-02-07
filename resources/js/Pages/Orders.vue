@@ -366,7 +366,7 @@ const orders = [
 ];
 
 const FakeAPI = {
-    async fetch({ page, itemsPerPage, sortBy, search }) {
+    async fetch({ page, itemsPerPage, sortBy, search }) {   
         return new Promise((resolve) => {
             setTimeout(() => {
                 const start = (page - 1) * itemsPerPage;
@@ -516,35 +516,42 @@ export default {
     methods: {
 
         async callClient(phone) {
-            try {
-                // Check if the global WebRTC client is available
-                if (!window.ATWebRTC) {
-                    this.$toastr.error("WebRTC client is unavailable.");
-                    return;
-                }
+    try {
+        console.log("Starting callClient function...");
 
-                console.log("Initiating call with client:", window.ATWebRTC);
-
-                // Use the globally available client to make the call.
-                // Adjust the options as needed (e.g., add callFrom if required).
-                ATWebRTC.call({
-                    callTo: phone
-                })
-                    .then(() => {
-                        this.$toastr.success("Call initiated successfully.");
-                        this.isCalling = true;
-                    })
-                    .catch(err => {
-                        console.error("Call failed", err);
-                        this.$toastr.error("Call failed: " + err.message);
-                    });
-
-            } catch (error) {
-                console.error("Error initiating call", error);
-                this.$toastr.error("Error initiating call: " + error.message);
-            }
+        // Check if the global WebRTC client is available
+        if (!window.ATWebRTC) {
+            console.error("ATWebRTC object is not defined.");
+            this.$toastr.error("WebRTC client is unavailable.");
+            return;
         }
-        ,
+
+        console.log("ATWebRTC object detected:", window.ATWebRTC);
+
+        // Check if the call method exists
+        if (typeof window.ATWebRTC.call !== 'function') {
+            console.error("Call method not found on ATWebRTC:", Object.keys(window.ATWebRTC));
+            this.$toastr.error("Call method is unavailable.");
+            return;
+        }
+
+        console.log("Initiating call to:", phone);
+
+        // Call the phone number
+        await window.ATWebRTC.call({
+            callTo: phone
+        });
+
+        console.log("Call initiated successfully.");
+        this.$toastr.success("Call initiated successfully.");
+        this.isCalling = true;
+
+    } catch (error) {
+        console.error("Error initiating call:", error);
+        this.$toastr.error("Error initiating call: " + error.message);
+    }
+}
+,
         // Close the dialog
         closeDialog() {
             this.callAgentDialog = false;
