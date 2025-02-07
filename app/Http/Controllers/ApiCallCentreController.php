@@ -18,6 +18,7 @@ use AfricasTalking\SDK\AfricasTalking;
 use App\Models\CallHistory;
 use App\Models\CallQueue;
 use App\Models\Officer;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
@@ -566,238 +567,230 @@ class ApiCallCentreController extends Controller
     }
 
 
+
     public function generateToken(Request $request)
 {
-    // Fetching the API credentials
+    // Fetch Africa's Talking API credentials from config.
     $apiKey = config('services.africastalking.api_key');
     $username = config('services.africastalking.username');
     $phoneNumber = trim(config('services.africastalking.phone'));
 
-    // Check if credentials are set
     if (!$username || !$apiKey) {
-        Log::error('Africa’s Talking credentials are missing.', [
+        Log::error('Africa’s Talking credentials are missing.', [   
             'username' => $username,
-            'apiKey' => $apiKey
+            'apiKey'   => $apiKey
         ]);
-
         return response()->json(['error' => 'Africa’s Talking credentials are missing.'], 500);
     }
 
-    // Set the client name for WebRTC (can be dynamic per user)
-    $clientName = 'browser-client-' . uniqid();
+    // Retrieve all users.
+    $users = User::all();
+    $updatedTokens = [];
+    $failedUpdates = [];
 
-    Log::info('Generating token for client', ['clientName' => $clientName]);
+    foreach ($users as $user) {
+        $clientName = $user->client_name ?: 'browser-client-' . uniqid();
 
-    // If no phone number is provided in the config, return an error
-    if (!$phoneNumber) {
-        return response()->json(['error' => 'Phone number is required.'], 400);
-    }
+        $incoming = isset($user->can_receive_calls) ? $user->can_receive_calls : true;
+        $outgoing = isset($user->can_call) ? $user->can_call : true;
 
-    // Define token permissions (canCall means it can make outbound calls)
-    $payload = json_encode([
-        'username' => $username,
-        'clientName' => $clientName,
-        'phoneNumber' => $phoneNumber,  // Add the phone number
-        'incoming' => true,  // Allow receiving calls
-        'outgoing' => true   // Allow making calls
-    ]);
-
-    // Africa's Talking API URL
-    $url = 'https://webrtc.africastalking.com/capability-token/request';
-
-    // cURL setup
-    $ch = curl_init();
-
-    // cURL options
-    curl_setopt($ch, CURLOPT_URL, $url);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_POST, true);
-    curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);  // Send JSON-encoded data
-    curl_setopt($ch, CURLOPT_HTTPHEADER, [
-        'apiKey: ' . $apiKey,
-        'Accept: application/json',
-        'Content-Type: application/json'
-    ]);
-
-    try {
-        // Execute the cURL request
-        $response = curl_exec($ch);
-
-        // Check if there was an error with cURL
-        if (curl_errno($ch)) {
-            Log::error('cURL Error: ' . curl_error($ch));
-
-            return response()->json(['error' => 'Failed to generate token via cURL'], 500);
-        }
-
-        // Close the cURL resource
-        curl_close($ch);
-
-        // Decode the response
-        $responseData = json_decode($response, true);
-
-        // If the response contains a token, return it
-        if (isset($responseData['token'])) {
-            Log::info('Token generated successfully', [
-                'token' => $responseData['token'],
-                'clientName' => $clientName
-            ]);
-
-            return response()->json([
-                'token' => $responseData['token'],
-                'clientName' => $clientName
-            ]);
-        } else {
-            // If no token is found, log the error
-            Log::error('Failed to generate token', ['response' => $responseData]);
-
-            return response()->json(['error' => 'Failed to generate token', 'details' => $responseData], 500);
-        }
-    } catch (\Exception $e) {
-        // Log any exceptions
-        Log::error('Exception occurred while generating token', [
-            'message' => $e->getMessage(),
-            'trace' => $e->getTraceAsString()
+        Log::info('Generating token for user', [
+            'user_id'    => $user->id,
+            'clientName' => $clientName,
+            'phoneNumber'=> $phoneNumber
         ]);
 
-        return response()->json([
-            'error' => 'Failed to generate token',
-            'message' => $e->getMessage()
-        ], 500);
+        // Prepare the payload.
+        $payload = json_encode([
+            'username'   => $username,
+            'clientName' => $clientName,
+            'phoneNumber'=> $phoneNumber,
+            'apiKey'     => $apiKey,
+            'incoming'   => $incoming ? "true" : "false",
+            'outgoing'   => $outgoing ? "true" : "false"
+        ]);
+
+        // Africa's Talking API URL.
+        $url = 'https://webrtc.africastalking.com/capability-token/request';
+
+        // Set up cURL.
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            'apiKey: ' . $apiKey,
+            'Accept: application/json',
+            'Content-Type: application/json'
+        ]);
+
+        // Execute the cURL request.
+        $response = curl_exec($ch);
+        if (curl_errno($ch)) {
+            Log::error("cURL Error for user {$user->id}: " . curl_error($ch));
+            curl_close($ch);
+            continue;
+        }
+        curl_close($ch);
+
+        // Decode the response.
+        $responseData = json_decode($response, true);
+        if (isset($responseData['token'])) {
+            $newToken = $responseData['token'];
+
+            Log::info("Updating token in database for user {$user->id}", [
+                'old_token'  => $user->agent_token,
+                'new_token'  => $newToken
+            ]);
+
+            // Update the user's token in the database.
+            $updateSuccess = $user->update(['token' => $newToken]);
+
+            if ($updateSuccess) {
+                Log::info("Database update successful for user {$user->id}");
+                $updatedTokens[] = [
+                    'user_id'    => $user->id,
+                    'token'      => $newToken,
+                    'clientName' => $clientName
+                ];
+            } else {
+                Log::warning("Database update failed for user {$user->id}");
+                $failedUpdates[] = $user->id;
+            }
+        } else {
+            Log::error('Failed to generate token for user', [
+                'user_id'  => $user->id,
+                'response' => $responseData
+            ]);
+        }
     }
+
+    // Return a summary of updated tokens.
+    return response()->json([
+        'updatedTokens' => $updatedTokens,
+        // 'failedUpdates' => $failedUpdates,
+        // 'totalUpdated'  => count($updatedTokens),
+        // 'totalFailed'   => count($failedUpdates),
+    ]);
 }
 
-    
-    // public function getToken(Request $request)
-    // {
 
-    //     $clientName = $request->clientName;
-    //     $curl = curl_init();
-    //     curl_setopt_array($curl, array(
-    //         CURLOPT_URL => "https://webrtc.africastalking.com/capability-token/request",
-    //         CURLOPT_RETURNTRANSFER => true,
-    //         CURLOPT_ENCODING => "",
-    //         CURLOPT_MAXREDIRS => 10,
-    //         CURLOPT_TIMEOUT => 0,
-    //         CURLOPT_FOLLOWLOCATION => true,
-    //         CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-    //         CURLOPT_CUSTOMREQUEST => "POST",
-    //         CURLOPT_POSTFIELDS => "{\n    \"username\": \"BoxleoKenya\",\n    \"phoneNumber\": \"+254730731433\",\n    \"clientName\": \"$clientName\",\n    \"incoming\": \"true\",\n    \"lifeTimeSec\": \"864000\",\n    \"outgoing\": \"true\",\n    \"token\": \"ATCAPtkn_206675b68efaff83d1ac2d027dd5bff18fd7cb64fgjhd5d0bdcsac44a883678afe7\"\n}",
-    //         CURLOPT_HTTPHEADER => array(
-    //             "apikey: 0fbf70babd408769207a740119b305da1c5505f72c9e91dce8031f7515a94255",
-    //             "Content-Type: application/json"
-    //         ),
-    //     ));
 
-    //     $response = curl_exec($curl);
-    //     curl_close($curl);
 
-    //     $content = json_decode($response, true);
-    //     $call_agent = DB::table('call_agents')
-    //         ->where('client_name', $clientName)
-    //         ->first();
+//     public function generateToken(Request $request)
+// {
+//     // Fetch Africa's Talking API credentials from config.
+//     $apiKey = config('services.africastalking.api_key');
+//     $username = config('services.africastalking.username');
+//     $phoneNumber = trim(config('services.africastalking.phone'));
 
-    //     if ($call_agent) {
 
-    //         $update = DB::table('call_agents')
-    //             ->where('id', $call_agent->id)
-    //             ->update([
-    //                 'token' => $content['token'],
-    //                 'updated_at' => date('Y-m-d H:i:s'),
-    //             ]);
-    //     }
+//     if (!$username || !$apiKey) {
+//         Log::error('Africa’s Talking credentials are missing.', [
+//             'username' => $username,
+//             'apiKey'   => $apiKey
+//         ]);
+//         return response()->json(['error' => 'Africa’s Talking credentials are missing.'], 500);
+//     }
 
-    //     return $content['token'];
-    // }
+//     // Retrieve all users.
+//     $users = User::all();
+//     $updatedTokens = [];
 
-    // public function transferCall(Request $request)
-    // {
-    //     $client_name = $request->client_name;
-    //     $transfer_client_name = $request->transfer_client_name;
+//     foreach ($users as $user) {
+//         // Use the user's existing client_name if available; otherwise, generate one.
+//         $clientName = $user->client_name ?: 'browser-client-' . uniqid();
 
-    //     $call_agent_available = DB::table('call_agents')
-    //         ->where('client_name', $transfer_client_name)
-    //         ->where('status', 'available')
-    //         ->count();
+//         // Retrieve the user's phone number (for example, from the "agent_sip" field).
+//         // $phoneNumber = trim($user->agent_sip);
+//         // if (!$phoneNumber) {
+//         //     Log::warning("User {$user->id} has no phone number set. Skipping token generation.");
+//         //     continue;
+//         // }
 
-    //     if ($call_agent_available > 0) {
-    //         $call_history = DB::table('call_histories')
-    //             ->where('isActive', 1)
-    //             ->where('agentId', $client_name)
-    //             ->latest()
-    //             ->first();
+//         // Determine call permissions; default to true if not set.
+//         $incoming = isset($user->can_receive_calls) ? $user->can_receive_calls : true;
+//         $outgoing = isset($user->can_call) ? $user->can_call : true;
 
-    //         if ($call_history) {
-    //             $transfer_client_name = "BoxleoKenya." . $transfer_client_name;
-    //             $curl = curl_init();
-    //             curl_setopt_array($curl, [
-    //                 CURLOPT_URL => "https://voice.africastalking.com/callTransfer",
-    //                 CURLOPT_RETURNTRANSFER => true,
-    //                 CURLOPT_ENCODING => "",
-    //                 CURLOPT_MAXREDIRS => 10,
-    //                 CURLOPT_TIMEOUT => 0,
-    //                 CURLOPT_FOLLOWLOCATION => true,
-    //                 CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-    //                 CURLOPT_CUSTOMREQUEST => "POST",
-    //                 CURLOPT_POSTFIELDS => [
-    //                     "sessionId" => $call_history->sessionId,
-    //                     "phoneNumber" => $transfer_client_name,
-    //                     "holdMusicUrl" => "https://boxleocourier.com/dashboard/api/v1/get-audio/playMusic.wav",
-    //                     "username" => "BoxleoKenya",
-    //                     "callLeg" => "caller"
-    //                 ],
-    //                 CURLOPT_HTTPHEADER => [
-    //                     "apikey: 0fbf70babd408769207a740119b305da1c5505f72c9e91dce8031f7515a94255"
-    //                 ],
-    //             ]);
+//         Log::info('Generating token for user', [
+//             'user_id'    => $user->id,
+//             'clientName' => $clientName,
+//             'phoneNumber'=> $phoneNumber,
+//             'apiKey'=> $apiKey,
 
-    //             $response = curl_exec($curl);
-    //             curl_close($curl);
+//         ]);
 
-    //             $xml = simplexml_load_string($response);
-    //             $json = json_encode($xml);
-    //             $array = json_decode($json, true);
+//         // Prepare the payload.
+//         $payload = json_encode([
+//             'username'   => $username,
+//             'clientName' => $clientName,
+//             'phoneNumber'=> $phoneNumber,
+//             'apiKey'=> $apiKey,
+//             // Africa's Talking API expects these as strings.
+//             'incoming'   => $incoming ? "true" : "false",
+//             'outgoing'   => $outgoing ? "true" : "false"
+//         ]);
 
-    //             if ($array['status'] == 'Success') {
-    //                 // Hang up the transferring agent's call
-    //                 $hangup_response = $this->hangupCall($call_history->sessionId);
+//         // Africa's Talking API URL.
+//         $url = 'https://webrtc.africastalking.com/capability-token/request';
 
-    //                 if ($hangup_response['success']) {
-    //                     $json_array = array(
-    //                         'success' => 1,
-    //                         'message' => 'Call successfully transferred',
-    //                     );
-    //                 } else {
-    //                     $json_array = array(
-    //                         'success' => 0,
-    //                         'message' => 'Error hanging up the transferring agent\'s call',
-    //                     );
-    //                 }
+//         // Set up cURL.
+//         $ch = curl_init();
+//         curl_setopt($ch, CURLOPT_URL, $url);
+//         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+//         curl_setopt($ch, CURLOPT_POST, true);
+//         curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
+//         curl_setopt($ch, CURLOPT_HTTPHEADER, [
+//             'apiKey: ' . $apiKey,
+//             'Accept: application/json',
+//             'Content-Type: application/json'
+//         ]);
 
-    //                 $response = $json_array;
-    //                 return json_encode($response);
-    //             } else {
-    //                 $json_array = array(
-    //                     'success' => 0,
-    //                     'message' => $array['errorMessage'],
-    //                 );
+//         // Execute the cURL request.
+//         $response = curl_exec($ch);
+//         if (curl_errno($ch)) {
+//             Log::error("cURL Error for user {$user->id}: " . curl_error($ch));
+//             curl_close($ch);
+//             continue;
+//         }
+//         curl_close($ch);
 
-    //                 $response = $json_array;
-    //                 return json_encode($response);
-    //             }
-    //         }
-    //     } else {
-    //         $json_array = array(
-    //             'success' => 0,
-    //             'message' => 'Agent not available',
-    //         );
+//         // Decode the response.
+//         $responseData = json_decode($response, true);
+//         if (isset($responseData['token'])) {
+//             // Update the user's token in the database.
+//             $user->update(['agent_token' => $responseData['token']]);
+//             Log::info('Token generated successfully', [
+//                 'user_id'    => $user->id,
+//                 'token'      => $responseData['token'],
+//                 'clientName' => $clientName
+//             ]);
+//             $updatedTokens[] = [
+//                 'user_id'    => $user->id,
+//                 'token'      => $responseData['token'],
+//                 'clientName' => $clientName
+//             ];
+//         } else {
+//             Log::error('Failed to generate token for user', [
+//                 'user_id'  => $user->id,
+//                 'response' => $responseData
+//             ]);
+//         }
+//     }
 
-    //         $response = $json_array;
-    //         return json_encode($response);
-    //     }
-    //  }
+//     // Return a summary of updated tokens.
+//     return response()->json([
+//         'updatedTokens' => $updatedTokens
+//     ]);
+// }
 
-    public function hangupCall($sessionId)
+
+
+
+
+
+  public function hangupCall($sessionId)
     {
         $curl = curl_init();
         curl_setopt_array($curl, [
