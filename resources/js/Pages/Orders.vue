@@ -527,13 +527,15 @@ export default {
             return;
         }
 
+        console.log("Initiating call from:", "+254711082021");
         console.log("Initiating call to:", phone);
+
 
         // Call the phone number
         await window.ATWebRTC.call({
             callFrom: "+254711082021",  
             callTo: phone,
-            clientRequestId: "call_12345"  // Optional for debugging
+            clientRequestId: "call_12345"  // Optional 
         });
 
         console.log("Call initiated successfully.");
