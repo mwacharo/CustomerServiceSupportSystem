@@ -505,14 +505,6 @@ export default {
     }),
 
 
-    // onMounted() {
-    //     if (window.ATWebRTC) {
-    //         console.log("ATWebRTC is ready:", window.ATWebRTC);
-    //     } else {
-    //         console.error("ATWebRTC is not available.");
-    //     }
-    // },
-
     methods: {
 
         async callClient(phone) {
@@ -539,7 +531,9 @@ export default {
 
         // Call the phone number
         await window.ATWebRTC.call({
-            callTo: phone
+            callFrom: "+254711082021",  
+            callTo: phone,
+            clientRequestId: "call_12345"  // Optional for debugging
         });
 
         console.log("Call initiated successfully.");
