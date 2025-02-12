@@ -346,6 +346,9 @@
 import AppLayout from "@/Layouts/AppLayout.vue";
 import { onMounted } from 'vue';
 
+import Africastalking from 'africastalking-client';
+
+
 
 
 const orders = [
@@ -366,7 +369,7 @@ const orders = [
 ];
 
 const FakeAPI = {
-    async fetch({ page, itemsPerPage, sortBy, search }) {   
+    async fetch({ page, itemsPerPage, sortBy, search }) {
         return new Promise((resolve) => {
             setTimeout(() => {
                 const start = (page - 1) * itemsPerPage;
@@ -391,6 +394,7 @@ export default {
         tab: "calls",
 
         isCalling: false,
+        connection_active: false,
         queueDialog: false,
         transferDialog: false,
         callAgentDialog: false,
@@ -402,12 +406,7 @@ export default {
             { name: "Pippa M", status: "engaged" },
             { name: "Russ N", status: "engaged" },
             { name: "Elif T", status: "engaged" },
-            // { name: "Jason B", status: "available" },
-            // { name: "Ella P", status: "offline" },
-            // { name: "Tom B", status: "offline" },
-            // { name: "Christine S", status: "engaged" },
-            // { name: "Trey B", status: "engaged" },
-            // { name: "Gabby T", status: "engaged" }
+   
         ],
 
 
@@ -507,48 +506,90 @@ export default {
 
     methods: {
 
+
+        async initializeAfricastalking() {
+            try {
+                const response = await axios.get('/api/v1/voice-token');  // Fetch token from server
+
+
+                console.log("API Response:", response.data);
+
+
+                const updatedTokens = response.data.updatedTokens;
+                if (!updatedTokens || updatedTokens.length === 0) {
+                    throw new Error("No tokens found in the response.");
+                }
+
+                const token = updatedTokens[0].token;
+                if (!token) {
+                    throw new Error("Token is missing from the response.");
+                }
+
+                // Initialize Africastalking client
+                const client = new Africastalking.Client(token);
+
+                // Set the 'ready' event listener
+                client.on('ready', () => {
+                    this.connection_active = true;
+                    console.log("Africastalking WebRTC client is ready.");
+                    this.$toastr.success("Africastalking WebRTC client is ready.");
+                });
+
+                // Event Listener for Errors
+                client.on('error', (err) => {
+                    console.error("Africastalking Client Error:", err);
+                    this.$toastr.error("Africastalking Client Error: " + err.message);
+                });
+
+                // Event Listener for Session Creation
+                client.on('session', (session) => {
+                    console.log("Session details:", session);
+                });
+
+
+                // Make Africastalking client available in the component
+                this.$webrtcClient = client;
+
+                console.log("Africastalking WebRTC client initialized:", client);
+            } catch (error) {
+                console.error("Error initializing Africastalking WebRTC client:", error);
+                this.$toastr.error("Failed to initialize WebRTC client.");
+            }
+        },
+
+
+
         async callClient(phone) {
-    try {
-        console.log("Starting callClient function...");
+            try {
+                console.log("Starting callClient function...");
 
-        // Check if the global WebRTC client is available
-        if (!window.ATWebRTC) {
-            console.error("ATWebRTC object is not defined.");
-            this.$toastr.error("WebRTC client is unavailable.");
-            return;
-        }
+                if (!this.$webrtcClient) {
+                    console.error("WebRTC client is not initialized.");
+                    this.$toastr.error("WebRTC client is unavailable.");
+                    return;
+                }
 
-        console.log("ATWebRTC object detected:", window.ATWebRTC);
+                console.log("Initiating call from +254711082021 to", phone);
 
-        // Check if the call method exists
-        if (typeof window.ATWebRTC.call !== 'function') {
-            console.error("Call method not found on ATWebRTC:", Object.keys(window.ATWebRTC));
-            this.$toastr.error("Call method is unavailable.");
-            return;
-        }
+                await this.$webrtcClient.call({
+                    callFrom: "+254711082021",
+                    callTo: phone,
+                    clientRequestId: "call_12345",
+                });
 
-        console.log("Initiating call from:", "+254711082021");
-        console.log("Initiating call to:", phone);
+                console.log("Call initiated successfully.");
+                this.$toastr.success("Call initiated successfully.");
+                this.isCalling = true;
+            } catch (error) {
+                console.error("Error initiating call:", error);
+                this.$toastr.error("Error initiating call: " + error.message);
+            }
+        },
 
 
-        // Call the phone number
-        await window.ATWebRTC.call({
-            callFrom: "+254711082021",  
-            callTo: phone,
-            clientRequestId: "call_12345"  // Optional 
-        });
 
-        console.log("Call initiated successfully.");
-        this.$toastr.success("Call initiated successfully.");
-        this.isCalling = true;
 
-    } catch (error) {
-        console.error("Error initiating call:", error);
-        this.$toastr.error("Error initiating call: " + error.message);
-    }
-}
-,
-        // Close the dialog
+       
         closeDialog() {
             this.callAgentDialog = false;
         },
@@ -742,6 +783,10 @@ export default {
             }
         }
     },
+    async mounted() {
+        await this.initializeAfricastalking();
+    }
+
 };
 </script>
 
