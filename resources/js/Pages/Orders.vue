@@ -521,7 +521,7 @@ export default {
         }
 
         const token = updatedTokens[0].token;
-        console.log("Using token:", token);
+        console.log("Using token:");
 
         if (!token) {
             console.error("Token is missing from response.");
