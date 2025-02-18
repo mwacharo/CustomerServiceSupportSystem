@@ -543,6 +543,55 @@ class ApiCallCentreController extends Controller
 
 
 
+
+
+    public function handleEventCallback(Request $request)
+{
+    // Log the entire event callback payload for debugging.
+    Log::info('Received event callback', $request->all());
+
+    // Extract common fields; adjust these keys based on the actual payload.
+    $eventType = $request->input('eventType', 'undefined');
+    $sessionId = $request->input('sessionId', null);
+
+    // Process the event based on its type.
+    switch ($eventType) {
+        case 'session_created':
+            Log::info("Session created event received.", ['sessionId' => $sessionId]);
+            // TODO: Add logic to handle a newly created session.
+            break;
+
+        case 'session_established':
+            Log::info("Session established event received.", ['sessionId' => $sessionId]);
+            // TODO: Update session status or perform any other logic.
+            break;
+
+        case 'session_terminated':
+            Log::info("Session terminated event received.", ['sessionId' => $sessionId]);
+            // TODO: Clean up session data, update database, etc.
+            break;
+
+        case 'ice_candidate':
+            Log::info("ICE candidate event received.", ['sessionId' => $sessionId, 'data' => $request->all()]);
+            // TODO: Process ICE candidate details if needed.
+            break;
+
+        case 'session_error':
+            Log::error("Session error event received.", ['sessionId' => $sessionId, 'data' => $request->all()]);
+            // TODO: Handle the error accordingly.
+            break;
+
+        default:
+            Log::warning("Unhandled event type: $eventType", $request->all());
+            break;
+    }
+
+    // Return a JSON response indicating successful processing of the event callback.
+    return response()->json(['status' => 'success']);
+}
+
+
+
     public function uploadMediaFile()
     {
         $AT = new AfricasTalking($this->username, $this->apiKey);
