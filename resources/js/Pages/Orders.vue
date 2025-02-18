@@ -350,7 +350,6 @@ import Africastalking from 'africastalking-client';
 
 
 
-
 const orders = [
     {
         product: "Phone",
@@ -497,6 +496,8 @@ export default {
         phonePopup: false,
         newCall: false,
         selectedItem: null,
+        afClient: null,
+
 
         selectedItem: {
             phone: '',
@@ -528,11 +529,12 @@ export default {
             return;
         }
 
-        // Initialize Africastalking client
+        // Initialize Africastalking client with the valid token
         const client = new Africastalking.Client(token);
         console.log("Africastalking client initialized.");
+        this.afClient = client
 
-        // Event Listeners
+        // Basic event listeners
         client.on('ready', () => {
             this.connection_active = true;
             console.log("Africastalking WebRTC client is ready.");
@@ -549,35 +551,40 @@ export default {
             this.$toastr.warning("Connection closed.");
         });
 
-        client.on('session', (session) => {
-            console.log("Session created:", session);
+        // Session event listener (merged into one block)
+        // client.on('session', (session) => {
+        //     console.log("Session created:", session);
+            
+        //     // Listen for session events
+        //     session.on('established', () => {
+        //         console.log("Session established successfully.");
+        //     });
 
-            session.on('established', () => {
-                console.log("Session established.");
-            });
+        //     session.on('terminated', (reason) => {
+        //         console.log("Session terminated:", reason);
+        //     });
 
-            session.on('terminated', (reason) => {
-                console.log("Session terminated:", reason);
-            });
-
-            session.on('error', (sessionError) => {
-                console.error("Session Error:", sessionError);
-                this.$toastr.error("Session Error: " + sessionError.message);
-            });
-        });
+        //     session.on('error', (sessionError) => {
+        //         console.error("Session Error:", sessionError);
+        //         this.$toastr.error("Session Error: " + sessionError.message);
+        //     });
+        // });
 
         // Handle Incoming Calls
         client.on('incoming', (incomingCall) => {
             console.log("Incoming call from:", incomingCall.remoteIdentity);
-            incomingCall.accept(); // Auto-answer
 
+            // Automatically answer the incoming call
+            incomingCall.accept();
+
+            // Handle events for the ongoing call
             incomingCall.on('established', () => {
-                console.log("Call established.");
+                console.log("Call established successfully.");
                 this.isCalling = true;
             });
 
             incomingCall.on('terminated', (reason) => {
-                console.log("Call ended:", reason);
+                console.log("Call terminated:", reason);
                 this.isCalling = false;
             });
 
@@ -586,29 +593,30 @@ export default {
             });
         });
 
-        // Store WebRTC client
+        // Save the client instance for later use
         this.$webrtcClient = client;
     } catch (error) {
-        console.error("Error initializing Africastalking WebRTC:", error);
-        this.$toastr.error("Failed to initialize WebRTC: " + error.message);
+        console.error("Error initializing Africastalking WebRTC client:", error);
+        this.$toastr.error("Failed to initialize WebRTC client: " + error.message);
     }
 },
 
 async callClient(phone) {
     try {
-        if (!this.$webrtcClient) {
-            console.error("WebRTC client is not initialized.");
-            this.$toastr.error("WebRTC client unavailable.");
-            return;
-        }
+        // if (!this.$webrtcClient) {
+        //     console.error("WebRTC client is not initialized.");
+        //     this.$toastr.error("WebRTC client unavailable.");
+        //     return;
+        // }
 
         console.log(`Calling ${phone} from +254711082159...`);
-        await this.$webrtcClient.call({
-            callFrom: "+254711082159",
-            callTo: phone,
-            clientRequestId: "call_" + Date.now(),
-        });
+        // await this.$webrtcClient.call({
+        //     callFrom: "+254711082159",
+        //     callTo: phone,
+        //     clientRequestId: "call_" + Date.now(),
+        // });
 
+        this.afClient.call(phone)
         console.log("Call initiated successfully.");
         this.$toastr.success("Call started.");
         this.isCalling = true;
