@@ -1,4 +1,4 @@
-<template>
+    <template>
   <v-dialog v-model="mainDialog" max-width="800">
     <v-card class="my-card" outlined>
       <v-card-title>
