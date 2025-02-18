@@ -406,7 +406,7 @@ export default {
             { name: "Pippa M", status: "engaged" },
             { name: "Russ N", status: "engaged" },
             { name: "Elif T", status: "engaged" },
-   
+
         ],
 
 
@@ -509,11 +509,8 @@ export default {
 
         async initializeAfricastalking() {
             try {
-                const response = await axios.get('/api/v1/voice-token');  // Fetch token from server
-
-
+                const response = await axios.get('/api/v1/voice-token');
                 console.log("API Response:", response.data);
-
 
                 const updatedTokens = response.data.updatedTokens;
                 if (!updatedTokens || updatedTokens.length === 0) {
@@ -521,43 +518,96 @@ export default {
                 }
 
                 const token = updatedTokens[0].token;
+                console.log("Using token:", token);
+
                 if (!token) {
                     throw new Error("Token is missing from the response.");
                 }
 
                 // Initialize Africastalking client
                 const client = new Africastalking.Client(token);
+                console.log("Africastalking client initialized.");
 
-                // Set the 'ready' event listener
+                // Event Listeners
                 client.on('ready', () => {
                     this.connection_active = true;
                     console.log("Africastalking WebRTC client is ready.");
                     this.$toastr.success("Africastalking WebRTC client is ready.");
                 });
 
-                // Event Listener for Errors
                 client.on('error', (err) => {
                     console.error("Africastalking Client Error:", err);
                     this.$toastr.error("Africastalking Client Error: " + err.message);
                 });
 
-                // Event Listener for Session Creation
+
+                client.on('closed', (err) => {
+                    console.error("Africastalking Client Error:", err);
+                    this.$toastr.error("Africastalking Client Error: " + err.message);
+                });
+
                 client.on('session', (session) => {
-                    console.log("Session details:", session);
+                    console.log("Session created:", session);
+                    // Listen for session-specific errors if available
+                    session.on('error', (sessionError) => {
+                        console.error("Session Error:", sessionError);
+                        this.$toastr.error("Session Error: " + sessionError.message);
+                    });
                 });
 
 
-                // Make Africastalking client available in the component
-                this.$webrtcClient = client;
 
-                console.log("Africastalking WebRTC client initialized:", client);
+                client.on('session', (session) => {
+                    console.log("Session details:", session);
+
+                    session.on('established', () => {
+                        console.log("Session established successfully.");
+                    });
+
+                    session.on('terminated', (reason) => {
+                        console.error("Session terminated:", reason);
+                    });
+
+                    session.on('error', (error) => {
+                        console.error("Session-specific error:", error);
+                    });
+                });
+
+
+                // Event: Handle Incoming Calls
+                client.on('incoming', (incomingCall) => {
+                    console.log("Incoming call from:", incomingCall.remoteIdentity);
+
+                    // Automatically answer the incoming call
+                    incomingCall.accept();
+
+                    // Handle events for the ongoing call
+                    incomingCall.on('established', () => {
+                        console.log("Call established successfully.");
+                        this.isCalling = true;
+                    });
+
+                    incomingCall.on('terminated', (reason) => {
+                        console.log("Call terminated:", reason);
+                        this.isCalling = false;
+                    });
+
+                    incomingCall.on('error', (error) => {
+                        console.error("Error during the call:", error);
+                    });
+                });
+
+                client.on('error', (err) => {
+                    console.error("Africastalking Client Error:", err);
+                });
+
+                // Make Africastalking client available
+                this.$webrtcClient = client;
             } catch (error) {
                 console.error("Error initializing Africastalking WebRTC client:", error);
-                this.$toastr.error("Failed to initialize WebRTC client.");
+                this.$toastr.error("Failed to initialize WebRTC client: " + error.message);
             }
         },
-
-
 
         async callClient(phone) {
             try {
@@ -574,7 +624,7 @@ export default {
                 await this.$webrtcClient.call({
                     callFrom: "+254711082021",
                     callTo: phone,
-                    clientRequestId: "call_12345",
+                    clientRequestId: "call_" + new Date().getTime(),
                 });
 
                 console.log("Call initiated successfully.");
@@ -584,12 +634,8 @@ export default {
                 console.error("Error initiating call:", error);
                 this.$toastr.error("Error initiating call: " + error.message);
             }
-        },
-
-
-
-
-       
+        }
+        ,
         closeDialog() {
             this.callAgentDialog = false;
         },
