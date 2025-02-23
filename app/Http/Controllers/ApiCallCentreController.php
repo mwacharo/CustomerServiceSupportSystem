@@ -25,7 +25,6 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Http;
 use SimpleXMLElement;
 
-
 class ApiCallCentreController extends Controller
 {
 
@@ -218,269 +217,120 @@ class ApiCallCentreController extends Controller
     }
 
 
-    // public function handleVoiceCallback(Request $request)
-    // {
-    //     Log::info('Received voice callback', $request->all());
-
-    //     $isActive = $request->input('isActive');
-    //     $sessionId = $request->input('sessionId');
-    //     $direction = $request->input('direction');
-    //     $callerNumber = $request->input('callerNumber');
-    //     $destinationNumber = $request->input('destinationNumber');
-
-    //     if ($isActive) {
-    //         Log::info("Call is active. Direction: $direction, Caller: $callerNumber, Destination: $destinationNumber");
-
-    //         if ($direction === 'Inbound') {
-    //             $clientName = substr($callerNumber, strpos($callerNumber, '.') + 1);
-    //             $callAgent = Officer::where('client_name', $clientName)->whereNull('deleted_at')->first();
-
-    //             if ($callAgent) {
-    //                 Log::info("Call agent found: {$callAgent->id}");
-    //                 $clientDialedNumber = $request->input('clientDialedNumber');
-
-    //                 if (in_array($clientDialedNumber, ['+254730731433', '+254730731433'])) {
-    //                     $callHistory = CallHistory::where('isActive', 1)
-    //                         ->where('nextCallStep', 'enqueue')
-    //                         ->whereNotNull('conference')
-    //                         ->whereNull('deleted_at')
-    //                         ->orderBy('created_at', 'ASC')
-    //                         ->first();
-
-    //                     if ($callHistory) {
-    //                         Log::info("Redirecting call to conference: {$callHistory->conference}");
-
-    //                         $callAgent->update(['status' => 'busy', 'sessionId' => $sessionId]);
-    //                         $callHistory->update(['adminId' => $callAgent->admin_id, 'agentId' => $callAgent->client_name, 'nextCallStep' => 'in_progress']);
-
-    //                         return $this->xmlResponse([
-    //                             'Response' => [
-    //                                 'Conference' => [
-    //                                     '_attributes' => [
-    //                                         'maxParticipants' => 2,
-    //                                         'record' => 'true',
-    //                                         'startOnEnter' => 'true',
-    //                                         'endOnExit' => 'true'
-    //                                     ],
-    //                                     '_value' => $callHistory->conference
-    //                                 ]
-    //                             ]
-    //                         ]);
-    //                     }
-
-    //                     Log::info("No active call in queue");
-    //                     return $this->xmlResponse([
-    //                         'Response' => [
-    //                             'Say' => 'Sorry, there are no calls in the waiting queue',
-    //                             'Reject' => []
-    //                         ]
-    //                     ]);
-    //                 }
-
-    //                 Log::info("New outbound call initiated");
-    //                 CallHistory::create([
-    //                     'isActive' => $isActive,
-    //                     'callerNumber' => $callerNumber,
-    //                     'destinationNumber' => $clientDialedNumber,
-    //                     'direction' => 'outbound',
-    //                     'sessionId' => $sessionId,
-    //                     'adminId' => $callAgent->admin_id,
-    //                     'agentId' => $callAgent->client_name,
-    //                 ]);
-
-    //                 $callAgent->update(['status' => 'busy', 'sessionId' => $sessionId]);
-    //                 return $this->xmlResponse([
-    //                     'Response' => [
-    //                         'Dial' => [
-    //                             '_attributes' => [
-    //                                 'record' => 'true',
-    //                                 'sequential' => 'true',
-    //                                 'phoneNumbers' => $clientDialedNumber,
-    //                                 'ringbackTone' => 'https://boxleocourier.com/dashboard/api/v1/get-audio/playMusic.wav'
-    //                             ]
-    //                         ],
-    //                         'Record' => []
-    //                     ]
-    //                 ]);
-    //             }
-
-    //             Log::info("No call agent found, updating call history");
-    //             CallHistory::updateOrCreate(['sessionId' => $sessionId], [
-    //                 'isActive' => $isActive,
-    //                 'callerNumber' => $callerNumber,
-    //                 'destinationNumber' => $destinationNumber
-    //             ]);
-    //         }
-    //     } else {
-    //         Log::info("Call is inactive. Updating call history for session: $sessionId");
-    //         $callHistory = CallHistory::where('sessionId', $sessionId)->first();
-
-    //         if ($callHistory) {
-    //             $callHistory->update([
-    //                 'isActive' => $isActive,
-    //                 'recordingUrl' => $request->input('recordingUrl'),
-    //                 'durationInSeconds' => $request->input('durationInSeconds'),
-    //                 'currencyCode' => $request->input('currencyCode'),
-    //                 'amount' => $request->input('amount'),
-    //                 'hangupCause' => $request->input('hangupCause'),
-    //             ]);
-
-    //             Officer::where('sessionId', $sessionId)->update(['status' => 'available', 'sessionId' => null]);
-    //         }
-    //     }
-    // }
-
-    // /**
-    //  * Generate an XML response.
-    //  */
-    // private function xmlResponse(array $data)
-    // {
-    //     if (empty($data)) {
-    //         Log::error("XML Response is empty. Returning default error message.");
-    //         return response('<Response><Say>Invalid response</Say></Response>', 200)->header('Content-Type', 'application/xml');
-    //     }
-
-    //     try {
-    //         $xml = new \SimpleXMLElement('<Response/>');
-    //         $this->arrayToXml($data, $xml);
-    //         return response($xml->asXML(), 200)->header('Content-Type', 'application/xml');
-    //     } catch (\Exception $e) {
-    //         Log::error("Error while generating XML: " . $e->getMessage());
-    //         return response('<Response><Say>Error processing request</Say></Response>', 500)->header('Content-Type', 'application/xml');
-    //     }
-    // }
-
-
-    // /**
-    //  * Convert an array to XML recursively.
-    //  */
-    // private function arrayToXml(array $data, \SimpleXMLElement &$xml)
-    // {
-    //     foreach ($data as $key => $value) {
-    //         // Ensure key is a valid XML tag
-    //         $key = preg_replace('/[^a-zA-Z0-9_]/', '', $key);
-
-    //         if (is_array($value)) {
-    //             if (isset($value['_attributes'])) {
-    //                 $child = $xml->addChild($key);
-    //                 foreach ($value['_attributes'] as $attrKey => $attrValue) {
-    //                     $child->addAttribute($attrKey, htmlspecialchars($attrValue));
-    //                 }
-
-    //                 if (isset($value['_value'])) {
-    //                     $child[0] = htmlspecialchars($value['_value']);
-    //                 }
-    //             } else {
-    //                 $subnode = $xml->addChild($key);
-    //                 $this->arrayToXml($value, $subnode);
-    //             }
-    //         } else {
-    //             $xml->addChild($key, htmlspecialchars($value));
-    //         }
-    //     }
-    // }
-
+  
 
     public function handleVoiceCallback(Request $request)
-{
-    Log::info('📞 Received voice callback', $request->all());
-
-    $isActive = filter_var($request->input('isActive'), FILTER_VALIDATE_BOOLEAN);
-    $sessionId = $request->input('sessionId');
-    $direction = $request->input('direction'); // 'Inbound' or 'Outbound'
-    $callerNumber = $request->input('callerNumber');
-    $destinationNumber = $request->input('destinationNumber', '');
-    $clientDialedNumber = $request->input('clientDialedNumber', '');
-
-    if ($isActive) {
-        Log::info("✅ Call is active. Direction: $direction, Caller: $callerNumber, Destination: $destinationNumber");
-
-        // **Handle Inbound Calls (User calls your WebRTC Client)**
-        if ($direction === 'Inbound') {
-            Log::info("📞 Inbound call from: $callerNumber");
-
-            return $this->xmlResponse([
-                'Response' => [
-                    'Say' => 'Hello! This is an automated response. Please wait.',
-                    'Dial' => [
-                        '_attributes' => [
-                            'record' => 'true',
-                            'phoneNumbers' => env('SUPPORT_AGENT_NUMBER', '+254711082159'), // Replace with agent number
-                            'ringbackTone' => 'https://support.solssa.com/api/v1/get-audio/playMusic.wav'
+    {
+        Log::info('📞 Received voice callback', $request->all());
+    
+        $isActive = filter_var($request->input('isActive'), FILTER_VALIDATE_BOOLEAN);
+        $sessionId = $request->input('sessionId');
+        $direction = $request->input('direction'); // 'Inbound' or 'Outbound'
+        $callerNumber = $request->input('callerNumber');
+        $destinationNumber = $request->input('destinationNumber', '');
+        $clientDialedNumber = $request->input('clientDialedNumber', '');
+    
+        if ($isActive) {
+            Log::info("✅ Call is active. Direction: $direction, Caller: $callerNumber, Destination: $destinationNumber");
+    
+            // **Handle Inbound Calls (User calls your WebRTC Client)**
+            if ($direction === 'Inbound') {
+                Log::info("📞 Inbound call from: $callerNumber");
+    
+                return $this->xmlResponse([
+                    'Response' => [
+                        'Say' => 'Hello! This is an automated response. Please wait.',
+                        'Dial' => [
+                            '_attributes' => [
+                                'record' => 'true',
+                                'phoneNumbers' => env('SUPPORT_AGENT_NUMBER', '+254711082159'),
+                                'ringbackTone' => 'https://support.solssa.com/api/v1/get-audio/playMusic.wav'
+                            ]
                         ]
                     ]
-                ]
-            ]);
-        }
-
-        // **Handle Outbound Calls (WebRTC client dials a user)**
-        if ($direction === 'Outbound') {
-            Log::info("📤 Outbound call initiated to: $clientDialedNumber");
-
-            CallHistory::create([
-                'isActive' => 1,
-                'callerNumber' => $callerNumber,
-                'destinationNumber' => $clientDialedNumber,
-                'direction' => 'outbound',
-                'sessionId' => $sessionId
-            ]);
-
-            return $this->xmlResponse([
-                'Response' => [
-                    'Dial' => [
-                        '_attributes' => [
-                            'record' => 'true',
-                            'phoneNumbers' => $clientDialedNumber, // Dynamic client number
-                            'ringbackTone' => 'https://support.solssa.com/api/v1/get-audio/playMusic.wav'
-                        ]
-                    ],
-                    'Record' => []
-                ]
-            ]);
-        }
-    }
-
-    // **Handle Call End**
-    Log::info("⏹️ Call ended. Updating call history for session: $sessionId");
-
-    CallHistory::where('sessionId', $sessionId)->update([
-        'isActive' => 0,
-        'recordingUrl' => $request->input('recordingUrl'),
-        'durationInSeconds' => $request->input('durationInSeconds'),
-        'currencyCode' => $request->input('currencyCode'),
-        'amount' => $request->input('amount'),
-        'hangupCause' => $request->input('hangupCause'),
-    ]);
-
-    Log::info("🔄 Resetting agent status for session: $sessionId");
-    Officer::where('sessionId', $sessionId)->update(['status' => 'available', 'sessionId' => null]);
-}
-
-
-private function xmlResponse(array $data)
-{
-    $xml = new SimpleXMLElement('<Response/>');
-
-    function arrayToXml($data, &$xml) {
-        foreach ($data as $key => $value) {
-            if (is_array($value)) {
-                $subNode = $xml->addChild($key);
-                arrayToXml($value, $subNode);
-            } else {
-                $xml->addChild($key, htmlspecialchars($value));
+                ]);
+            }
+    
+            // **Handle Outbound Calls (WebRTC client dials a user)**
+            if ($direction === 'Outbound') {
+                Log::info("📤 Outbound call initiated to: $clientDialedNumber");
+    
+                CallHistory::create([
+                    'isActive' => 1,
+                    'callerNumber' => $callerNumber ?? 'Unknown',
+                    'destinationNumber' => $clientDialedNumber ?? 'Unknown',
+                    'direction' => 'outbound',
+                    'sessionId' => $sessionId ?? 'Unknown'
+                ]);
+    
+                return $this->xmlResponse([
+                    'Response' => [
+                        'Dial' => [
+                            '_attributes' => [
+                                'record' => 'true',
+                                'phoneNumbers' => $clientDialedNumber, 
+                                'ringbackTone' => 'https://support.solssa.com/api/v1/get-audio/playMusic.wav'
+                            ]
+                        ],
+                        'Record' => []
+                    ]
+                ]);
             }
         }
+    
+        // **Handle Call End**
+        Log::info("⏹️ Call ended. Updating call history for session: $sessionId");
+    
+        if (CallHistory::where('sessionId', $sessionId)->exists()) {
+            CallHistory::where('sessionId', $sessionId)->update([
+                'isActive' => 0,
+                'recordingUrl' => $request->input('recordingUrl'),
+                'durationInSeconds' => $request->input('durationInSeconds'),
+                'currencyCode' => $request->input('currencyCode'),
+                'amount' => $request->input('amount'),
+                'hangupCause' => $request->input('hangupCause'),
+            ]);
+        } else {
+            Log::warning("⚠️ No call history found for session: $sessionId");
+        }
+    
+        Log::info("🔄 Resetting agent status for session: $sessionId");
+        if (Officer::where('sessionId', $sessionId)->exists()) {
+            Officer::where('sessionId', $sessionId)->update(['status' => 'available', 'sessionId' => null]);
+        } else {
+            Log::warning("⚠️ No officer session found for: $sessionId");
+        }
+    
+        return response()->json(['message' => 'Call handled successfully'], 200);
     }
-
-    arrayToXml($data, $xml);
+    private function xmlResponse(array $data)
+{
+    $xml = new SimpleXMLElement('<Response/>');
+    $this->arrayToXml($data, $xml);
     return response($xml->asXML(), 200)->header('Content-Type', 'application/xml');
 }
 
-// private function xmlResponse(array $data)
-// {
-//     $xml = ArrayToXml::convert($data, 'Response', true, 'utf-8', '1.0', ['formatOutput' => true]);
-//     return response($xml, 200)->header('Content-Type', 'application/xml');
-// }
+
+
+private function arrayToXml(array $data, SimpleXMLElement &$xml)
+{
+    foreach ($data as $key => $value) {
+        if (is_array($value)) {
+            if (isset($value['_attributes'])) {
+                $subnode = $xml->addChild($key);
+                foreach ($value['_attributes'] as $attrKey => $attrValue) {
+                    $subnode->addAttribute($attrKey, $attrValue);
+                }
+            } else {
+                $subnode = $xml->addChild($key);
+                $this->arrayToXml($value, $subnode);
+            }
+        } else {
+            $xml->addChild($key, htmlspecialchars($value));
+        }
+    }
+}
+
 
 
     public function handleEventCallback(Request $request)
