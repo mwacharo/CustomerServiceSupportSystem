@@ -23,6 +23,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Http;
+use SimpleXMLElement;
+
 
 class ApiCallCentreController extends Controller
 {
@@ -380,155 +382,152 @@ class ApiCallCentreController extends Controller
 
 
     public function handleVoiceCallback(Request $request)
-    {
-        Log::info('Received voice callback', $request->all());
-    
-        $isActive = filter_var($request->input('isActive'), FILTER_VALIDATE_BOOLEAN);
-        $sessionId = $request->input('sessionId');
-        $direction = $request->input('direction'); // 'Inbound' or 'Outbound'
-        $callerNumber = $request->input('callerNumber');
-        $destinationNumber = $request->input('destinationNumber', '');
-        $clientDialedNumber = $request->input('clientDialedNumber', '');
-    
-        if ($isActive) {
-            Log::info("Call is active. Direction: $direction, Caller: $callerNumber, Destination: $destinationNumber");
-    
-            // **Handle Inbound Calls (Customer calls your AT number)**
-            if ($direction === 'Inbound') {
-                $availableAgent = Officer::where('status', 'available')->whereNull('deleted_at')->first();
-    
-                if (!$availableAgent) {
-                    Log::warning("No available agents for inbound call from: $callerNumber");
-    
-                    return $this->xmlResponse([
-                        'Response' => [
-                            'Say' => 'No agents are currently available. Please try again later.',
-                            'Reject' => []
+{
+    Log::info('📞 Received voice callback', $request->all());
+
+    $isActive = filter_var($request->input('isActive'), FILTER_VALIDATE_BOOLEAN);
+    $sessionId = $request->input('sessionId');
+    $direction = $request->input('direction'); // 'Inbound' or 'Outbound'
+    $callerNumber = $request->input('callerNumber');
+    $destinationNumber = $request->input('destinationNumber', '');
+    $clientDialedNumber = $request->input('clientDialedNumber', '');
+
+    if ($isActive) {
+        Log::info("✅ Call is active. Direction: $direction, Caller: $callerNumber, Destination: $destinationNumber");
+
+        // **Handle Inbound Calls (User calls your WebRTC Client)**
+        if ($direction === 'Inbound') {
+            Log::info("📞 Inbound call from: $callerNumber");
+
+            return $this->xmlResponse([
+                'Response' => [
+                    'Say' => 'Hello! This is an automated response. Please wait.',
+                    'Dial' => [
+                        '_attributes' => [
+                            'record' => 'true',
+                            'phoneNumbers' => env('SUPPORT_AGENT_NUMBER', '+254711082159'), // Replace with agent number
+                            'ringbackTone' => 'https://support.solssa.com/api/v1/get-audio/playMusic.wav'
                         ]
-                    ]);
-                }
-    
-                Log::info("Assigning inbound call from $callerNumber to agent {$availableAgent->client_name}");
-                $availableAgent->update(['status' => 'busy', 'sessionId' => $sessionId]);
-    
-                return $this->xmlResponse([
-                    'Response' => [
-                        'Dial' => [
-                            '_attributes' => [
-                                'record' => 'true',
-                                'phoneNumbers' => $availableAgent->phone,
-                                'ringbackTone' => 'https://support.solssa.com/api/v1/get-audio/playMusic.wav'
-                            ]
-                        ],
-                        'Record' => []
                     ]
-                ]);
-            }
-    
-            // **Handle Outbound Calls (Agent dials a user)**
-            if ($direction === 'Outbound') {
-                Log::info("Outbound call initiated by agent to: $clientDialedNumber");
-    
-                CallHistory::create([
-                    'isActive' => 1,
-                    'callerNumber' => $callerNumber,
-                    'destinationNumber' => $clientDialedNumber,
-                    'direction' => 'outbound',
-                    'sessionId' => $sessionId
-                ]);
-    
-                return $this->xmlResponse([
-                    'Response' => [
-                        'Dial' => [
-                            '_attributes' => [
-                                'record' => 'true',
-                                'phoneNumbers' => $clientDialedNumber,
-                                'ringbackTone' => 'https://support.solssa.com/api/v1/get-audio/playMusic.wav'
-                            ]
-                        ],
-                        'Record' => []
-                    ]
-                ]);
-            }
-        }
-    
-        // **Handle Call End**
-        Log::info("Call ended. Updating call history for session: $sessionId");
-    
-        CallHistory::where('sessionId', $sessionId)->update([
-            'isActive' => 0,
-            'recordingUrl' => $request->input('recordingUrl'),
-            'durationInSeconds' => $request->input('durationInSeconds'),
-            'currencyCode' => $request->input('currencyCode'),
-            'amount' => $request->input('amount'),
-            'hangupCause' => $request->input('hangupCause'),
-        ]);
-    
-        Officer::where('sessionId', $sessionId)->update(['status' => 'available', 'sessionId' => null]);
-    }
-        private function xmlResponse(array $data)
-    {
-        if (empty($data)) {
-            Log::error("XML Response is empty. Returning default error message.");
-            return response('<Response><Say>Invalid response</Say></Response>', 200)->header('Content-Type', 'application/xml');
+                ]
+            ]);
         }
 
-        try {
-            $xml = new \SimpleXMLElement('<Response/>');
-            $this->arrayToXml($data, $xml);
-            return response($xml->asXML(), 200)->header('Content-Type', 'application/xml');
-        } catch (\Exception $e) {
-            Log::error("Error while generating XML: " . $e->getMessage());
-            return response('<Response><Say>Error processing request</Say></Response>', 500)->header('Content-Type', 'application/xml');
+        // **Handle Outbound Calls (WebRTC client dials a user)**
+        if ($direction === 'Outbound') {
+            Log::info("📤 Outbound call initiated to: $clientDialedNumber");
+
+            CallHistory::create([
+                'isActive' => 1,
+                'callerNumber' => $callerNumber,
+                'destinationNumber' => $clientDialedNumber,
+                'direction' => 'outbound',
+                'sessionId' => $sessionId
+            ]);
+
+            return $this->xmlResponse([
+                'Response' => [
+                    'Dial' => [
+                        '_attributes' => [
+                            'record' => 'true',
+                            'phoneNumbers' => $clientDialedNumber, // Dynamic client number
+                            'ringbackTone' => 'https://support.solssa.com/api/v1/get-audio/playMusic.wav'
+                        ]
+                    ],
+                    'Record' => []
+                ]
+            ]);
         }
     }
 
+    // **Handle Call End**
+    Log::info("⏹️ Call ended. Updating call history for session: $sessionId");
+
+    CallHistory::where('sessionId', $sessionId)->update([
+        'isActive' => 0,
+        'recordingUrl' => $request->input('recordingUrl'),
+        'durationInSeconds' => $request->input('durationInSeconds'),
+        'currencyCode' => $request->input('currencyCode'),
+        'amount' => $request->input('amount'),
+        'hangupCause' => $request->input('hangupCause'),
+    ]);
+
+    Log::info("🔄 Resetting agent status for session: $sessionId");
+    Officer::where('sessionId', $sessionId)->update(['status' => 'available', 'sessionId' => null]);
+}
+
+
+private function xmlResponse(array $data)
+{
+    $xml = new SimpleXMLElement('<Response/>');
+
+    function arrayToXml($data, &$xml) {
+        foreach ($data as $key => $value) {
+            if (is_array($value)) {
+                $subNode = $xml->addChild($key);
+                arrayToXml($value, $subNode);
+            } else {
+                $xml->addChild($key, htmlspecialchars($value));
+            }
+        }
+    }
+
+    arrayToXml($data, $xml);
+    return response($xml->asXML(), 200)->header('Content-Type', 'application/xml');
+}
+
+// private function xmlResponse(array $data)
+// {
+//     $xml = ArrayToXml::convert($data, 'Response', true, 'utf-8', '1.0', ['formatOutput' => true]);
+//     return response($xml, 200)->header('Content-Type', 'application/xml');
+// }
 
 
     public function handleEventCallback(Request $request)
-{
-    // Log the entire event callback payload for debugging.
-    Log::info('Received event callback', $request->all());
+    {
+        // Log the entire event callback payload for debugging.
+        Log::info('Received event callback', $request->all());
 
-    // Extract common fields; adjust these keys based on the actual payload.
-    $eventType = $request->input('eventType', 'undefined');
-    $sessionId = $request->input('sessionId', null);
+        // Extract common fields; adjust these keys based on the actual payload.
+        $eventType = $request->input('eventType', 'undefined');
+        $sessionId = $request->input('sessionId', null);
 
-    // Process the event based on its type.
-    switch ($eventType) {
-        case 'session_created':
-            Log::info("Session created event received.", ['sessionId' => $sessionId]);
-            // TODO: Add logic to handle a newly created session.
-            break;
+        // Process the event based on its type.
+        switch ($eventType) {
+            case 'session_created':
+                Log::info("Session created event received.", ['sessionId' => $sessionId]);
+                // TODO: Add logic to handle a newly created session.
+                break;
 
-        case 'session_established':
-            Log::info("Session established event received.", ['sessionId' => $sessionId]);
-            // TODO: Update session status or perform any other logic.
-            break;
+            case 'session_established':
+                Log::info("Session established event received.", ['sessionId' => $sessionId]);
+                // TODO: Update session status or perform any other logic.
+                break;
 
-        case 'session_terminated':
-            Log::info("Session terminated event received.", ['sessionId' => $sessionId]);
-            // TODO: Clean up session data, update database, etc.
-            break;
+            case 'session_terminated':
+                Log::info("Session terminated event received.", ['sessionId' => $sessionId]);
+                // TODO: Clean up session data, update database, etc.
+                break;
 
-        case 'ice_candidate':
-            Log::info("ICE candidate event received.", ['sessionId' => $sessionId, 'data' => $request->all()]);
-            // TODO: Process ICE candidate details if needed.
-            break;
+            case 'ice_candidate':
+                Log::info("ICE candidate event received.", ['sessionId' => $sessionId, 'data' => $request->all()]);
+                // TODO: Process ICE candidate details if needed.
+                break;
 
-        case 'session_error':
-            Log::error("Session error event received.", ['sessionId' => $sessionId, 'data' => $request->all()]);
-            // TODO: Handle the error accordingly.
-            break;
+            case 'session_error':
+                Log::error("Session error event received.", ['sessionId' => $sessionId, 'data' => $request->all()]);
+                // TODO: Handle the error accordingly.
+                break;
 
-        default:
-            Log::warning("Unhandled event type: $eventType", $request->all());
-            break;
+            default:
+                Log::warning("Unhandled event type: $eventType", $request->all());
+                break;
+        }
+
+        // Return a JSON response indicating successful processing of the event callback.
+        return response()->json(['status' => 'success']);
     }
 
-    // Return a JSON response indicating successful processing of the event callback.
-    return response()->json(['status' => 'success']);
-}
 
 
 
@@ -556,359 +555,138 @@ class ApiCallCentreController extends Controller
     }
 
 
+    public function generateToken(Request $request)
+    {
+        // Fetch Africa's Talking API credentials from config.
+        $apiKey    = config('services.africastalking.api_key');
+        $username  = config('services.africastalking.username');
+        $phoneNumber = config('services.africastalking.phone'); // e.g. +2547XXXXXXX
 
-//     public function generateToken(Request $request)
-// {
-//     // Fetch Africa's Talking API credentials from config.
-//     $apiKey = config('services.africastalking.api_key');
-//     $username = config('services.africastalking.username');
-//     $phoneNumber = trim(config('services.africastalking.phone'));
-
-//     if (!$username || !$apiKey) {
-//         Log::error('Africa’s Talking credentials are missing.', [   
-//             'username' => $username,
-//             'apiKey'   => $apiKey
-//         ]);
-//         return response()->json(['error' => 'Africa’s Talking credentials are missing.'], 500);
-//     }
-
-//     // Retrieve all users.
-//     $users = User::all();
-//     $updatedTokens = [];
-//     $failedUpdates = [];
-
-//     foreach ($users as $user) {
-//         $clientName = $user->client_name ?: 'browser-client-' . uniqid();
-
-//         $incoming = isset($user->can_receive_calls) ? $user->can_receive_calls : true;
-//         $outgoing = isset($user->can_call) ? $user->can_call : true;
-
-//         Log::info('Generating token for user', [
-//             'user_id'    => $user->id,
-//             'clientName' => $clientName,
-//             'phoneNumber'=> $phoneNumber
-//         ]);
-
-//         // Prepare the payload.
-//         $payload = json_encode([
-//             'username'   => $username,
-//             'clientName' => $clientName,
-//             'phoneNumber'=> $phoneNumber,
-//             'apiKey'     => $apiKey,
-//             'incoming'   => $incoming ? "true" : "false",
-//             'outgoing'   => $outgoing ? "true" : "false"
-//         ]);
-
-//         // Africa's Talking API URL.
-//         $url = 'https://webrtc.africastalking.com/capability-token/request';
-
-//         // Set up cURL.
-//         $ch = curl_init();
-//         curl_setopt($ch, CURLOPT_URL, $url);
-//         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-//         curl_setopt($ch, CURLOPT_POST, true);
-//         curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
-//         curl_setopt($ch, CURLOPT_HTTPHEADER, [
-//             'apiKey: ' . $apiKey,
-//             'Accept: application/json',
-//             'Content-Type: application/json'
-//         ]);
-
-//         // Execute the cURL request.
-//         $response = curl_exec($ch);
-//         if (curl_errno($ch)) {
-//             Log::error("cURL Error for user {$user->id}: " . curl_error($ch));
-//             curl_close($ch);
-//             continue;
-//         }
-//         curl_close($ch);
-
-//         // Decode the response.
-//         $responseData = json_decode($response, true);
-//         if (isset($responseData['token'])) {
-//             $newToken = $responseData['token'];
-
-//             Log::info("Updating token in database for user {$user->id}", [
-//                 'old_token'  => $user->agent_token,
-//                 'new_token'  => $newToken
-//             ]);
-
-//             // Update the user's token in the database.
-//             $updateSuccess = $user->update(['token' => $newToken]);
-
-//             if ($updateSuccess) {
-//                 Log::info("Database update successful for user {$user->id}");
-//                 $updatedTokens[] = [
-//                     'user_id'    => $user->id,
-//                     'token'      => $newToken,
-//                     'clientName' => $clientName
-//                 ];
-//             } else {
-//                 Log::warning("Database update failed for user {$user->id}");
-//                 $failedUpdates[] = $user->id;
-//             }
-//         } else {
-//             Log::error('Failed to generate token for user', [
-//                 'user_id'  => $user->id,
-//                 'response' => $responseData
-//             ]);
-//         }
-//     }
-
-//     // Return a summary of updated tokens.
-//     return response()->json([
-//         'updatedTokens' => $updatedTokens,
-//         // 'failedUpdates' => $failedUpdates,
-//         // 'totalUpdated'  => count($updatedTokens),
-//         // 'totalFailed'   => count($failedUpdates),
-//     ]);
-// }
-
-
-
-
-//     public function generateToken(Request $request)
-// {
-//     // Fetch Africa's Talking API credentials from config.
-//     $apiKey = config('services.africastalking.api_key');
-//     $username = config('services.africastalking.username');
-//     $phoneNumber = trim(config('services.africastalking.phone'));
-
-
-//     if (!$username || !$apiKey) {
-//         Log::error('Africa’s Talking credentials are missing.', [
-//             'username' => $username,
-//             'apiKey'   => $apiKey
-//         ]);
-//         return response()->json(['error' => 'Africa’s Talking credentials are missing.'], 500);
-//     }
-
-//     // Retrieve all users.
-//     $users = User::all();
-//     $updatedTokens = [];
-
-//     foreach ($users as $user) {
-//         // Use the user's existing client_name if available; otherwise, generate one.
-//         $clientName = $user->client_name ?: 'browser-client-' . uniqid();
-
-//         // Retrieve the user's phone number (for example, from the "agent_sip" field).
-//         // $phoneNumber = trim($user->agent_sip);
-//         // if (!$phoneNumber) {
-//         //     Log::warning("User {$user->id} has no phone number set. Skipping token generation.");
-//         //     continue;
-//         // }
-
-//         // Determine call permissions; default to true if not set.
-//         $incoming = isset($user->can_receive_calls) ? $user->can_receive_calls : true;
-//         $outgoing = isset($user->can_call) ? $user->can_call : true;
-
-//         Log::info('Generating token for user', [
-//             'user_id'    => $user->id,
-//             'clientName' => $clientName,
-//             'phoneNumber'=> $phoneNumber,
-//             'apiKey'=> $apiKey,
-
-//         ]);
-
-//         // Prepare the payload.
-//         $payload = json_encode([
-//             'username'   => $username,
-//             'clientName' => $clientName,
-//             'phoneNumber'=> $phoneNumber,
-//             'apiKey'=> $apiKey,
-//             // Africa's Talking API expects these as strings.
-//             'incoming'   => $incoming ? "true" : "false",
-//             'outgoing'   => $outgoing ? "true" : "false"
-//         ]);
-
-//         // Africa's Talking API URL.
-//         $url = 'https://webrtc.africastalking.com/capability-token/request';
-
-//         // Set up cURL.
-//         $ch = curl_init();
-//         curl_setopt($ch, CURLOPT_URL, $url);
-//         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-//         curl_setopt($ch, CURLOPT_POST, true);
-//         curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
-//         curl_setopt($ch, CURLOPT_HTTPHEADER, [
-//             'apiKey: ' . $apiKey,
-//             'Accept: application/json',
-//             'Content-Type: application/json'
-//         ]);
-
-//         // Execute the cURL request.
-//         $response = curl_exec($ch);
-//         if (curl_errno($ch)) {
-//             Log::error("cURL Error for user {$user->id}: " . curl_error($ch));
-//             curl_close($ch);
-//             continue;
-//         }
-//         curl_close($ch);
-
-//         // Decode the response.
-//         $responseData = json_decode($response, true);
-//         if (isset($responseData['token'])) {
-//             // Update the user's token in the database.
-//             $user->update(['agent_token' => $responseData['token']]);
-//             Log::info('Token generated successfully', [
-//                 'user_id'    => $user->id,
-//                 'token'      => $responseData['token'],
-//                 'clientName' => $clientName
-//             ]);
-//             $updatedTokens[] = [
-//                 'user_id'    => $user->id,
-//                 'token'      => $responseData['token'],
-//                 'clientName' => $clientName
-//             ];
-//         } else {
-//             Log::error('Failed to generate token for user', [
-//                 'user_id'  => $user->id,
-//                 'response' => $responseData
-//             ]);
-//         }
-//     }
-
-//     // Return a summary of updated tokens.
-//     return response()->json([
-//         'updatedTokens' => $updatedTokens
-//     ]);
-// }
-
-
-
-
-public function generateToken(Request $request)
-{
-    // Fetch Africa's Talking API credentials from config.
-    $apiKey    = config('services.africastalking.api_key');
-    $username  = config('services.africastalking.username');
-    $phoneNumber = config('services.africastalking.phone'); // e.g. +2547XXXXXXX
-
-    if (!$username || !$apiKey) {
-        Log::error('Africa’s Talking credentials are missing.', [
-            'username' => $username,
-            'apiKey'   => $apiKey
-        ]);
-        return response()->json(['error' => 'Africa’s Talking credentials are missing.'], 500);
-    }
-
-    // Retrieve all users (or filter to specific users if needed).
-    $users = User::all();
-    $updatedTokens = [];
-    $failedUpdates = [];
-
-    foreach ($users as $user) {
-        // Either use the user’s existing client_name or generate a unique one
-        $clientName = $user->client_name ?: 'browser-client-' . uniqid();
-
-        // Decide if the user can receive or make calls
-        $incoming = isset($user->can_receive_calls) ? $user->can_receive_calls : true;
-        $outgoing = isset($user->can_call) ? $user->can_call : true;
-
-        Log::info('Generating token for user', [
-            'user_id'    => $user->id,
-            'clientName' => $clientName,
-            'phoneNumber'=> $phoneNumber
-        ]);
-
-        // Prepare the JSON payload.
-        // Do NOT include the apiKey in the payload; pass it in headers instead.
-        $payload = [
-            'username'    => $username,
-            'clientName'  => $clientName,
-            'phoneNumber' => $phoneNumber,        // Required if you want PSTN calls
-            'incoming'    => $incoming ? "true" : "false",
-            'outgoing'    => $outgoing ? "true" : "false",
-            'lifeTimeSec' => "86400"              // e.g., 24 hours in seconds
-        ];
-
-        // Africa's Talking WebRTC token endpoint
-        $url = 'https://webrtc.africastalking.com/capability-token/request';
-
-        // cURL to Africa's Talking
-        $ch = curl_init($url);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_POST, true);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
-        curl_setopt($ch, CURLOPT_HTTPHEADER, [
-            'apiKey: ' . $apiKey,
-            'Accept: application/json',
-            'Content-Type: application/json'
-        ]);
-
-        // Execute the cURL request.
-        $response = curl_exec($ch);
-        if (curl_errno($ch)) {
-            Log::error("cURL Error for user {$user->id}: " . curl_error($ch));
-            curl_close($ch);
-            continue; // Move to next user
+        if (!$username || !$apiKey) {
+            Log::error('Africa’s Talking credentials are missing.', [
+                'username' => $username,
+                'apiKey'   => $apiKey
+            ]);
+            return response()->json(['error' => 'Africa’s Talking credentials are missing.'], 500);
         }
-        curl_close($ch);
 
-        // Decode the response from Africa’s Talking
-        $responseData = json_decode($response, true);
+        // Retrieve all users (or filter to specific users if needed).
+        $users = User::all();
+        $updatedTokens = [];
+        $failedUpdates = [];
 
-        // Example of a successful response:
-        // {
-        //   "success": true,
-        //   "token": "ATCAPtkn_...",
-        //   "message": "Capability token successfully created.",
-        //   "incoming": true,
-        //   "outgoing": true,
-        //   "lifeTimeSec": 86400,
-        //   "clientName": "browser-client-123abc"
-        // }
+        foreach ($users as $user) {
+            // Either use the user’s existing client_name or generate a unique one
+            $clientName = $user->client_name ?: 'browser-client-' . uniqid();
 
-        if (isset($responseData['token'])) {
-            $newToken = $responseData['token'];
+            // Decide if the user can receive or make calls
+            $incoming = isset($user->can_receive_calls) ? $user->can_receive_calls : true;
+            $outgoing = isset($user->can_call) ? $user->can_call : true;
 
-            Log::info("Updating token in database for user {$user->id}", [
-                'old_token'  => $user->token,
-                'new_token'  => $newToken
+            Log::info('Generating token for user', [
+                'user_id'    => $user->id,
+                'clientName' => $clientName,
+                'phoneNumber' => $phoneNumber
             ]);
 
-            // Update only the token in your database (or store more fields if desired)
-            $updateSuccess = $user->update(['token' => $newToken]);
+            // Prepare the JSON payload.
+            // Do NOT include the apiKey in the payload; pass it in headers instead.
+            $payload = [
+                'username'    => $username,
+                'clientName'  => $clientName,
+                'phoneNumber' => $phoneNumber,        // Required if you want PSTN calls
+                'incoming'    => $incoming ? "true" : "false",
+                'outgoing'    => $outgoing ? "true" : "false",
+                'lifeTimeSec' => "86400"              // e.g., 24 hours in seconds
+            ];
 
-            if ($updateSuccess) {
-                Log::info("Database update successful for user {$user->id}");
-                // Include all relevant response data
-                $updatedTokens[] = [
-                    'user_id'     => $user->id,
-                    'token'       => $responseData['token'],
-                    'clientName'  => $responseData['clientName'] ?? $clientName,
-                    'incoming'    => $responseData['incoming'] ?? null,
-                    'outgoing'    => $responseData['outgoing'] ?? null,
-                    'lifeTimeSec' => $responseData['lifeTimeSec'] ?? null,
-                    'message'     => $responseData['message'] ?? null,
-                    'success'     => $responseData['success'] ?? false
-                ];
+            // Africa's Talking WebRTC token endpoint
+            $url = 'https://webrtc.africastalking.com/capability-token/request';
+
+            // cURL to Africa's Talking
+            $ch = curl_init($url);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_POST, true);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
+            curl_setopt($ch, CURLOPT_HTTPHEADER, [
+                'apiKey: ' . $apiKey,
+                'Accept: application/json',
+                'Content-Type: application/json'
+            ]);
+
+            // Execute the cURL request.
+            $response = curl_exec($ch);
+            if (curl_errno($ch)) {
+                Log::error("cURL Error for user {$user->id}: " . curl_error($ch));
+                curl_close($ch);
+                continue; // Move to next user
+            }
+            curl_close($ch);
+
+            // Decode the response from Africa’s Talking
+            $responseData = json_decode($response, true);
+
+            // Example of a successful response:
+            // {
+            //   "success": true,
+            //   "token": "ATCAPtkn_...",
+            //   "message": "Capability token successfully created.",
+            //   "incoming": true,
+            //   "outgoing": true,
+            //   "lifeTimeSec": 86400,
+            //   "clientName": "browser-client-123abc"
+            // }
+
+            if (isset($responseData['token'])) {
+                $newToken = $responseData['token'];
+
+                Log::info("Updating token in database for user {$user->id}", [
+                    'old_token'  => $user->token,
+                    'new_token'  => $newToken
+                ]);
+
+                // Update only the token in your database (or store more fields if desired)
+                $updateSuccess = $user->update(['token' => $newToken]);
+
+                if ($updateSuccess) {
+                    Log::info("Database update successful for user {$user->id}");
+                    // Include all relevant response data
+                    $updatedTokens[] = [
+                        'user_id'     => $user->id,
+                        'token'       => $responseData['token'],
+                        'clientName'  => $responseData['clientName'] ?? $clientName,
+                        'incoming'    => $responseData['incoming'] ?? null,
+                        'outgoing'    => $responseData['outgoing'] ?? null,
+                        'lifeTimeSec' => $responseData['lifeTimeSec'] ?? null,
+                        'message'     => $responseData['message'] ?? null,
+                        'success'     => $responseData['success'] ?? false
+                    ];
+                } else {
+                    Log::warning("Database update failed for user {$user->id}");
+                    $failedUpdates[] = $user->id;
+                }
             } else {
-                Log::warning("Database update failed for user {$user->id}");
+                Log::error('Failed to generate token for user', [
+                    'user_id'  => $user->id,
+                    'response' => $responseData
+                ]);
                 $failedUpdates[] = $user->id;
             }
-        } else {
-            Log::error('Failed to generate token for user', [
-                'user_id'  => $user->id,
-                'response' => $responseData
-            ]);
-            $failedUpdates[] = $user->id;
         }
+
+        // Return a summary of updated tokens
+        return response()->json([
+            'updatedTokens' => $updatedTokens,
+            'failedUpdates' => $failedUpdates,
+            'totalUpdated'  => count($updatedTokens),
+            'totalFailed'   => count($failedUpdates),
+        ]);
     }
 
-    // Return a summary of updated tokens
-    return response()->json([
-        'updatedTokens' => $updatedTokens,
-        'failedUpdates' => $failedUpdates,
-        'totalUpdated'  => count($updatedTokens),
-        'totalFailed'   => count($failedUpdates),
-    ]);
-}
 
 
 
-
-  public function hangupCall($sessionId)
+    public function hangupCall($sessionId)
     {
         $curl = curl_init();
         curl_setopt_array($curl, [
@@ -939,7 +717,7 @@ public function generateToken(Request $request)
     }
 
 
-    
+
 
     public function getCallWaitingHistory()
     {
@@ -1605,7 +1383,4 @@ public function generateToken(Request $request)
 
         return json_encode($orders);
     }
-
 }
-
-
