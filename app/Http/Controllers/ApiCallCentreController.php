@@ -466,7 +466,22 @@ class ApiCallCentreController extends Controller
     
         Officer::where('sessionId', $sessionId)->update(['status' => 'available', 'sessionId' => null]);
     }
-    
+        private function xmlResponse(array $data)
+    {
+        if (empty($data)) {
+            Log::error("XML Response is empty. Returning default error message.");
+            return response('<Response><Say>Invalid response</Say></Response>', 200)->header('Content-Type', 'application/xml');
+        }
+
+        try {
+            $xml = new \SimpleXMLElement('<Response/>');
+            $this->arrayToXml($data, $xml);
+            return response($xml->asXML(), 200)->header('Content-Type', 'application/xml');
+        } catch (\Exception $e) {
+            Log::error("Error while generating XML: " . $e->getMessage());
+            return response('<Response><Say>Error processing request</Say></Response>', 500)->header('Content-Type', 'application/xml');
+        }
+    }
 
 
 
@@ -1592,3 +1607,5 @@ public function generateToken(Request $request)
     }
 
 }
+
+
