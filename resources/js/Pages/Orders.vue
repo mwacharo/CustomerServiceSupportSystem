@@ -347,6 +347,8 @@ import AppLayout from "@/Layouts/AppLayout.vue";
 import { onMounted } from 'vue';
 
 import Africastalking from 'africastalking-client';
+import Pusher from "pusher-js";
+
 
 
 
@@ -387,6 +389,21 @@ const FakeAPI = {
 };
 
 export default {
+
+
+    mounted() {
+        const pusher = new Pusher("your_app_key", {
+            cluster: "your_cluster",
+            encrypted: true
+        });
+
+        const channel = pusher.subscribe("call-updates");
+        channel.bind("call.status", (data) => {
+            console.log("Call status update:", data);
+            this.$toastr.info(`Call status: ${data.status}`);
+        });
+    },
+
     components: { AppLayout },
     data: () => ({
         itemsPerPage: 5,
