@@ -243,7 +243,9 @@ class ApiCallCentreController extends Controller
                         'Dial' => [
                             '_attributes' => [
                                 'record' => 'true',
-                                'phoneNumbers' => env('SUPPORT_AGENT_NUMBER', '+254711082159'),
+                                // 'phoneNumbers' => env('SUPPORT_AGENT_NUMBER', '+254711082159'),
+                                 'phoneNumbers' => $clientDialedNumber,
+
                                 'ringbackTone' => 'https://support.solssa.com/api/v1/get-audio/playMusic.wav'
                             ]
                         ]
