@@ -236,6 +236,16 @@ class ApiCallCentreController extends Controller
             // **Handle Inbound Calls (User calls your WebRTC Client)**
             if ($direction === 'Inbound') {
                 Log::info("📞 Inbound call from: $callerNumber");
+
+
+                CallHistory::create([
+                    'sessionId' => $sessionId,
+                    'callerNumber' => $callerNumber,
+                    'destinationNumber' => $destinationNumber,
+                    'direction' => 'inbound',
+                    'isActive' => 1
+                ]);
+                
     
                 return $this->xmlResponse([
                     'Response' => [
