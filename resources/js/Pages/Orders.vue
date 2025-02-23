@@ -568,24 +568,6 @@ export default {
             this.$toastr.warning("Connection closed.");
         });
 
-        // Session event listener (merged into one block)
-        // client.on('session', (session) => {
-        //     console.log("Session created:", session);
-            
-        //     // Listen for session events
-        //     session.on('established', () => {
-        //         console.log("Session established successfully.");
-        //     });
-
-        //     session.on('terminated', (reason) => {
-        //         console.log("Session terminated:", reason);
-        //     });
-
-        //     session.on('error', (sessionError) => {
-        //         console.error("Session Error:", sessionError);
-        //         this.$toastr.error("Session Error: " + sessionError.message);
-        //     });
-        // });
 
         // Handle Incoming Calls
         client.on('incoming', (incomingCall) => {
@@ -620,18 +602,10 @@ export default {
 
 async callClient(phone) {
     try {
-        // if (!this.$webrtcClient) {
-        //     console.error("WebRTC client is not initialized.");
-        //     this.$toastr.error("WebRTC client unavailable.");
-        //     return;
-        // }
+  
 
         console.log(`Calling ${phone} from +254711082159...`);
-        // await this.$webrtcClient.call({
-        //     callFrom: "+254711082159",
-        //     callTo: phone,
-        //     clientRequestId: "call_" + Date.now(),
-        // });
+      
 
         this.afClient.call(phone)
         console.log("Call initiated successfully.");
@@ -779,56 +753,7 @@ async callClient(phone) {
             this.callAgentDialog = false;
             console.log('Calling agent:', agent);
         },
-
-
-        formatPhoneNumber(phone) {
-            if (!phone) return '';
-
-            // Remove all non-numeric characters
-            phone = phone.replace(/\D/g, '');
-
-            // If the number starts with '0' (e.g., 0712345678), replace it with '+254'
-            if (phone.startsWith('0')) {
-                phone = '+254' + phone.substring(1);
-            }
-            // If the number starts with '254' but missing '+', add it
-            else if (phone.startsWith('254')) {
-                phone = '+254' + phone.substring(3);
-            }
-            // If it's already in the correct format, return as is
-            else if (phone.startsWith('+254')) {
-                return phone;
-            }
-            // If none of the above, it's invalid
-            else {
-                this.$toastr.error('Invalid phone number format');
-                return '';
-            }
-
-            return phone;
-        },
-        // callClient(phone) {
-
-        //     phone = this.formatPhoneNumber(phone);
-
-        //     if (!phone) {
-        //         this.phone = '';
-        //         this.newCall = false;
-        //         return;
-        //     }
-        //     this.isCalling = true;
-        //     this.$toastr.error('Please enter a valid phone number');
-        //     console.log(`Calling ${phone}...`);
-
-        //     axios.post('/api/v1/call-centre-make-call', { phone })
-        //         .then(response => {
-        //             console.log('Call initiated', response);
-        //             this.newCall = false;
-        //         })
-        //         .catch(error => {
-        //             console.error('Error initiating call', error);
-        //         });
-        // },
+  
         watch: {
             // Watch for any change in the agents and filter again if needed
             availableAgents(newAgents) {
