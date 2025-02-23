@@ -290,6 +290,7 @@ class ApiCallCentreController extends Controller
                             'sessionId' => $sessionId,
                             'callerNumber' => $callerNumber,
                             'destinationNumber' => $destinationNumber,
+                            
                             'direction' => strtolower($direction),
                             'isActive' => 1
                         ]);
@@ -302,7 +303,10 @@ class ApiCallCentreController extends Controller
                                     '_attributes' => [
                                         'record' => 'true',
                                         'sequential' => 'true',
-                                        'phoneNumbers' => $clientDialedNumber,
+                                        // 'phoneNumbers' => $clientDialedNumber,
+                                        'phoneNumbers' => "Mwacharo.browser-client-67bb3ad643a73",
+
+                                        // Mwacharo.browser-client-67bb3ad643a73
                                         'ringbackTone' => 'https://support.solssa.com/api/v1/get-audio/playMusic.wav'
                                     ]
                                 ]
