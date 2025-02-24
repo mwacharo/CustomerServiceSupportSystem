@@ -400,6 +400,10 @@ class ApiCallCentreController extends Controller
 
                 broadcast(new CallStatusUpdated($call));
                 break;
+            case 'Ringing':
+                    Log::info("Call is ringing for session: {$sessionId}");
+                    // Update call history or notify UI that call is ringing
+                    break;   
 
             case 'OutgoingCall': // OUTGOING CALL
                 Log::info("📤 Outgoing call from system to $destinationNumber by agent $callerNumber");
