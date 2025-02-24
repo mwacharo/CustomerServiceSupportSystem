@@ -401,7 +401,7 @@ class ApiCallCentreController extends Controller
                 broadcast(new CallStatusUpdated($call));
                 break;
 
-            case 'OutgoingCall': // NEW CASE ADDED FOR OUTGOING CALL
+            case 'OutgoingCall': // OUTGOING CALL
                 Log::info("📤 Outgoing call from system to $destinationNumber by agent $callerNumber");
 
                 $call = CallHistory::updateOrCreate(
@@ -477,6 +477,8 @@ class ApiCallCentreController extends Controller
                                     'record' => 'true',
                                     'sequential' => 'true',
                                     'phoneNumbers' => "Mwacharo.browser-client-67bb3ad643a73",
+                                    'phoneNumbers' => +254741821113,
+
                                     'ringbackTone' => 'https://support.solssa.com/api/v1/get-audio/playMusic.wav'
                                 ]
                             ]
@@ -562,7 +564,8 @@ class ApiCallCentreController extends Controller
 
             // Extract payload with a fallback
             $payload = json_decode($request->getContent(), true) ?? $request->all();
-            $eventType = $payload['eventType'] ?? 'undefined';
+            // $eventType = $payload['eventType'] ?? 'undefined';
+            $eventType = $request->event;
             $sessionId = $payload['sessionId'] ?? null;
 
             if ($eventType === 'undefined') {

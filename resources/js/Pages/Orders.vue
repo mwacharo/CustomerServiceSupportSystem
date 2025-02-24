@@ -603,20 +603,39 @@ export default {
 async callClient(phone) {
     try {
   
-
         console.log(`Calling ${phone} from +254711082159...`);
-      
-
         this.afClient.call(phone)
         console.log("Call initiated successfully.");
         this.$toastr.success("Call started.");
         this.isCalling = true;
+
+
+         // Register call-specific event listeners to track progress:
+         this.afClient.on('afClienting', () => {
+          this.logEvent("afClient is in progress (calling)...");
+        });
+
+        this.afClient.on('callaccepted', () => {
+          this.logEvent("Call accepted (bridged between caller and callee).");
+        });
+
+        this.afClient.on('hangup', (hangupCause) => {
+          this.logEvent(`Call hung up (${hangupCause.code} - ${hangupCause.reason}).`);
+          this.$toastr.info(`Call ended: ${hangupCause.reason}`);
+          this.isCalling = false;
+          this.activeCall = null;
+        });
     } catch (error) {
         console.error("Call initiation error:", error);
         this.$toastr.error("Call failed: " + error.message);
     }
 }
 ,
+
+logEvent(message) {
+      const timestamp = new Date().toLocaleTimeString();
+      this.eventLog.unshift(`${timestamp}: ${message}`);
+    },
         closeDialog() {
             this.callAgentDialog = false;
         },

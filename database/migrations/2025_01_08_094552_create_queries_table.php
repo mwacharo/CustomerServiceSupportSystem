@@ -19,7 +19,7 @@ return new class extends Migration
             $table->enum('query_type', ['business', 'exchange', 'refund', 'undelivered']);
             $table->text('details')->nullable();
             $table->enum('status', ['open', 'in_progress', 'resolved', 'closed'])->default('open');
-            $table->foreignId('officer_id')->nullable()->constrained()->onDelete('set null');
+            $table->foreignId('user_id')->nullable()->constrained()->onDelete('set null');
             $table->timestamps();
             $table->softDeletes();
 
