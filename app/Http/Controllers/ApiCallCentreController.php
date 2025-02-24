@@ -23,7 +23,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Http;
-use SimpleXMLElement;
 
 class ApiCallCentreController extends Controller
 {
@@ -218,13 +217,17 @@ class ApiCallCentreController extends Controller
 
     public function handleVoiceCallback(Request $request)
     {
+
+
         $response  = '<?xml version="1.0" encoding="UTF-8"?>';
-        $response .= '<Response>';
-        $response .= '<Dial record="true" sequential="true" phoneNumbers="0741821113"/>';
-        $response .= '</Response>';
-    
-        return response($response, 200)
-                    ->header('Content-Type', 'text/plain');
+    $response .= '<Response>';
+    $response .= '<Dial record="true" sequential="false" phoneNumbers="+254741821113" ringbackTone="http://mymediafile.com/playme.mp3" />';
+    $response .= '</Response>';
+
+    // Print the response onto the page so that our gateway can read it
+    header('Content-type: application/xml');
+    echo $response;
+
     }
     
 
@@ -233,7 +236,7 @@ class ApiCallCentreController extends Controller
 
     $response  = '<?xml version="1.0" encoding="UTF-8"?>';
     $response .= '<Response>';
-    $response .= '<Dial record="true" sequential="true" phoneNumbers="' . $clientDialedNumber . '"/>';
+    $response .= '<Dial record="true" sequential="true" phoneNumbers= $clientDialedNumber/>';
     $response .= '</Response>';
     echo $response;
 
@@ -389,31 +392,31 @@ class ApiCallCentreController extends Controller
 }
 
 
-    private function xmlResponse(array $data)
-    {
-        $xml = new SimpleXMLElement('<Response/>');
-        $this->arrayToXml($data, $xml);
-        return response($xml->asXML(), 200)->header('Content-Type', 'application/xml');
-    }
+    // private function xmlResponse(array $data)
+    // {
+    //     $xml = new SimpleXMLElement('<Response/>');
+    //     $this->arrayToXml($data, $xml);
+    //     return response($xml->asXML(), 200)->header('Content-Type', 'application/xml');
+    // }
 
-    private function arrayToXml(array $data, SimpleXMLElement &$xml)
-    {
-        foreach ($data as $key => $value) {
-            if (is_array($value)) {
-                if (isset($value['_attributes'])) {
-                    $subnode = $xml->addChild($key);
-                    foreach ($value['_attributes'] as $attrKey => $attrValue) {
-                        $subnode->addAttribute($attrKey, $attrValue);
-                    }
-                } else {
-                    $subnode = $xml->addChild($key);
-                    $this->arrayToXml($value, $subnode);
-                }
-            } else {
-                $xml->addChild($key, htmlspecialchars($value));
-            }
-        }
-    }
+    // private function arrayToXml(array $data, SimpleXMLElement &$xml)
+    // {
+    //     foreach ($data as $key => $value) {
+    //         if (is_array($value)) {
+    //             if (isset($value['_attributes'])) {
+    //                 $subnode = $xml->addChild($key);
+    //                 foreach ($value['_attributes'] as $attrKey => $attrValue) {
+    //                     $subnode->addAttribute($attrKey, $attrValue);
+    //                 }
+    //             } else {
+    //                 $subnode = $xml->addChild($key);
+    //                 $this->arrayToXml($value, $subnode);
+    //             }
+    //         } else {
+    //             $xml->addChild($key, htmlspecialchars($value));
+    //         }
+    //     }
+    // }
 
     public function handleEventCallback(Request $request)
     {
