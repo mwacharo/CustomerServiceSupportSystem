@@ -218,9 +218,27 @@ class ApiCallCentreController extends Controller
 
 
 
-
     public function handleVoiceCallback(Request $request)
+    {
+
+        $response  = '<?xml version="1.0" encoding="UTF-8"?>';
+        $response .= '<Response>';
+        $response .= '<Dial record="true" sequential="true" phoneNumbers="0741821113"/>';
+        $response .= '</Response>';
+        echo $response;
+    }
+
+
+    public function handleVoiceCallback1(Request $request)
 {
+
+    $response  = '<?xml version="1.0" encoding="UTF-8"?>';
+    $response .= '<Response>';
+    $response .= '<Dial record="true" sequential="true" phoneNumbers="' . $clientDialedNumber . '"/>';
+    $response .= '</Response>';
+    echo $response;
+
+
     try {
         // Log the full request data for debugging
         Log::info('📞 Received voice callback', [
@@ -274,34 +292,7 @@ class ApiCallCentreController extends Controller
                     echo $response;
                     break;   
 
-            // case 'OutgoingCall': // OUTGOING CALL
-            //     Log::info("📤 Outgoing call from system to $destinationNumber by agent $callerNumber");
-
-            //     $call = CallHistory::updateOrCreate(
-            //         ['sessionId' => $sessionId],
-            //         [
-            //             'callerNumber' => $callerNumber,
-            //             'destinationNumber' => $destinationNumber,
-            //             'direction' => 'outgoing',
-            //             'status' => 'dialing',
-            //             'isActive' => 1
-            //         ]
-            //     );
-
-                // broadcast(new CallStatusUpdated($call));
-
-                // return $this->xmlResponse([
-                //     'Response' => [
-                //         'Dial' => [
-                //             '_attributes' => [
-                //                 'record' => 'true',
-                //                 'phoneNumbers' => $destinationNumber,
-                //                 'ringbackTone' => 'https://support.solssa.com/api/v1/get-audio/playMusic.wav'
-                //             ]
-                //         ]
-                //     ]
-                // ]);
-                // break;
+      
 
             case 'CallInitiated':
                 Log::info("🔄 Call initiated: $callerNumber -> $destinationNumber");
