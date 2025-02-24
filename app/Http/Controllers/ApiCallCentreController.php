@@ -241,13 +241,14 @@ class ApiCallCentreController extends Controller
         $callerNumber = $request->input('callerNumber');
         $destinationNumber = $request->input('destinationNumber', '');
         $clientDialedNumber = $request->input('clientDialedNumber', '');
+
         $callSessionState = $request->input('callSessionState', '');
 
         // Log call session state for debugging
         Log::info("📞 Call session state: $callSessionState for session: $sessionId");
 
         switch ($callSessionState) {
-            case 'IncomingCall':
+            case 'Completed':
                 Log::info("📲 Incoming call from $callerNumber to $destinationNumber");
 
                 $call = CallHistory::updateOrCreate(
@@ -273,19 +274,19 @@ class ApiCallCentreController extends Controller
                     echo $response;
                     break;   
 
-            case 'OutgoingCall': // OUTGOING CALL
-                Log::info("📤 Outgoing call from system to $destinationNumber by agent $callerNumber");
+            // case 'OutgoingCall': // OUTGOING CALL
+            //     Log::info("📤 Outgoing call from system to $destinationNumber by agent $callerNumber");
 
-                $call = CallHistory::updateOrCreate(
-                    ['sessionId' => $sessionId],
-                    [
-                        'callerNumber' => $callerNumber,
-                        'destinationNumber' => $destinationNumber,
-                        'direction' => 'outgoing',
-                        'status' => 'dialing',
-                        'isActive' => 1
-                    ]
-                );
+            //     $call = CallHistory::updateOrCreate(
+            //         ['sessionId' => $sessionId],
+            //         [
+            //             'callerNumber' => $callerNumber,
+            //             'destinationNumber' => $destinationNumber,
+            //             'direction' => 'outgoing',
+            //             'status' => 'dialing',
+            //             'isActive' => 1
+            //         ]
+            //     );
 
                 broadcast(new CallStatusUpdated($call));
 
@@ -389,7 +390,6 @@ class ApiCallCentreController extends Controller
                 break;
         }
 
-        return response()->json(['message' => 'Call handled successfully'], 200);
     } catch (\Exception $e) {
         Log::error("❌ Error in handleVoiceCallback: " . $e->getMessage(), [
             'trace' => $e->getTraceAsString()
