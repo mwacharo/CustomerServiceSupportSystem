@@ -216,117 +216,62 @@ class ApiCallCentreController extends Controller
     }
 
 
-    public function handleVoiceCallback(Request $request)
-{
-    // Build the XML response string
-    $xml  = '<?xml version="1.0" encoding="UTF-8"?>';
-    $xml .= '<Response>';
-    $xml .= '<Dial record="true" sequential="true" phoneNumbers="+254741821113" ringbackTone="http://mymediafile.com/playme.mp3" />';
-    $xml .= '</Response>';
-    
-    // Trim the XML string to remove any extra whitespace or BOM characters
-    $xml = trim($xml);
-    
-    // Return the XML response with the proper header and status code.
-    return response($xml, 200)
-                ->header('Content-Type', 'text/plain');
-}
+    public function handleVoiceCallback()
+    {
+        // Build the XML response string
+        $xml  = '<?xml version="1.0" encoding="UTF-8"?>';
+        $xml .= '<Response>';
+        $xml .= '<Dial record="true" sequential="true" phoneNumbers="+254741821113" ringbackTone="http://mymediafile.com/playme.mp3" />';
+        $xml .= '</Response>';
 
+        // Trim the XML string to remove any extra whitespace or BOM characters
+        $xml = trim($xml);
 
-    
+        // Return the XML response with the proper header and status code.
+        return response($xml, 200)
+            ->header('Content-Type', 'text/plain');
+    }
+
 
     public function handleVoiceCallbacktest(Request $request)
-{
+    {
 
-    $response  = '<?xml version="1.0" encoding="UTF-8"?>';
-    $response .= '<Response>';
-    $response .= '<Dial record="true" sequential="true" phoneNumbers= $clientDialedNumber/>';
-    $response .= '</Response>';
-    echo $response;
+        $response  = '<?xml version="1.0" encoding="UTF-8"?>';
+        $response .= '<Response>';
+        $response .= '<Dial record="true" sequential="true" phoneNumbers= $clientDialedNumber/>';
+        $response .= '</Response>';
+        echo $response;
 
 
-    try {
-        // Log the full request data for debugging
-        Log::info('📞 Received voice callback', [
-            'headers' => $request->headers->all(),
-            'body' => $request->all()
-        ]);
+        try {
+            // Log the full request data for debugging
+            Log::info('📞 Received voice callback', [
+                'headers' => $request->headers->all(),
+                'body' => $request->all()
+            ]);
 
-        // Validate session ID
-        $sessionId = $request->input('sessionId');
-        if (!$sessionId) {
-            Log::warning("⚠️ Missing sessionId in voice callback request.");
-            return response()->json(['error' => 'Session ID is required'], 400);
-        }
+            // Validate session ID
+            $sessionId = $request->input('sessionId');
+            if (!$sessionId) {
+                Log::warning("⚠️ Missing sessionId in voice callback request.");
+                return response()->json(['error' => 'Session ID is required'], 400);
+            }
 
-        // Extract relevant parameters
-        $isActive = $request->boolean('isActive', false);
-        $direction = $request->input('direction');
-        $callerNumber = $request->input('callerNumber');
-        $destinationNumber = $request->input('destinationNumber', '');
-        $clientDialedNumber = $request->input('clientDialedNumber', '');
+            // Extract relevant parameters
+            $isActive = $request->boolean('isActive', false);
+            $direction = $request->input('direction');
+            $callerNumber = $request->input('callerNumber');
+            $destinationNumber = $request->input('destinationNumber', '');
+            $clientDialedNumber = $request->input('clientDialedNumber', '');
 
-        $callSessionState = $request->input('callSessionState', '');
+            $callSessionState = $request->input('callSessionState', '');
 
-        // Log call session state for debugging
-        Log::info("📞 Call session state: $callSessionState for session: $sessionId");
+            // Log call session state for debugging
+            Log::info("📞 Call session state: $callSessionState for session: $sessionId");
 
-        switch ($callSessionState) {
-            case 'Completed':
-                Log::info("📲 Incoming call from $callerNumber to $destinationNumber");
-
-                $call = CallHistory::updateOrCreate(
-                    ['sessionId' => $sessionId],
-                    [
-                        'callerNumber' => $callerNumber,
-                        'destinationNumber' => $destinationNumber,
-                        'direction' => strtolower($direction),
-                        'status' => 'incoming',
-                        'isActive' => 1
-                    ]
-                );
-
-                broadcast(new CallStatusUpdated($call));
-                break;
-            case 'Ringing':
-                    // Log::info("Call is ringing for session: {$sessionId}");
-                    // Update call history or notify UI that call is ringing
-                    $response  = '<?xml version="1.0" encoding="UTF-8"?>';
-                    $response .= '<Response>';
-                    $response .= '<Dial record="true" sequential="true" phoneNumbers="' . $clientDialedNumber . '"/>';
-                    $response .= '</Response>';
-                    echo $response;
-                    break;   
-
-      
-
-            case 'CallInitiated':
-                Log::info("🔄 Call initiated: $callerNumber -> $destinationNumber");
-
-                $call = CallHistory::updateOrCreate(
-                    ['sessionId' => $sessionId],
-                    ['status' => 'initiated']
-                );
-
-                broadcast(new CallStatusUpdated($call));
-                break;
-
-            case 'CallConnected':
-                Log::info("✅ Call connected between $callerNumber and $destinationNumber");
-
-                $call = CallHistory::updateOrCreate(
-                    ['sessionId' => $sessionId],
-                    ['status' => 'connected']
-                );
-
-                broadcast(new CallStatusUpdated($call));
-                break;
-
-            case 'CallTerminated':
-                Log::info("⏹️ Call terminated for session: $sessionId");
-
-                if ($isActive) {
-                    Log::info("✅ Call is active. Caller: $callerNumber, Destination: $destinationNumber");
+            switch ($callSessionState) {
+                case 'Completed':
+                    Log::info("📲 Incoming call from $callerNumber to $destinationNumber");
 
                     $call = CallHistory::updateOrCreate(
                         ['sessionId' => $sessionId],
@@ -334,66 +279,118 @@ class ApiCallCentreController extends Controller
                             'callerNumber' => $callerNumber,
                             'destinationNumber' => $destinationNumber,
                             'direction' => strtolower($direction),
+                            'status' => 'incoming',
                             'isActive' => 1
                         ]
                     );
 
                     broadcast(new CallStatusUpdated($call));
+                    break;
+                case 'Ringing':
+                    // Log::info("Call is ringing for session: {$sessionId}");
+                    // Update call history or notify UI that call is ringing
+                    $response  = '<?xml version="1.0" encoding="UTF-8"?>';
+                    $response .= '<Response>';
+                    $response .= '<Dial record="true" sequential="true" phoneNumbers="' . $clientDialedNumber . '"/>';
+                    $response .= '</Response>';
+                    echo $response;
+                    break;
 
-                    return $this->xmlResponse([
-                        'Response' => [
-                            'Dial' => [
-                                '_attributes' => [
-                                    'record' => 'true',
-                                    'sequential' => 'true',
-                                    'phoneNumbers' => "Mwacharo.browser-client-67bb3ad643a73",
-                                    'phoneNumbers' => +254741821113,
 
-                                    'ringbackTone' => 'https://support.solssa.com/api/v1/get-audio/playMusic.wav'
+
+                case 'CallInitiated':
+                    Log::info("🔄 Call initiated: $callerNumber -> $destinationNumber");
+
+                    $call = CallHistory::updateOrCreate(
+                        ['sessionId' => $sessionId],
+                        ['status' => 'initiated']
+                    );
+
+                    broadcast(new CallStatusUpdated($call));
+                    break;
+
+                case 'CallConnected':
+                    Log::info("✅ Call connected between $callerNumber and $destinationNumber");
+
+                    $call = CallHistory::updateOrCreate(
+                        ['sessionId' => $sessionId],
+                        ['status' => 'connected']
+                    );
+
+                    broadcast(new CallStatusUpdated($call));
+                    break;
+
+                case 'CallTerminated':
+                    Log::info("⏹️ Call terminated for session: $sessionId");
+
+                    if ($isActive) {
+                        Log::info("✅ Call is active. Caller: $callerNumber, Destination: $destinationNumber");
+
+                        $call = CallHistory::updateOrCreate(
+                            ['sessionId' => $sessionId],
+                            [
+                                'callerNumber' => $callerNumber,
+                                'destinationNumber' => $destinationNumber,
+                                'direction' => strtolower($direction),
+                                'isActive' => 1
+                            ]
+                        );
+
+                        broadcast(new CallStatusUpdated($call));
+
+                        return $this->xmlResponse([
+                            'Response' => [
+                                'Dial' => [
+                                    '_attributes' => [
+                                        'record' => 'true',
+                                        'sequential' => 'true',
+                                        'phoneNumbers' => "Mwacharo.browser-client-67bb3ad643a73",
+                                        'phoneNumbers' => +254741821113,
+
+                                        'ringbackTone' => 'https://support.solssa.com/api/v1/get-audio/playMusic.wav'
+                                    ]
                                 ]
                             ]
+                        ]);
+                    }
+                    break;
+
+                case 'Completed':
+                    Log::info("⏹️ Call ended. Updating call history for session: $sessionId");
+
+                    $call = CallHistory::updateOrCreate(
+                        ['sessionId' => $sessionId],
+                        [
+                            'isActive' => 0,
+                            'recordingUrl' => $request->input('recordingUrl'),
+                            'durationInSeconds' => $request->input('durationInSeconds'),
+                            'currencyCode' => $request->input('currencyCode'),
+                            'amount' => $request->input('amount'),
+                            'hangupCause' => $request->input('hangupCause'),
+                            'status' => $request->input('status'),
+                            'dialStartTime' => $request->input('dialStartTime'),
+                            'dialDurationInSeconds' => $request->input('dialDurationInSeconds')
                         ]
-                    ]);
-                }
-                break;
+                    );
 
-            case 'Completed':
-                Log::info("⏹️ Call ended. Updating call history for session: $sessionId");
+                    // Reset agent status
+                    Log::info("🔄 Resetting agent status for session: $sessionId");
+                    User::where('sessionId', $sessionId)->update(['status' => 'available', 'sessionId' => null]);
 
-                $call = CallHistory::updateOrCreate(
-                    ['sessionId' => $sessionId],
-                    [
-                        'isActive' => 0,
-                        'recordingUrl' => $request->input('recordingUrl'),
-                        'durationInSeconds' => $request->input('durationInSeconds'),
-                        'currencyCode' => $request->input('currencyCode'),
-                        'amount' => $request->input('amount'),
-                        'hangupCause' => $request->input('hangupCause'),
-                        'status' => $request->input('status'),
-                        'dialStartTime' => $request->input('dialStartTime'),
-                        'dialDurationInSeconds' => $request->input('dialDurationInSeconds')
-                    ]
-                );
+                    broadcast(new CallStatusUpdated($call));
+                    break;
 
-                // Reset agent status
-                Log::info("🔄 Resetting agent status for session: $sessionId");
-                User::where('sessionId', $sessionId)->update(['status' => 'available', 'sessionId' => null]);
-
-                broadcast(new CallStatusUpdated($call));
-                break;
-
-            default:
-                Log::warning("⚠️ Unhandled call state: $callSessionState");
-                break;
+                default:
+                    Log::warning("⚠️ Unhandled call state: $callSessionState");
+                    break;
+            }
+        } catch (\Exception $e) {
+            Log::error("❌ Error in handleVoiceCallback: " . $e->getMessage(), [
+                'trace' => $e->getTraceAsString()
+            ]);
+            return response()->json(['error' => 'Internal Server Error'], 500);
         }
-
-    } catch (\Exception $e) {
-        Log::error("❌ Error in handleVoiceCallback: " . $e->getMessage(), [
-            'trace' => $e->getTraceAsString()
-        ]);
-        return response()->json(['error' => 'Internal Server Error'], 500);
     }
-}
 
 
     // private function xmlResponse(array $data)
@@ -422,58 +419,58 @@ class ApiCallCentreController extends Controller
     //     }
     // }
 
-    public function handleEventCallback(Request $request)
-    {
-        try {
-            // Log full request data for debugging
-            Log::info('📡 Received event callback', [
-                'headers' => $request->headers->all(),
-                'body' => $request->all()
-            ]);
+    // public function handleEventCallback(Request $request)
+    // {
+    //     try {
+    //         // Log full request data for debugging
+    //         Log::info('📡 Received event callback', [
+    //             'headers' => $request->headers->all(),
+    //             'body' => $request->all()
+    //         ]);
 
-            // Extract payload with a fallback
-            $payload = json_decode($request->getContent(), true) ?? $request->all();
-            // $eventType = $payload['eventType'] ?? 'undefined';
-            $eventType = $request->event;
-            $sessionId = $payload['sessionId'] ?? null;
+    //         // Extract payload with a fallback
+    //         $payload = json_decode($request->getContent(), true) ?? $request->all();
+    //         // $eventType = $payload['eventType'] ?? 'undefined';
+    //         $eventType = $request->event;
+    //         $sessionId = $payload['sessionId'] ?? null;
 
-            if ($eventType === 'undefined') {
-                Log::warning("⚠️ Missing eventType in event callback.");
-            }
+    //         if ($eventType === 'undefined') {
+    //             Log::warning("⚠️ Missing eventType in event callback.");
+    //         }
 
-            switch ($eventType) {
-                case 'session_created':
-                    Log::info("📢 Session created", ['sessionId' => $sessionId]);
-                    break;
+    //         switch ($eventType) {
+    //             case 'session_created':
+    //                 Log::info("📢 Session created", ['sessionId' => $sessionId]);
+    //                 break;
 
-                case 'session_established':
-                    Log::info("✅ Session established", ['sessionId' => $sessionId]);
-                    break;
+    //             case 'session_established':
+    //                 Log::info("✅ Session established", ['sessionId' => $sessionId]);
+    //                 break;
 
-                case 'session_terminated':
-                    Log::info("🛑 Session terminated", ['sessionId' => $sessionId]);
-                    break;
+    //             case 'session_terminated':
+    //                 Log::info("🛑 Session terminated", ['sessionId' => $sessionId]);
+    //                 break;
 
-                case 'ice_candidate':
-                    Log::info("🌐 ICE candidate received", ['sessionId' => $sessionId, 'data' => $payload]);
-                    break;
+    //             case 'ice_candidate':
+    //                 Log::info("🌐 ICE candidate received", ['sessionId' => $sessionId, 'data' => $payload]);
+    //                 break;
 
-                case 'session_error':
-                    Log::error("❌ Session error occurred", ['sessionId' => $sessionId, 'error' => $payload]);
-                    break;
+    //             case 'session_error':
+    //                 Log::error("❌ Session error occurred", ['sessionId' => $sessionId, 'error' => $payload]);
+    //                 break;
 
-                default:
-                    Log::warning("⚠️ Unhandled event type: $eventType", ['data' => $payload]);
-            }
+    //             default:
+    //                 Log::warning("⚠️ Unhandled event type: $eventType", ['data' => $payload]);
+    //         }
 
-            return response()->json(['status' => 'success'], 200);
-        } catch (\Exception $e) {
-            Log::error("❌ Error in handleEventCallback: " . $e->getMessage(), [
-                'trace' => $e->getTraceAsString()
-            ]);
-            return response()->json(['error' => 'Internal Server Error'], 500);
-        }
-    }
+    //         return response()->json(['status' => 'success'], 200);
+    //     } catch (\Exception $e) {
+    //         Log::error("❌ Error in handleEventCallback: " . $e->getMessage(), [
+    //             'trace' => $e->getTraceAsString()
+    //         ]);
+    //         return response()->json(['error' => 'Internal Server Error'], 500);
+    //     }
+    // }
 
     public function uploadMediaFile()
     {
