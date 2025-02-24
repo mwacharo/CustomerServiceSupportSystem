@@ -224,7 +224,7 @@ class ApiCallCentreController extends Controller
         $response .= '<Response>';
         $response .= '<Dial record="true" sequential="true" phoneNumbers="0741821113"/>';
         $response .= '</Response>';
-        echo $response;
+        // echo $response;
         return $response;
     }
 
