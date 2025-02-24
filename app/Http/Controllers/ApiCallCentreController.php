@@ -217,17 +217,13 @@ class ApiCallCentreController extends Controller
 
     public function handleVoiceCallback(Request $request)
     {
-
-
-        $response  = '<?xml version="1.0" encoding="UTF-8"?>';
-    $response .= '<Response>';
-    $response .= '<Dial record="true" sequential="false" phoneNumbers="+254741821113" ringbackTone="http://mymediafile.com/playme.mp3" />';
-    $response .= '</Response>';
-
-    // Print the response onto the page so that our gateway can read it
-    header('Content-type: application/xml');
-    echo $response;
-
+        $xml = '<?xml version="1.0" encoding="UTF-8"?>';
+        $xml .= '<Response>';
+        $xml .= '<Dial record="true" sequential="true" phoneNumbers="+254741821113" ringbackTone="http://mymediafile.com/playme.mp3" />';
+        $xml .= '</Response>';
+        
+        return response($xml, 200)
+               ->header('Content-Type', 'text/plain');
     }
     
 
