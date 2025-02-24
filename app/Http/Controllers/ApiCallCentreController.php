@@ -265,7 +265,7 @@ class ApiCallCentreController extends Controller
                 broadcast(new CallStatusUpdated($call));
                 break;
             case 'Ringing':
-                    Log::info("Call is ringing for session: {$sessionId}");
+                    // Log::info("Call is ringing for session: {$sessionId}");
                     // Update call history or notify UI that call is ringing
                     $response  = '<?xml version="1.0" encoding="UTF-8"?>';
                     $response .= '<Response>';
@@ -288,20 +288,20 @@ class ApiCallCentreController extends Controller
             //         ]
             //     );
 
-                broadcast(new CallStatusUpdated($call));
+                // broadcast(new CallStatusUpdated($call));
 
-                return $this->xmlResponse([
-                    'Response' => [
-                        'Dial' => [
-                            '_attributes' => [
-                                'record' => 'true',
-                                'phoneNumbers' => $destinationNumber,
-                                'ringbackTone' => 'https://support.solssa.com/api/v1/get-audio/playMusic.wav'
-                            ]
-                        ]
-                    ]
-                ]);
-                break;
+                // return $this->xmlResponse([
+                //     'Response' => [
+                //         'Dial' => [
+                //             '_attributes' => [
+                //                 'record' => 'true',
+                //                 'phoneNumbers' => $destinationNumber,
+                //                 'ringbackTone' => 'https://support.solssa.com/api/v1/get-audio/playMusic.wav'
+                //             ]
+                //         ]
+                //     ]
+                // ]);
+                // break;
 
             case 'CallInitiated':
                 Log::info("🔄 Call initiated: $callerNumber -> $destinationNumber");
