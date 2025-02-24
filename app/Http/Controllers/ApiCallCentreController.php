@@ -215,19 +215,27 @@ class ApiCallCentreController extends Controller
         return response()->json(['error' => 'Agent not found or is busy'], 400);
     }
 
+
     public function handleVoiceCallback(Request $request)
-    {
-        $xml = '<?xml version="1.0" encoding="UTF-8"?>';
-        $xml .= '<Response>';
-        $xml .= '<Dial record="true" sequential="true" phoneNumbers="+254741821113" ringbackTone="http://mymediafile.com/playme.mp3" />';
-        $xml .= '</Response>';
-        
-        return response($xml, 200)
-               ->header('Content-Type', 'text/plain');
-    }
+{
+    // Build the XML response string
+    $xml  = '<?xml version="1.0" encoding="UTF-8"?>';
+    $xml .= '<Response>';
+    $xml .= '<Dial record="true" sequential="true" phoneNumbers="+254741821113" ringbackTone="http://mymediafile.com/playme.mp3" />';
+    $xml .= '</Response>';
+    
+    // Trim the XML string to remove any extra whitespace or BOM characters
+    $xml = trim($xml);
+    
+    // Return the XML response with the proper header and status code.
+    return response($xml, 200)
+                ->header('Content-Type', 'text/plain');
+}
+
+
     
 
-    public function handleVoiceCallback1(Request $request)
+    public function handleVoiceCallbacktest(Request $request)
 {
 
     $response  = '<?xml version="1.0" encoding="UTF-8"?>';
