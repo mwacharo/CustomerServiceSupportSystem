@@ -216,18 +216,17 @@ class ApiCallCentreController extends Controller
         return response()->json(['error' => 'Agent not found or is busy'], 400);
     }
 
-
-
     public function handleVoiceCallback(Request $request)
     {
         $response  = '<?xml version="1.0" encoding="UTF-8"?>';
         $response .= '<Response>';
         $response .= '<Dial record="true" sequential="true" phoneNumbers="0741821113"/>';
         $response .= '</Response>';
-        // echo $response;
-        return $response;
+    
+        return response($response, 200)
+                    ->header('Content-Type', 'text/plain');
     }
-
+    
 
     public function handleVoiceCallback1(Request $request)
 {
