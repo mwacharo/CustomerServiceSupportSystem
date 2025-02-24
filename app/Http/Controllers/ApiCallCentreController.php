@@ -220,12 +220,12 @@ class ApiCallCentreController extends Controller
 
     public function handleVoiceCallback(Request $request)
     {
-
         $response  = '<?xml version="1.0" encoding="UTF-8"?>';
         $response .= '<Response>';
         $response .= '<Dial record="true" sequential="true" phoneNumbers="0741821113"/>';
         $response .= '</Response>';
         echo $response;
+        return $response;
     }
 
 
