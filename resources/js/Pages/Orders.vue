@@ -526,116 +526,121 @@ export default {
 
 
         async initializeAfricastalking() {
-    try {
-        const response = await axios.get('/api/v1/voice-token');
-        console.log("API Response:", response.data);
+            try {
+                const response = await axios.get('/api/v1/voice-token');
+                console.log("API Response:", response.data);
 
-        const updatedTokens = response.data.updatedTokens;
-        if (!updatedTokens || updatedTokens.length === 0) {
-            console.error("No tokens found in response.");
-            this.$toastr.error("No tokens available.");
-            return;
-        }
+                const updatedTokens = response.data.updatedTokens;
+                if (!updatedTokens || updatedTokens.length === 0) {
+                    console.error("No tokens found in response.");
+                    this.$toastr.error("No tokens available.");
+                    return;
+                }
 
-        const token = updatedTokens[0].token;
-        console.log("Using token:");
+                const token = updatedTokens[0].token;
+                console.log("Using token:");
 
-        if (!token) {
-            console.error("Token is missing from response.");
-            this.$toastr.error("Invalid token received.");
-            return;
-        }
+                if (!token) {
+                    console.error("Token is missing from response.");
+                    this.$toastr.error("Invalid token received.");
+                    return;
+                }
 
-        // Initialize Africastalking client with the valid token
-        const client = new Africastalking.Client(token);
-        console.log("Africastalking client initialized.");
-        this.afClient = client
+                // Initialize Africastalking client with the valid token
+                const client = new Africastalking.Client(token);
+                console.log("Africastalking client initialized.");
+                this.afClient = client
 
-        // Basic event listeners
-        client.on('ready', () => {
-            this.connection_active = true;
-            console.log("Africastalking WebRTC client is ready.");
-            this.$toastr.success("WebRTC client is ready.");
-        });
+                // Basic event listeners
+                client.on('ready', () => {
+                    this.connection_active = true;
+                    console.log("Africastalking WebRTC client is ready.");
+                    this.$toastr.success("WebRTC client is ready.");
+                });
 
-        client.on('error', (err) => {
-            console.error("Africastalking Client Error:", err);
-            this.$toastr.error("Client Error: " + err.message);
-        });
+                client.on('error', (err) => {
+                    console.error("Africastalking Client Error:", err);
+                    this.$toastr.error("Client Error: " + err.message);
+                });
 
-        client.on('closed', (err) => {
-            console.warn("Africastalking Client Connection Closed:", err);
-            this.$toastr.warning("Connection closed.");
-        });
+                client.on('closed', (err) => {
+                    console.warn("Africastalking Client Connection Closed:", err);
+                    this.$toastr.warning("Connection closed.");
+                });
+
+                client.on('incomingcall', function (params) {
+                    this.$toastr.success(`${params.from} is calling you`)
+                }, false);
 
 
-        // Handle Incoming Calls
-        client.on('incoming', (incomingCall) => {
-            console.log("Incoming call from:", incomingCall.remoteIdentity);
 
-            // Automatically answer the incoming call
-            incomingCall.accept();
+                // Handle Incoming Calls
+                // client.on('incoming', (incomingCall) => {
+                //     console.log("Incoming call from:", incomingCall.remoteIdentity);
 
-            // Handle events for the ongoing call
-            incomingCall.on('established', () => {
-                console.log("Call established successfully.");
+                //     // Automatically answer the incoming call
+                //     incomingCall.accept();
+
+                //     // Handle events for the ongoing call
+                //     incomingCall.on('established', () => {
+                //         console.log("Call established successfully.");
+                //         this.isCalling = true;
+                //     });
+
+                //     incomingCall.on('terminated', (reason) => {
+                //         console.log("Call terminated:", reason);
+                //         this.isCalling = false;
+                //     });
+
+                //     incomingCall.on('error', (error) => {
+                //         console.error("Call Error:", error);
+                //     });
+                // });
+
+                // Save the client instance for later use
+                this.$webrtcClient = client;
+            } catch (error) {
+                console.error("Error initializing Africastalking WebRTC client:", error);
+                this.$toastr.error("Failed to initialize WebRTC client: " + error.message);
+            }
+        },
+
+        async callClient(phone) {
+            try {
+
+                console.log(`Calling ${phone} from +254711082159...`);
+                this.afClient.call(phone)
+                console.log("Call initiated successfully.");
+                this.$toastr.success("Call started.");
                 this.isCalling = true;
-            });
-
-            incomingCall.on('terminated', (reason) => {
-                console.log("Call terminated:", reason);
-                this.isCalling = false;
-            });
-
-            incomingCall.on('error', (error) => {
-                console.error("Call Error:", error);
-            });
-        });
-
-        // Save the client instance for later use
-        this.$webrtcClient = client;
-    } catch (error) {
-        console.error("Error initializing Africastalking WebRTC client:", error);
-        this.$toastr.error("Failed to initialize WebRTC client: " + error.message);
-    }
-},
-
-async callClient(phone) {
-    try {
-  
-        console.log(`Calling ${phone} from +254711082159...`);
-        this.afClient.call(phone)
-        console.log("Call initiated successfully.");
-        this.$toastr.success("Call started.");
-        this.isCalling = true;
 
 
-         // Register call-specific event listeners to track progress:
-         this.afClient.on('afClienting', () => {
-          this.logEvent("afClient is in progress (calling)...");
-        });
+                // Register call-specific event listeners to track progress:
+                this.afClient.on('afClienting', () => {
+                    this.logEvent("afClient is in progress (calling)...");
+                });
 
-        this.afClient.on('callaccepted', () => {
-          this.logEvent("Call accepted (bridged between caller and callee).");
-        });
+                this.afClient.on('callaccepted', () => {
+                    this.logEvent("Call accepted (bridged between caller and callee).");
+                });
 
-        this.afClient.on('hangup', (hangupCause) => {
-          this.logEvent(`Call hung up (${hangupCause.code} - ${hangupCause.reason}).`);
-          this.$toastr.info(`Call ended: ${hangupCause.reason}`);
-          this.isCalling = false;
-          this.activeCall = null;
-        });
-    } catch (error) {
-        console.error("Call initiation error:", error);
-        this.$toastr.error("Call failed: " + error.message);
-    }
-}
-,
+                this.afClient.on('hangup', (hangupCause) => {
+                    this.logEvent(`Call hung up (${hangupCause.code} - ${hangupCause.reason}).`);
+                    this.$toastr.info(`Call ended: ${hangupCause.reason}`);
+                    this.isCalling = false;
+                    this.activeCall = null;
+                });
+            } catch (error) {
+                console.error("Call initiation error:", error);
+                this.$toastr.error("Call failed: " + error.message);
+            }
+        }
+        ,
 
-logEvent(message) {
-      const timestamp = new Date().toLocaleTimeString();
-      this.eventLog.unshift(`${timestamp}: ${message}`);
-    },
+        logEvent(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            this.eventLog.unshift(`${timestamp}: ${message}`);
+        },
         closeDialog() {
             this.callAgentDialog = false;
         },
@@ -772,7 +777,7 @@ logEvent(message) {
             this.callAgentDialog = false;
             console.log('Calling agent:', agent);
         },
-  
+
         watch: {
             // Watch for any change in the agents and filter again if needed
             availableAgents(newAgents) {
