@@ -428,43 +428,28 @@ class ApiCallCentreController extends Controller
                 'body' => $request->all()
             ]);
 
-            // Extract payload with a fallback
-            $payload = json_decode($request->getContent(), true) ?? $request->all();
-            $eventType = $payload['eventType'] ?? 'undefined';
-            $sessionId = $payload['sessionId'] ?? null;
+          
+            // Store the request body in the CallHistory table
+            CallHistory::create([
+                'sessionId' => $payload['sessionId'] ?? null,
+                'callerNumber' => $payload['callerNumber'] ?? null,
+                'destinationNumber' => $payload['destinationNumber'] ?? null,
+                'direction' => $payload['direction'] ?? null,
+                'status' => $payload['status'] ?? null,
+                'isActive' => $payload['isActive'] ?? null,
+                'callStartTime' => $payload['callStartTime'] ?? null,
+                'durationInSeconds' => $payload['durationInSeconds'] ?? null,
+                'amount' => $payload['amount'] ?? null,
+                'currencyCode' => $payload['currencyCode'] ?? null,
+                'callerCountryCode' => $payload['callerCountryCode'] ?? null,
+                'callerCarrierName' => $payload['callerCarrierName'] ?? null,
+            ]);
 
-            if ($eventType === 'undefined') {
-                Log::warning("⚠️ Missing eventType in event callback.");
-            }
-
-            switch ($eventType) {
-                case 'session_created':
-                    Log::info("📢 Session created", ['sessionId' => $sessionId]);
-                    break;
-
-                case 'session_established':
-                    Log::info("✅ Session established", ['sessionId' => $sessionId]);
-                    break;
-
-                case 'session_terminated':
-                    Log::info("🛑 Session terminated", ['sessionId' => $sessionId]);
-                    break;
-
-                case 'ice_candidate':
-                    Log::info("🌐 ICE candidate received", ['sessionId' => $sessionId, 'data' => $payload]);
-                    break;
-
-                case 'session_error':
-                    Log::error("❌ Session error occurred", ['sessionId' => $sessionId, 'error' => $payload]);
-                    break;
-
-                default:
-                    Log::warning("⚠️ Unhandled event type: $eventType", ['data' => $payload]);
-            }
+                    
 
             return response()->json(['status' => 'success'], 200);
         } catch (\Exception $e) {
-            Log::error("❌ Error in handleEventCallback: " . $e->getMessage(), [
+            Log::error("❌ Error : " . $e->getMessage(), [
                 'trace' => $e->getTraceAsString()
             ]);
             return response()->json(['error' => 'Internal Server Error'], 500);
