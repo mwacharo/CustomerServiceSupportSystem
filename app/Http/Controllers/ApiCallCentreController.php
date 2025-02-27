@@ -216,24 +216,9 @@ class ApiCallCentreController extends Controller
     }
 
 
-    public function handleVoiceCallback()
-    {
-        // Build the XML response string
-        $xml  = '<?xml version="1.0" encoding="UTF-8"?>';
-        $xml .= '<Response>';
-        $xml .= '<Dial record="true" sequential="true" phoneNumbers="+254741821113" ringbackTone="http://mymediafile.com/playme.mp3" />';
-        $xml .= '</Response>';
+  
 
-        // Trim the XML string to remove any extra whitespace or BOM characters
-        $xml = trim($xml);
-
-        // Return the XML response with the proper header and status code.
-        return response($xml, 200)
-            ->header('Content-Type', 'text/plain');
-    }
-
-
-    public function handleVoiceCallbacktest(Request $request)
+    public function handleVoiceCallbackt(Request $request)
     {
 
         $response  = '<?xml version="1.0" encoding="UTF-8"?>';
@@ -393,31 +378,25 @@ class ApiCallCentreController extends Controller
     }
 
 
-    // private function xmlResponse(array $data)
-    // {
-    //     $xml = new SimpleXMLElement('<Response/>');
-    //     $this->arrayToXml($data, $xml);
-    //     return response($xml->asXML(), 200)->header('Content-Type', 'application/xml');
-    // }
 
-    // private function arrayToXml(array $data, SimpleXMLElement &$xml)
-    // {
-    //     foreach ($data as $key => $value) {
-    //         if (is_array($value)) {
-    //             if (isset($value['_attributes'])) {
-    //                 $subnode = $xml->addChild($key);
-    //                 foreach ($value['_attributes'] as $attrKey => $attrValue) {
-    //                     $subnode->addAttribute($attrKey, $attrValue);
-    //                 }
-    //             } else {
-    //                 $subnode = $xml->addChild($key);
-    //                 $this->arrayToXml($value, $subnode);
-    //             }
-    //         } else {
-    //             $xml->addChild($key, htmlspecialchars($value));
-    //         }
-    //     }
-    // }
+    public function handleVoiceCallbackTest()
+    {
+        // Build the XML response string
+        $xml  = '<?xml version="1.0" encoding="UTF-8"?>';
+        $xml .= '<Response>';
+        $xml .= '<Dial record="true" sequential="true" phoneNumbers="+254741821113" ringbackTone="http://mymediafile.com/playme.mp3" />';
+        $xml .= '</Response>';
+
+        // Trim the XML string to remove any extra whitespace or BOM characters
+        $xml = trim($xml);
+
+        // Return the XML response with the proper header and status code.
+        return response($xml, 200)
+            ->header('Content-Type', 'text/plain');
+    }
+
+
+
 
     public function handleEventCallback(Request $request)
     {
@@ -428,7 +407,9 @@ class ApiCallCentreController extends Controller
                 'body' => $request->all()
             ]);
 
-          
+            // Extract the payload from the request
+            $payload = $request->all();
+
             // Store the request body in the CallHistory table
             CallHistory::create([
                 'sessionId' => $payload['sessionId'] ?? null,
@@ -444,8 +425,6 @@ class ApiCallCentreController extends Controller
                 'callerCountryCode' => $payload['callerCountryCode'] ?? null,
                 'callerCarrierName' => $payload['callerCarrierName'] ?? null,
             ]);
-
-                    
 
             return response()->json(['status' => 'success'], 200);
         } catch (\Exception $e) {
