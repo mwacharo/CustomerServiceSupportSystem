@@ -141,38 +141,7 @@ class ApiCallCentreController extends Controller
     }
 
 
-    // Enqueue incoming calls when agents are busy
-    public function enqueueCall(Request $request)
-    {
-        $phone = $request->input('phone');
-        $virtualNumber = '+254741821113'; // Virtual number for incoming calls
-
-        // Check if there are available agents or all are busy
-        $agentsBusy = $this->checkIfAgentsAreBusy();
-
-        if ($agentsBusy) {
-            // If agents are busy, enqueue the call
-            $queuedCall = CallQueue::create(['phone_number' => $phone]);
-
-            // Add the call to the queue (using Africa's Talking Voice API)
-            $username = config('services.africastalking.username');
-            $apiKey = config('services.africastalking.api_key');
-            $africastalking = new AfricasTalking($username, $apiKey);
-            $voice = $africastalking->voice();
-
-            // Enqueue the call with a hold music or message
-            $response = $voice->enqueue([
-                'from' => $virtualNumber,
-                'to' => $phone,
-                'url' => 'http://www.mymediaserver.com/audio/callWaiting.wav',  // Optional: Music or message URL
-            ]);
-
-            return response()->json(['message' => 'Call added to queue', 'data' => $response], 200);
-        }
-
-        return response()->json(['message' => 'Agents are available, call can be answered immediately'], 200);
-    }
-
+    
     // Function to check if all agents are busy
     private function checkIfAgentsAreBusy()
     {
@@ -248,6 +217,10 @@ class ApiCallCentreController extends Controller
     
             // Handle outgoing calls
             if ($isOutgoing) {
+
+                Log::info("📞 Outgoing call detected", ['isOutgoing' => $isOutgoing]);
+
+
                 switch ($callSessionState) {
                     case 'Ringing':
                         // Compose the response for outgoing calls
@@ -309,12 +282,13 @@ class ApiCallCentreController extends Controller
             } else {
                 // Handle incoming calls
                 // Compose the response for incoming calls
+                Log::info("📲 Incoming call from $callerNumber to $destinationNumber");
+
                 $response = '<?xml version="1.0" encoding="UTF-8"?>';
                 $response .= '<Response>';
                 $response .= '<Say voice="woman" playBeep="false">Welcome to Boxleo Courier and Fulfillment Services Limited. All our customer service representatives are currently not available, please call us later.</Say>';
                 $response .= '</Response>';
     
-                Log::info("📲 Incoming call from $callerNumber to $destinationNumber");
                 echo $response;
             }
     
