@@ -209,8 +209,14 @@ class ApiCallCentreController extends Controller
             $clientDialedNumber = $request->input('clientDialedNumber', '');
             $callSessionState = $request->input('callSessionState', '');
     
-            // Determine if the call is outgoing
-            $isOutgoing = str_contains($callerNumber, 'Mwacharo.browser-client-67bb3ad643a73');
+        
+
+            Log::info("📞 Caller Number received: $callerNumber");
+
+
+            $isOutgoing = str_contains($callerNumber, 'Mwacharo.browser-client') || 
+              str_contains($callerNumber, 'BoxleoKenya.browser-client');
+
     
             // Log call session state for debugging
             Log::info("📞 Call session state: $callSessionState for session: $sessionId");
@@ -218,7 +224,13 @@ class ApiCallCentreController extends Controller
             // Handle outgoing calls
             if ($isOutgoing) {
 
-                Log::info("📞 Outgoing call detected", ['isOutgoing' => $isOutgoing]);
+
+
+                Log::info("📞 Outgoing call check", [
+                    'callerNumber' => $callerNumber,
+                    'isOutgoing' => $isOutgoing
+                ]);
+                
 
 
                 switch ($callSessionState) {
