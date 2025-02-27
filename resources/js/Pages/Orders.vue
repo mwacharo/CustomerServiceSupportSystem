@@ -349,9 +349,6 @@ import { onMounted } from 'vue';
 import Africastalking from 'africastalking-client';
 import Pusher from "pusher-js";
 
-
-
-
 const orders = [
     {
         product: "Phone",
@@ -416,6 +413,8 @@ export default {
         callAgentDialog: false,
         queuedCalls: [],
         selectedAgent: null,
+        // eventLog: null,
+
 
         agents: [
             { name: "Mark D", status: "available" },
@@ -519,11 +518,10 @@ export default {
         selectedItem: {
             phone: '',
         },
+        eventLog: [],
     }),
 
-
     methods: {
-
 
         async initializeAfricastalking() {
             try {
@@ -572,8 +570,6 @@ export default {
                     this.$toastr.success(`${params.from} is calling you`)
                 }, false);
 
-
-
                 // Handle Incoming Calls
                 // client.on('incoming', (incomingCall) => {
                 //     console.log("Incoming call from:", incomingCall.remoteIdentity);
@@ -613,8 +609,6 @@ export default {
                 console.log("Call initiated successfully.");
                 this.$toastr.success("Call started.");
                 this.isCalling = true;
-
-
                 // Register call-specific event listeners to track progress:
                 this.afClient.on('afClienting', () => {
                     this.logEvent("afClient is in progress (calling)...");
@@ -626,7 +620,7 @@ export default {
 
                 this.afClient.on('hangup', (hangupCause) => {
                     this.logEvent(`Call hung up (${hangupCause.code} - ${hangupCause.reason}).`);
-                    this.$toastr.info(`Call ended: ${hangupCause.reason}`);
+                    this.$toastr.error(`Call ended: ${hangupCause.reason}`);
                     this.isCalling = false;
                     this.activeCall = null;
                 });
@@ -696,7 +690,6 @@ export default {
                     console.error('Error dequeuing call:', error);
                 });
         },
-
 
         handleHangup() {
             // Check if the callId exists
