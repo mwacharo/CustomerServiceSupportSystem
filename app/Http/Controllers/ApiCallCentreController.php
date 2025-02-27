@@ -251,12 +251,16 @@ class ApiCallCentreController extends Controller
 
             $callSessionState = $request->input('callSessionState', '');
 
+
+
+            // how to differentiate incoming call from outgoing 
+
             // Log call session state for debugging
             Log::info("📞 Call session state: $callSessionState for session: $sessionId");
 
             switch ($callSessionState) {
                 case 'Completed':
-                    Log::info("📲 Incoming call from $callerNumber to $destinationNumber");
+                    Log::info("📲 Outgoing call from $callerNumber to $destinationNumber");
 
                     $call = CallHistory::updateOrCreate(
                         ['sessionId' => $sessionId],
