@@ -232,13 +232,12 @@ class ApiCallCentreController extends Controller
                 ]);
                 
 
-
                 switch ($callSessionState) {
                     case 'Ringing':
                         // Compose the response for outgoing calls
                         $response = '<?xml version="1.0" encoding="UTF-8"?>';
                         $response .= '<Response>';
-                        $response .= '<Dial phoneNumbers="' . $clientDialedNumber . '" ringbackTone="http://mymediafile.com/playme.mp3" record="true" maxDuration="5" sequential="true" />';
+                        $response .= '<Dial phoneNumbers="' . $clientDialedNumber . '" ringbackTone="http://mymediafile.com/playme.mp3" record="true" maxDuration="60" sequential="true" />';
                         $response .= '</Response>';
     
                         Log::info("📲 Outgoing call from $callerNumber to $clientDialedNumber");
