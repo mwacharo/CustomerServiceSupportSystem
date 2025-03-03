@@ -237,11 +237,13 @@ class ApiCallCentreController extends Controller
                         // Compose the response for outgoing calls
                         $response = '<?xml version="1.0" encoding="UTF-8"?>';
                         $response .= '<Response>';
-                        $response .= '<Dial phoneNumbers="' . $clientDialedNumber . '" ringbackTone="http://mymediafile.com/playme.mp3" record="true" maxDuration="60" sequential="true" />';
+                        // $response .= '<Dial phoneNumbers="' . $clientDialedNumber . '" ringbackTone="http://mymediafile.com/playme.mp3" record="true" maxDuration="60" sequential="true" />';
+                        $response .= '<Dial record="true" sequential="true" phoneNumbers="' . $clientDialedNumber . '" ringbackTone="http://mymediafile.com/playme.mp3" />';
+                        header('Content-type: application/xml');
                         $response .= '</Response>';
-    
-                        Log::info("📲 Outgoing call from $callerNumber to $clientDialedNumber");
                         echo $response;
+                        Log::info("📲 Outgoing call from $callerNumber to $clientDialedNumber");
+
                         break;
     
                     case 'CallInitiated':
