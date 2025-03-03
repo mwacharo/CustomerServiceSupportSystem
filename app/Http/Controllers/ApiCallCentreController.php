@@ -234,17 +234,17 @@ class ApiCallCentreController extends Controller
 
                 switch ($callSessionState) {
                     case 'Ringing':
-                        // Compose the response for outgoing calls
                         $response = '<?xml version="1.0" encoding="UTF-8"?>';
                         $response .= '<Response>';
-                        // $response .= '<Dial phoneNumbers="' . $clientDialedNumber . '" ringbackTone="http://mymediafile.com/playme.mp3" record="true" maxDuration="60" sequential="true" />';
                         $response .= '<Dial record="true" sequential="true" phoneNumbers="' . $clientDialedNumber . '" ringbackTone="http://mymediafile.com/playme.mp3" />';
-                        header('Content-type: application/xml');
-                        $response .= '</Response>';
+                        $response .= '</Response>'; // Only one closing tag
+                
+                        header('Content-type: application/xml'); // Ensure the header is set before output
                         echo $response;
+                        
                         Log::info("📲 Outgoing call from $callerNumber to $clientDialedNumber");
-
                         break;
+            
     
                     case 'CallInitiated':
                         Log::info("🔄 Call initiated: $callerNumber -> $clientDialedNumber");
