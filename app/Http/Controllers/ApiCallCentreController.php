@@ -233,20 +233,23 @@ class ApiCallCentreController extends Controller
 
                 switch ($callSessionState) {
                     case 'Ringing':
-                        // Ensure no spaces or new lines before the XML declaration
+                        // Ensure proper headers
                         header('Content-Type: application/xml; charset=utf-8');
+                
+                        // Construct the XML response
                         $response = '<?xml version="1.0" encoding="UTF-8"?>';
                         $response .= '<Response>';
                         $response .= '<Dial record="true" sequential="true" phoneNumbers="' . preg_replace('/^\+/', '', trim($clientDialedNumber)) . '"/>';
                         $response .= '</Response>';
                 
-                        // Log before sending response
-                        Log::info("Generated XML Response: " . json_encode($response));
+                        // Debug: Log the exact XML before sending
+                        Log::info("Raw XML Response:\n" . $response);
+                        Log::info("Generated XML Response: " . json_encode($response, JSON_UNESCAPED_SLASHES));
                         Log::info("📲 Outgoing call from $callerNumber to $clientDialedNumber");
                 
-                        echo trim($response); // Ensure no extra spaces before output
-                        exit; // Use exit instead of die for clarity
-                        break;
+                        // Send response
+                        echo trim($response);
+                        exit;
                 
         
                     case 'CallInitiated':
