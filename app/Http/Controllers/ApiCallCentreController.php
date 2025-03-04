@@ -237,7 +237,7 @@ class ApiCallCentreController extends Controller
                         header('Content-Type: application/xml; charset=utf-8');
 echo '<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-    <Dial record="true" sequential="true" phoneNumbers="+254741821113" ringbackTone="http://mymediafile.com/playme.mp3" />
+    <Dial record="true" sequential="true" phoneNumbers="+254741821113" maxDuration="5" ringbackTone="http://mymediafile.com/playme.mp3" />
 </Response>';
 
                         
