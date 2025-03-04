@@ -141,7 +141,7 @@ class ApiCallCentreController extends Controller
     }
 
 
-    
+
     // Function to check if all agents are busy
     private function checkIfAgentsAreBusy()
     {
@@ -185,7 +185,7 @@ class ApiCallCentreController extends Controller
     }
 
 
-  
+
     public function handleVoiceCallback(Request $request)
     {
         try {
@@ -194,33 +194,33 @@ class ApiCallCentreController extends Controller
                 'headers' => $request->headers->all(),
                 'body' => $request->all()
             ]);
-    
+
             // Validate session ID
             $sessionId = $request->input('sessionId');
             if (!$sessionId) {
                 Log::warning("⚠️ Missing sessionId in voice callback request.");
                 return response()->json(['error' => 'Session ID is required'], 400);
             }
-    
+
             // Extract relevant parameters
             $isActive = $request->boolean('isActive', false);
             $callerNumber = $request->input('callerNumber');
             $destinationNumber = $request->input('destinationNumber', '');
             $clientDialedNumber = $request->input('clientDialedNumber', '');
             $callSessionState = $request->input('callSessionState', '');
-    
-        
+
+
 
             Log::info("📞 Caller Number received: $callerNumber");
 
 
-            $isOutgoing = str_contains($callerNumber, 'Mwacharo.browser-client') || 
-              str_contains($callerNumber, 'BoxleoKenya.browser-client');
+            $isOutgoing = str_contains($callerNumber, 'Mwacharo.browser-client') ||
+                str_contains($callerNumber, 'BoxleoKenya.browser-client');
 
-    
+
             // Log call session state for debugging
             Log::info("📞 Call session state: $callSessionState for session: $sessionId");
-    
+
             // Handle outgoing calls
             if ($isOutgoing) {
 
@@ -230,31 +230,35 @@ class ApiCallCentreController extends Controller
                     'callerNumber' => $callerNumber,
                     'isOutgoing' => $isOutgoing
                 ]);
-                
 
                 switch ($callSessionState) {
                     case 'Ringing':
+                        // Ensure no spaces or new lines before the XML declaration
                         header('Content-Type: application/xml; charset=utf-8');
-echo '<?xml version="1.0" encoding="UTF-8"?>
-<Response>
-    <Dial record="true" sequential="true" phoneNumbers="+254741821113" maxDuration="5" ringbackTone="http://mymediafile.com/playme.mp3" />
-</Response>';
-
-                        
+                        $response = '<?xml version="1.0" encoding="UTF-8"?>';
+                        $response .= '<Response>';
+                        $response .= '<Dial record="true" sequential="true" phoneNumbers="' . preg_replace('/^\+/', '', trim($clientDialedNumber)) . '"/>';
+                        $response .= '</Response>';
+                
+                        // Log before sending response
+                        Log::info("Generated XML Response: " . json_encode($response));
                         Log::info("📲 Outgoing call from $callerNumber to $clientDialedNumber");
+                
+                        echo trim($response); // Ensure no extra spaces before output
+                        exit; // Use exit instead of die for clarity
                         break;
-            
-    
+                
+        
                     case 'CallInitiated':
                         Log::info("🔄 Call initiated: $callerNumber -> $clientDialedNumber");
                         $this->updateCallHistory($sessionId, ['status' => 'initiated']);
                         break;
-    
+
                     case 'CallConnected':
                         Log::info("✅ Call connected between $callerNumber and $clientDialedNumber");
                         $this->updateCallHistory($sessionId, ['status' => 'connected']);
                         break;
-    
+
                     case 'CallTerminated':
                         Log::info("⏹️ Call terminated for session: $sessionId");
                         if ($isActive) {
@@ -267,7 +271,7 @@ echo '<?xml version="1.0" encoding="UTF-8"?>
                             ]);
                         }
                         break;
-    
+
                     case 'Completed':
                         Log::info("⏹️ Call ended. Updating call history for session: $sessionId");
                         $this->updateCallHistory($sessionId, [
@@ -281,12 +285,12 @@ echo '<?xml version="1.0" encoding="UTF-8"?>
                             'dialStartTime' => $request->input('dialStartTime'),
                             'dialDurationInSeconds' => $request->input('dialDurationInSeconds'),
                         ]);
-    
+
                         // Reset agent status
                         Log::info("🔄 Resetting agent status for session: $sessionId");
                         User::where('sessionId', $sessionId)->update(['status' => 'available', 'sessionId' => null]);
                         break;
-    
+
                     default:
                         Log::warning("⚠️ Unhandled call state: $callSessionState");
                         break;
@@ -300,10 +304,9 @@ echo '<?xml version="1.0" encoding="UTF-8"?>
                 $response .= '<Response>';
                 $response .= '<Say voice="woman" playBeep="false">Welcome to Boxleo Courier and Fulfillment Services Limited. All our customer service representatives are currently not available, please call us later.</Say>';
                 $response .= '</Response>';
-    
+
                 echo $response;
             }
-    
         } catch (\Exception $e) {
             Log::error("❌ Error in handleVoiceCallback: " . $e->getMessage(), [
                 'trace' => $e->getTraceAsString()
@@ -311,7 +314,7 @@ echo '<?xml version="1.0" encoding="UTF-8"?>
             return response()->json(['error' => 'Internal Server Error'], 500);
         }
     }
-    
+
     /**
      * Update call history.
      */
@@ -528,13 +531,4 @@ echo '<?xml version="1.0" encoding="UTF-8"?>
             'totalFailed'   => count($failedUpdates),
         ]);
     }
-
-
-
-
-
-
-
- 
- 
 }
