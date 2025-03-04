@@ -233,7 +233,8 @@ class ApiCallCentreController extends Controller
 
                 switch ($callSessionState) {
                     case 'Ringing':
-                        // Ensure proper headers
+                        // Ensure no whitespace before output
+                        ob_clean();
                         header('Content-Type: application/xml; charset=utf-8');
                 
                         // Construct the XML response
@@ -242,16 +243,15 @@ class ApiCallCentreController extends Controller
                         $response .= '<Dial record="true" sequential="true" phoneNumbers="' . preg_replace('/^\+/', '', trim($clientDialedNumber)) . '"/>';
                         $response .= '</Response>';
                 
-                        // Debug: Log the exact XML before sending
-                        Log::info("Raw XML Response:\n" . $response);
-                        Log::info("Generated XML Response: " . json_encode($response, JSON_UNESCAPED_SLASHES));
+                        // Debugging logs
                         Log::info("📲 Outgoing call from $callerNumber to $clientDialedNumber");
+                        Log::info("Generated XML Response: " . json_encode($response, JSON_UNESCAPED_SLASHES));
                 
-                        // Send response
+                        // Print & exit to ensure no extra output
                         echo trim($response);
                         exit;
+            
                 
-        
                     case 'CallInitiated':
                         Log::info("🔄 Call initiated: $callerNumber -> $clientDialedNumber");
                         $this->updateCallHistory($sessionId, ['status' => 'initiated']);
