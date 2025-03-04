@@ -236,11 +236,12 @@ class ApiCallCentreController extends Controller
                     case 'Ringing':
                         $response = '<?xml version="1.0" encoding="UTF-8"?>';
                         $response .= '<Response>';
-                        $response .= '<Dial record="true" sequential="true" phoneNumbers="' . $clientDialedNumber . '" ringbackTone="http://mymediafile.com/playme.mp3" />';
-                        $response .= '</Response>'; // Only one closing tag
-                
-                        header('Content-type: application/xml'); // Ensure the header is set before output
-                        echo $response;
+                        $response .= '<Dial record="true" sequential="true" phoneNumbers="' . trim($clientDialedNumber) . '" ringbackTone="http://mymediafile.com/playme.mp3" />';
+                        $response .= '</Response>';
+                        
+                        header('Content-type: application/xml');
+                        echo trim($response); // Trim any unexpected whitespace
+                        
                         
                         Log::info("📲 Outgoing call from $callerNumber to $clientDialedNumber");
                         break;
