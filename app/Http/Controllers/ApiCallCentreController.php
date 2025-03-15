@@ -236,22 +236,22 @@ class ApiCallCentreController extends Controller
                         // Ensure no whitespace before output
                         ob_clean();
                         header('Content-Type: application/xml; charset=utf-8');
-                
+
                         // Construct the XML response
                         $response = '<?xml version="1.0" encoding="UTF-8"?>';
                         $response .= '<Response>';
                         $response .= '<Dial record="true" sequential="true" phoneNumbers="' . preg_replace('/^\+/', '', trim($clientDialedNumber)) . '"/>';
                         $response .= '</Response>';
-                
+
                         // Debugging logs
                         Log::info("📲 Outgoing call from $callerNumber to $clientDialedNumber");
                         Log::info("Generated XML Response: " . json_encode($response, JSON_UNESCAPED_SLASHES));
-                
+
                         // Print & exit to ensure no extra output
                         echo trim($response);
                         exit;
-            
-                
+
+
                     case 'CallInitiated':
                         Log::info("🔄 Call initiated: $callerNumber -> $clientDialedNumber");
                         $this->updateCallHistory($sessionId, ['status' => 'initiated']);
@@ -301,14 +301,17 @@ class ApiCallCentreController extends Controller
             } else {
                 // Handle incoming calls
                 // Compose the response for incoming calls
-                Log::info("📲 Incoming call from $callerNumber to $destinationNumber");
-
+                // Handle incoming calls
+                 Log::info("📲 Incoming call from $callerNumber to $destinationNumber");
                 $response = '<?xml version="1.0" encoding="UTF-8"?>';
                 $response .= '<Response>';
                 $response .= '<Say voice="woman" playBeep="false">Welcome to Boxleo Courier and Fulfillment Services Limited. All our customer service representatives are currently not available, please call us later.</Say>';
                 $response .= '</Response>';
-
                 echo $response;
+
+            
+                exit; // Ensure script stops execution after sending response
+
             }
         } catch (\Exception $e) {
             Log::error("❌ Error in handleVoiceCallback: " . $e->getMessage(), [
@@ -333,7 +336,7 @@ class ApiCallCentreController extends Controller
     {
         try {
 
-            // Dialing,Bridged,Completed
+            // Dialing,Bridged,Completed ,hangup , 
             // Log full request data for debugging
             Log::info('📡 Received event callback', [
                 'headers' => $request->headers->all(),
