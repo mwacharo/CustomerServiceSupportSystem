@@ -302,14 +302,22 @@ class ApiCallCentreController extends Controller
                 // Handle incoming calls
                 // Compose the response for incoming calls
                 // Handle incoming calls
-                 Log::info("📲 Incoming call from $callerNumber to $destinationNumber");
-                $response = '<?xml version="1.0" encoding="UTF-8"?>';
-                $response .= '<Response>';
-                $response .= '<Say voice="woman" playBeep="false">Welcome to Boxleo Courier and Fulfillment Services Limited. All our customer service representatives are currently not available, please call us later.</Say>';
-                $response .= '</Response>';
-                echo $response;
+                // Clear any previous output
+                if (ob_get_length()) {
+                    ob_clean();
+                }
 
-            
+                header('Content-Type: application/xml; charset=UTF-8');
+
+                // Log the incoming call
+                Log::info("📲 Incoming call from $callerNumber to $destinationNumber");
+
+                // Send a clean XML response
+                echo '<?xml version="1.0" encoding="UTF-8"?>' . "\n";
+                echo '<Response>';
+                echo '<Say voice="woman" playBeep="false">Welcome to Boxleo Courier and Fulfillment Services Limited. All our customer service representatives are currently not available, please call us later.</Say>';
+                echo '</Response>';
+
                 exit; // Ensure script stops execution after sending response
 
             }
