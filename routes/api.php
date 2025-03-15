@@ -7,7 +7,6 @@ use App\Http\Controllers\ApiRolesController;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\ApiSectorsController;
 use App\Http\Controllers\ApiUserController;
 use App\Http\Controllers\ApiCallCentreController;
 
@@ -129,3 +128,5 @@ Route::get('v1/call-agent-details-2/{id}', [ApiCallAgentController::class, 'getC
 Route::get('v1/call-agent-summary/{id}', [ApiCallAgentController::class, 'getCallAgentSummary']);
 
 // Route::get('v1/delete-records', [ApiController::class, 'deleteRecords']);
+// https://support.solssa.com/api/v1/africastalking-handle-callback
+// // https://support.solssa.com/api/v1/handleEventCallback

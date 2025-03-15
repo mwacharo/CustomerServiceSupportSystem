@@ -28,5 +28,6 @@ class CallHistory extends Model
         'nextCallStep',
         'conference',
         'status',
+        'clientDialedNumber'
     ];
 }

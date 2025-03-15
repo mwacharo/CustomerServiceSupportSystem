@@ -327,28 +327,13 @@ class ApiCallCentreController extends Controller
         broadcast(new CallStatusUpdated($call));
     }
 
-    public function handleVoiceCallbackTest()
-    {
-        // Build the XML response string
-        $xml  = '<?xml version="1.0" encoding="UTF-8"?>';
-        $xml .= '<Response>';
-        $xml .= '<Dial record="true" sequential="true" phoneNumbers="+254741821113" ringbackTone="http://mymediafile.com/playme.mp3" />';
-        $xml .= '</Response>';
-
-        // Trim the XML string to remove any extra whitespace or BOM characters
-        $xml = trim($xml);
-
-        // Return the XML response with the proper header and status code.
-        return response($xml, 200)
-            ->header('Content-Type', 'text/plain');
-    }
-
-
 
 
     public function handleEventCallback(Request $request)
     {
         try {
+
+            // Dialing,Bridged,Completed
             // Log full request data for debugging
             Log::info('📡 Received event callback', [
                 'headers' => $request->headers->all(),
@@ -359,20 +344,26 @@ class ApiCallCentreController extends Controller
             $payload = $request->all();
 
             // Store the request body in the CallHistory table
-            CallHistory::create([
-                'sessionId' => $payload['sessionId'] ?? null,
-                'callerNumber' => $payload['callerNumber'] ?? null,
-                'destinationNumber' => $payload['destinationNumber'] ?? null,
-                'direction' => $payload['direction'] ?? null,
-                'status' => $payload['status'] ?? null,
-                'isActive' => $payload['isActive'] ?? null,
-                'callStartTime' => $payload['callStartTime'] ?? null,
-                'durationInSeconds' => $payload['durationInSeconds'] ?? null,
-                'amount' => $payload['amount'] ?? null,
-                'currencyCode' => $payload['currencyCode'] ?? null,
-                'callerCountryCode' => $payload['callerCountryCode'] ?? null,
-                'callerCarrierName' => $payload['callerCarrierName'] ?? null,
-            ]);
+            CallHistory::updateOrCreate(
+                ['sessionId' => $payload['sessionId'] ?? null],
+                [
+                    'callerNumber' => $payload['callerNumber'] ?? null,
+                    'destinationNumber' => $payload['destinationNumber'] ?? null,
+                    'direction' => $payload['direction'] ?? null,
+                    'status' => $payload['status'] ?? null,
+                    'isActive' => $payload['isActive'] ?? null,
+                    'callStartTime' => $payload['callStartTime'] ?? null,
+                    'durationInSeconds' => $payload['durationInSeconds'] ?? null,
+                    'amount' => $payload['amount'] ?? null,
+                    'currencyCode' => $payload['currencyCode'] ?? null,
+                    'callerCountryCode' => $payload['callerCountryCode'] ?? null,
+                    'callerCarrierName' => $payload['callerCarrierName'] ?? null,
+                    'dialStartTime' => $payload['dialStartTime'] ?? null,
+                    'dialDurationInSeconds' => $payload['dialDurationInSeconds'] ?? null,
+                    'clientDialedNumber' => $payload['clientDialedNumber'] ?? null,
+                    'recordingUrl' => $payload['recordingUrl'] ?? null,
+                ]
+            );
 
             return response()->json(['status' => 'success'], 200);
         } catch (\Exception $e) {
