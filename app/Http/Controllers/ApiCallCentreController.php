@@ -18,6 +18,8 @@ use AfricasTalking\SDK\AfricasTalking;
 use App\Events\CallStatusUpdated;
 use App\Models\CallHistory;
 use App\Models\CallQueue;
+use App\Models\IvrOption;
+use App\Models\Officer;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -307,19 +309,11 @@ class ApiCallCentreController extends Controller
                     ob_clean();
                 }
 
-                header('Content-Type: application/xml; charset=UTF-8');
+            Log::info("📲 Incoming call from $callerNumber to $destinationNumber");
+                  // Fetch the dynamic IVR menu
+          $ivrResponse = $this->generateDynamicMenu();
 
-                // Log the incoming call
-                Log::info("📲 Incoming call from $callerNumber to $destinationNumber");
-
-                // Send a clean XML response
-                echo '<?xml version="1.0" encoding="UTF-8"?>' . "\n";
-                echo '<Response>';
-                echo '<Say voice="woman" playBeep="false">Welcome to Boxleo Courier and Fulfillment Services Limited. All our customer service representatives are currently not available, please call us later.</Say>';
-                echo '</Response>';
-
-                exit; // Ensure script stops execution after sending response
-
+    return response($ivrResponse, 200)->header('Content-Type', 'application/xml');
             }
         } catch (\Exception $e) {
             Log::error("❌ Error in handleVoiceCallback: " . $e->getMessage(), [
@@ -328,6 +322,68 @@ class ApiCallCentreController extends Controller
             return response()->json(['error' => 'Internal Server Error'], 500);
         }
     }
+
+
+    private function generateDynamicMenu()
+    {
+        $options = IvrOption::all();
+        $response = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
+        <Response>
+            <GetDigits timeout=\"10\" finishOnKey=\"#\" callbackUrl=\"https://support.solssa.com/api/v1/africastalking-handle-callback\">
+                <Say voice=\"woman\">Welcome to Boxleo Courier. Please select an option:</Say>";
+
+        foreach ($options as $option) {
+            $response .= "<Say>Press {$option->option_number} for {$option->description}</Say>";
+        }
+
+        $response .= "</GetDigits></Response>";
+
+        return $response;
+    }
+
+
+
+
+    private function handleSelection($dtmfDigits)
+    {
+        $option = IVROption::where('option_number', $dtmfDigits)->first();
+
+        if (!$option) {
+            return $this->generateDynamicMenu(); // Replay menu if input is invalid
+        }
+
+        // If the user selects "Speak to an Agent" (e.g., Option 6)
+        if ($option->option_number == 6) {
+            $agentNumber = $this->getAvailableAgent();
+            if ($agentNumber) {
+                return "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
+                <Response>
+                    <Dial phoneNumbers=\"{$agentNumber}\" />
+                </Response>";
+            } else {
+                return "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
+                <Response>
+                    <Say voice=\"woman\">All agents are currently busy. Please call again later.</Say>
+                </Response>";
+            }
+        }
+
+        // Forward the call to the assigned number
+        return "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
+        <Response>
+            <Dial phoneNumbers=\"{$option->forward_number}\" />
+        </Response>";
+    }
+
+    private function getAvailableAgent()
+{
+    $agent = User::where('status', 'available')
+        ->where('is_active', true)
+        // ->where('can_receive_calls', true)
+        ->first();
+
+    return $agent ? $agent->phone_number : null;
+}
 
     /**
      * Update call history.
