@@ -10,7 +10,7 @@ class IvrOption extends Model
     use HasFactory;
 
 
-    protected $fillable = ['option_number', 'description', 'forward_number'];
+    protected $fillable = ['option_number', 'description', 'forward_number','status'];
 
 }
 

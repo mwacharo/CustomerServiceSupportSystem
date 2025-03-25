@@ -311,9 +311,8 @@ class ApiCallCentreController extends Controller
 
             Log::info("📲 Incoming call from $callerNumber to $destinationNumber");
                   // Fetch the dynamic IVR menu
-          $ivrResponse = $this->generateDynamicMenu();
-
-    return response($ivrResponse, 200)->header('Content-Type', 'application/xml');
+                  return response($this->generateDynamicMenu(), 200)
+                  ->header('Content-Type', 'application/xml');
             }
         } catch (\Exception $e) {
             Log::error("❌ Error in handleVoiceCallback: " . $e->getMessage(), [
@@ -326,54 +325,65 @@ class ApiCallCentreController extends Controller
 
     private function generateDynamicMenu()
     {
-        $options = IvrOption::all();
-        $response = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
-        <Response>
-            <GetDigits timeout=\"10\" finishOnKey=\"#\" callbackUrl=\"https://support.solssa.com/api/v1/africastalking-handle-callback\">
-                <Say voice=\"woman\">Welcome to Boxleo Courier. Please select an option:</Say>";
+        $options = IVROption::where('status', 'active')->get();
+
+        $response = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<Response>\n";
+        $response .= "<GetDigits timeout=\"10\" finishOnKey=\"#\" callbackUrl=\"https://support.solssa.com/api/v1/africastalking-handle-callback\">\n";
+        $response .= "<Say voice=\"woman\">Welcome to Boxleo Courier. Please select an option:</Say>\n";
 
         foreach ($options as $option) {
-            $response .= "<Say>Press {$option->option_number} for {$option->description}</Say>";
+            $response .= "<Say>Press {$option->option_number} for {$option->description}.</Say>\n";
         }
 
-        $response .= "</GetDigits></Response>";
+        $response .= "</GetDigits>\n";
+        $response .= "<Say voice=\"woman\">We did not receive any input. Connecting your call now.</Say>\n";
+        $response .= "<Dial phoneNumbers=\"+254700123456\" />\n"; // Default fallback
+        $response .= "</Response>";
 
         return $response;
     }
 
 
 
-
-    private function handleSelection($dtmfDigits)
+    public function handleSelection(Request $request)
     {
+        $dtmfDigits = $request->input('dtmfDigits');
+        Log::info("📲 IVR selection received: {$dtmfDigits}");
+
         $option = IVROption::where('option_number', $dtmfDigits)->first();
 
         if (!$option) {
-            return $this->generateDynamicMenu(); // Replay menu if input is invalid
+            Log::warning("❌ Invalid IVR selection: {$dtmfDigits}");
+            return response($this->generateDynamicMenu(), 200)->header('Content-Type', 'application/xml');
         }
 
         // If the user selects "Speak to an Agent" (e.g., Option 6)
         if ($option->option_number == 6) {
             $agentNumber = $this->getAvailableAgent();
             if ($agentNumber) {
-                return "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
-                <Response>
-                    <Dial phoneNumbers=\"{$agentNumber}\" />
-                </Response>";
+                return response($this->dialNumber($agentNumber), 200)->header('Content-Type', 'application/xml');
             } else {
-                return "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
-                <Response>
-                    <Say voice=\"woman\">All agents are currently busy. Please call again later.</Say>
-                </Response>";
+                return response("<Response><Say voice=\"woman\">All agents are busy. Please call later.</Say></Response>", 200)
+                    ->header('Content-Type', 'application/xml');
             }
         }
 
         // Forward the call to the assigned number
+        return response($this->dialNumber($option->forward_number), 200)->header('Content-Type', 'application/xml');
+    }
+
+
+        /**
+     * Helper function to generate Dial XML response.
+     */
+    private function dialNumber($phoneNumber)
+    {
         return "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
         <Response>
-            <Dial phoneNumbers=\"{$option->forward_number}\" />
+            <Dial phoneNumbers=\"{$phoneNumber}\" />
         </Response>";
     }
+
 
     private function getAvailableAgent()
 {
