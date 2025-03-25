@@ -427,7 +427,8 @@ class ApiCallCentreController extends Controller
                     'callerCarrierName' => $payload['callerCarrierName'] ?? null,
                     'dialStartTime' => $payload['dialStartTime'] ?? null,
                     'dialDurationInSeconds' => $payload['dialDurationInSeconds'] ?? null,
-                    'clientDialedNumber' => $payload['clientDialedNumber'] ?? null,
+                    // 'clientDialedNumber' => $payload['clientDialedNumber'] ?? null,
+                    'callerNumber' => $payload['callerNumber'] ?? null,
                     'recordingUrl' => $payload['recordingUrl'] ?? null,
                 ]
             );
