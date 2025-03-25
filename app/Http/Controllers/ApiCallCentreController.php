@@ -309,6 +309,16 @@ class ApiCallCentreController extends Controller
                     ob_clean();
                 }
 
+
+
+              // Check if the request contains DTMF input (user pressed a key)
+        $dtmfDigits = $request->input('dtmfDigits');
+        if ($dtmfDigits) {
+            Log::info("📲 User input received: $dtmfDigits");
+            return response($this->handleSelection($dtmfDigits), 200)
+                ->header('Content-Type', 'application/xml');
+        }    
+
             Log::info("📲 Incoming call from $callerNumber to $destinationNumber");
                   // Fetch the dynamic IVR menu
                   return response($this->generateDynamicMenu(), 200)
@@ -323,26 +333,33 @@ class ApiCallCentreController extends Controller
     }
 
 
+
     private function generateDynamicMenu()
-    {
-        $options = IVROption::where('status', 'active')->get();
+{
+    // $options = IVROption::where('status', 'active')->get();
+    $options = IVROption::all();
 
-        $response = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<Response>\n";
-        $response .= "<GetDigits timeout=\"10\" finishOnKey=\"#\" callbackUrl=\"https://support.solssa.com/api/v1/africastalking-handle-callback\">\n";
-        $response .= "<Say voice=\"woman\">Welcome to Boxleo Courier. Please select an option:</Say>\n";
 
-        foreach ($options as $option) {
-            $response .= "<Say>Press {$option->option_number} for {$option->description}.</Say>\n";
-        }
+    $response = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<Response>\n";
+    $response .= "<GetDigits timeout=\"10\" finishOnKey=\"#\" callbackUrl=\"https://support.solssa.com/api/v1/africastalking-handle-callback\">\n";
+    $response .= "<Say voice=\"woman\">Welcome to Boxleo Courier. Please select an option: ";
 
-        $response .= "</GetDigits>\n";
-        $response .= "<Say voice=\"woman\">We did not receive any input. Connecting your call now.</Say>\n";
-        $response .= "<Dial phoneNumbers=\"+254700123456\" />\n"; // Default fallback
-        $response .= "</Response>";
-
-        return $response;
+    foreach ($options as $option) {
+        $response .= "Press {$option->option_number} for {$option->description}, ";
     }
 
+    $response .= "</Say>\n"; // Close Say tag properly
+    $response .= "</GetDigits>\n";
+    $response .= "<Say voice=\"woman\">We did not receive any input. Connecting your call now.</Say>\n";
+    $response .= "<Dial phoneNumbers=\"+254700123456\" />\n"; // Default fallback
+    $response .= "</Response>";
+
+    return $response;
+}
+
+
+
+    
 
 
     public function handleSelection(Request $request)
