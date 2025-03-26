@@ -391,14 +391,18 @@ class ApiCallCentreController extends Controller
 
 
     private function getAvailableAgent()
-{
-    $agent = User::where('status', 'available')
-        // ->where('is_active', true)
-        // ->where('can_receive_calls', true)
-        ->first();
+    {
+        Log::info('Checking for available agents...');
 
-    return $agent ? $agent->phone_number : null;
-}
+        $agent = User::where('status', 'available')
+            // ->where('is_active', true)
+            // ->where('can_receive_calls', true)
+            ->first();
+
+        Log::info($agent ? "Found available agent: {$agent->phone_number}" : 'No available agents found.');
+
+        return $agent ? $agent->phone_number : null;
+    }
 
     /**
      * Update call history.
