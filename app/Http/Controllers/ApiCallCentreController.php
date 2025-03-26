@@ -325,6 +325,7 @@ class ApiCallCentreController extends Controller
     }
 
 
+
     private function generateDynamicMenu($step = 1)
     {
         $options = IVROption::all();
@@ -355,9 +356,8 @@ class ApiCallCentreController extends Controller
    
 
 
-    public function handleSelection(Request $request)
+public function handleSelection($dtmfDigits)
 {
-    $dtmfDigits = $request->input('dtmfDigits'); // User input
     Log::info("📲 IVR selection received: {$dtmfDigits}");
 
     // Fetch the selected option from DB
@@ -365,18 +365,28 @@ class ApiCallCentreController extends Controller
 
     if (!$option) {
         Log::warning("❌ Invalid IVR selection: {$dtmfDigits}");
-        return $this->generateDynamicMenu($request->input('step', 1)); // Continue menu
+        return "<?xml version=\"1.0\" encoding=\"UTF-8\"?><Response>
+                    <Say voice=\"woman\">Invalid option selected. Please try again.</Say>
+                    " . $this->generateDynamicMenu() . "
+                </Response>";
     }
 
-    // Stop further prompts and connect the user
+    // Stop prompt and take action based on the selected option
     if ($option->option_number == 6) {
         $agentNumber = $this->getAvailableAgent();
         return $agentNumber 
             ? $this->dialNumber($agentNumber)
-            : "<?xml version=\"1.0\" encoding=\"UTF-8\"?><Response><Say voice=\"woman\">All agents are busy. Please try again later.</Say></Response>";
+            : "<?xml version=\"1.0\" encoding=\"UTF-8\"?><Response><Say voice=\"woman\">All agents are currently busy. Please try again later.</Say></Response>";
     }
 
-    return $this->dialNumber($option->forward_number);
+    // Forward call to stored number
+    if (!empty($option->forward_number)) {
+        return $this->dialNumber($option->forward_number);
+    }
+
+    return "<?xml version=\"1.0\" encoding=\"UTF-8\"?><Response>
+                <Say voice=\"woman\">You have selected {$option->description}. Please wait while we connect you.</Say>
+            </Response>";
 }
 
 
