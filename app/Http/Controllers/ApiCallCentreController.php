@@ -328,7 +328,9 @@ class ApiCallCentreController extends Controller
 
     private function generateDynamicMenu()
     {
-        $options = IVROption::where('status', 'active')->get();
+        // $options = IVROption::where('status', 'active')->get();
+
+         $options = IVROption::all();
     
         $response = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<Response>\n";
         $response .= "<GetDigits timeout=\"3\" finishOnKey=\"#\" callbackUrl=\"https://support.solssa.com/api/v1/africastalking-handle-callback\">\n";
