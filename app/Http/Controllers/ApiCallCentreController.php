@@ -324,6 +324,7 @@ class ApiCallCentreController extends Controller
         }
     }
 
+
     private function generateDynamicMenu($step = 1)
     {
         $options = IVROption::all();
@@ -354,8 +355,9 @@ class ApiCallCentreController extends Controller
    
 
 
-public function handleSelection($dtmfDigits)
+    public function handleSelection(Request $request)
 {
+    $dtmfDigits = $request->input('dtmfDigits'); // User input
     Log::info("📲 IVR selection received: {$dtmfDigits}");
 
     // Fetch the selected option from DB
@@ -363,28 +365,18 @@ public function handleSelection($dtmfDigits)
 
     if (!$option) {
         Log::warning("❌ Invalid IVR selection: {$dtmfDigits}");
-        return "<?xml version=\"1.0\" encoding=\"UTF-8\"?><Response>
-                    <Say voice=\"woman\">Invalid option selected. Please try again.</Say>
-                    " . $this->generateDynamicMenu() . "
-                </Response>";
+        return $this->generateDynamicMenu($request->input('step', 1)); // Continue menu
     }
 
-    // Stop prompt and take action based on the selected option
+    // Stop further prompts and connect the user
     if ($option->option_number == 6) {
         $agentNumber = $this->getAvailableAgent();
         return $agentNumber 
             ? $this->dialNumber($agentNumber)
-            : "<?xml version=\"1.0\" encoding=\"UTF-8\"?><Response><Say voice=\"woman\">All agents are currently busy. Please try again later.</Say></Response>";
+            : "<?xml version=\"1.0\" encoding=\"UTF-8\"?><Response><Say voice=\"woman\">All agents are busy. Please try again later.</Say></Response>";
     }
 
-    // Forward call to stored number
-    if (!empty($option->forward_number)) {
-        return $this->dialNumber($option->forward_number);
-    }
-
-    return "<?xml version=\"1.0\" encoding=\"UTF-8\"?><Response>
-                <Say voice=\"woman\">You have selected {$option->description}. Please wait while we connect you.</Say>
-            </Response>";
+    return $this->dialNumber($option->forward_number);
 }
 
 
