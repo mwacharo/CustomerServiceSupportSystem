@@ -312,7 +312,10 @@ class ApiCallCentreController extends Controller
                   // Fetch the dynamic IVR menu
                   return response($this->generateDynamicMenu(), 200)
                   ->header('Content-Type', 'application/xml');
+
+                  return $response;
             }
+            
         } catch (\Exception $e) {
             Log::error("❌ Error in handleVoiceCallback: " . $e->getMessage(), [
                 'trace' => $e->getTraceAsString()
