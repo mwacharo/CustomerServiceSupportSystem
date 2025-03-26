@@ -324,37 +324,34 @@ class ApiCallCentreController extends Controller
         }
     }
 
-
-
-    private function generateDynamicMenu()
+    private function generateDynamicMenu($step = 1)
     {
-        // $options = IVROption::where('status', 'active')->get();
-
-         $options = IVROption::all();
-    
-        $response = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<Response>\n";
-        $response .= "<GetDigits timeout=\"3\" finishOnKey=\"#\" callbackUrl=\"https://support.solssa.com/api/v1/africastalking-handle-callback\">\n";
-        $response .= "<Say voice=\"woman\">Welcome to Boxleo Courier. Please select an option: ";
-    
-        // Dynamically generate menu options
-        $optionPhrases = [];
-        foreach ($options as $option) {
-            $optionPhrases[] = "Press {$option->option_number} for {$option->description}";
+        $options = IVROption::all();
+        
+        if ($step > count($options)) {
+            return "<?xml version=\"1.0\" encoding=\"UTF-8\"?><Response>
+                        <Say voice=\"woman\">We did not receive any input. Connecting your call now.</Say>
+                        <Dial phoneNumbers=\"+254707709370\" />
+                    </Response>";
         }
+    
+        $option = $options[$step - 1]; // Fetch current option
+        $nextStep = $step + 1; // Move to the next option if no input
         
-        // Join options with comma
-        $response .= implode(', ', $optionPhrases);
-        
-        $response .= "</Say>\n";
+        $response = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<Response>\n";
+        $response .= "<GetDigits timeout=\"3\" finishOnKey=\"#\" callbackUrl=\"https://support.solssa.com/api/v1/africastalking-handle-callback?step={$nextStep}\">\n";
+        $response .= "<Say voice=\"woman\">Press {$option->option_number} for {$option->description}.</Say>\n";
         $response .= "</GetDigits>\n";
         
-        // Fallback if no input received
-        $response .= "<Say voice=\"woman\">We did not receive any input. Connecting your call now.</Say>\n";
-        $response .= "<Dial phoneNumbers=\"+254707709370\" />\n"; // Default fallback
+        // If no input, move to next option
+        $response .= "<Redirect>https://support.solssa.com/api/v1/africastalking-handle-callback?step={$nextStep}</Redirect>\n";
         $response .= "</Response>";
     
         return $response;
     }
+    
+
+   
 
 
 public function handleSelection($dtmfDigits)
