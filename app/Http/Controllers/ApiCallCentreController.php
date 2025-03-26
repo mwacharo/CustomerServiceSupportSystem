@@ -302,11 +302,7 @@ class ApiCallCentreController extends Controller
         $dtmfDigits = $request->input('dtmfDigits');
         if ($dtmfDigits) {
             Log::info("📲 User input received: $dtmfDigits");
-            // return response($this->handleSelection($dtmfDigits), 200)
-            //     ->header('Content-Type', 'application/xml');
-
-
-            // ✅ Create a new Request object and pass the input
+           
     $mockRequest = new Request(['dtmfDigits' => $dtmfDigits]);
 
     return response($this->handleSelection($mockRequest), 200)
@@ -345,7 +341,7 @@ class ApiCallCentreController extends Controller
     $response .= "</Say>\n"; // Close Say tag properly
     $response .= "</GetDigits>\n";
     $response .= "<Say voice=\"woman\">We did not receive any input. Connecting your call now.</Say>\n";
-    $response .= "<Dial phoneNumbers=\"+254700123456\" />\n"; // Default fallback
+    $response .= "<Dial phoneNumbers=\"+254707709370\" />\n"; // Default fallback
     $response .= "</Response>";
 
     return $response;
