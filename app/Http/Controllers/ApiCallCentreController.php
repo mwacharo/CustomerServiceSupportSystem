@@ -303,11 +303,10 @@ class ApiCallCentreController extends Controller
         if ($dtmfDigits) {
             Log::info("📲 User input received: $dtmfDigits");
            
-    // $mockRequest = new Request(['dtmfDigits' => $dtmfDigits]);
 
     return response($this->handleSelection($dtmfDigits), 200)
         ->header('Content-Type', 'application/xml');
-        }    
+        }
 
             Log::info("📲 Incoming call from $callerNumber to $destinationNumber");
                   // Fetch the dynamic IVR menu
