@@ -303,9 +303,9 @@ class ApiCallCentreController extends Controller
         if ($dtmfDigits) {
             Log::info("📲 User input received: $dtmfDigits");
            
-    $mockRequest = new Request(['dtmfDigits' => $dtmfDigits]);
+    // $mockRequest = new Request(['dtmfDigits' => $dtmfDigits]);
 
-    return response($this->handleSelection($mockRequest), 200)
+    return response($this->handleSelection($dtmfDigits), 200)
         ->header('Content-Type', 'application/xml');
         }    
 
@@ -325,62 +325,68 @@ class ApiCallCentreController extends Controller
 
 
     private function generateDynamicMenu()
-{
-    // $options = IVROption::where('status', 'active')->get();
-    $options = IVROption::all();
-
-
-    $response = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<Response>\n";
-    $response .= "<GetDigits timeout=\"10\" finishOnKey=\"#\" callbackUrl=\"https://support.solssa.com/api/v1/africastalking-handle-callback\">\n";
-    $response .= "<Say voice=\"woman\">Welcome to Boxleo Courier. Please select an option: ";
-
-    foreach ($options as $option) {
-        $response .= "Press {$option->option_number} for {$option->description}, ";
+    {
+        $options = IVROption::where('status', 'active')->get();
+    
+        $response = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<Response>\n";
+        $response .= "<GetDigits timeout=\"3\" finishOnKey=\"#\" callbackUrl=\"https://support.solssa.com/api/v1/africastalking-handle-callback\">\n";
+        $response .= "<Say voice=\"woman\">Welcome to Boxleo Courier. Please select an option: ";
+    
+        // Dynamically generate menu options
+        $optionPhrases = [];
+        foreach ($options as $option) {
+            $optionPhrases[] = "Press {$option->option_number} for {$option->description}";
+        }
+        
+        // Join options with comma
+        $response .= implode(', ', $optionPhrases);
+        
+        $response .= "</Say>\n";
+        $response .= "</GetDigits>\n";
+        
+        // Fallback if no input received
+        $response .= "<Say voice=\"woman\">We did not receive any input. Connecting your call now.</Say>\n";
+        $response .= "<Dial phoneNumbers=\"+254707709370\" />\n"; // Default fallback
+        $response .= "</Response>";
+    
+        return $response;
     }
 
-    $response .= "</Say>\n"; // Close Say tag properly
-    $response .= "</GetDigits>\n";
-    $response .= "<Say voice=\"woman\">We did not receive any input. Connecting your call now.</Say>\n";
-    $response .= "<Dial phoneNumbers=\"+254707709370\" />\n"; // Default fallback
-    $response .= "</Response>";
 
-    return $response;
+public function handleSelection($dtmfDigits)
+{
+    Log::info("📲 IVR selection received: {$dtmfDigits}");
+
+    // Fetch the selected option from DB
+    $option = IVROption::where('option_number', $dtmfDigits)->first();
+
+    if (!$option) {
+        Log::warning("❌ Invalid IVR selection: {$dtmfDigits}");
+        return "<?xml version=\"1.0\" encoding=\"UTF-8\"?><Response>
+                    <Say voice=\"woman\">Invalid option selected. Please try again.</Say>
+                    " . $this->generateDynamicMenu() . "
+                </Response>";
+    }
+
+    // Stop prompt and take action based on the selected option
+    if ($option->option_number == 6) {
+        $agentNumber = $this->getAvailableAgent();
+        return $agentNumber 
+            ? $this->dialNumber($agentNumber)
+            : "<?xml version=\"1.0\" encoding=\"UTF-8\"?><Response><Say voice=\"woman\">All agents are currently busy. Please try again later.</Say></Response>";
+    }
+
+    // Forward call to stored number
+    if (!empty($option->forward_number)) {
+        return $this->dialNumber($option->forward_number);
+    }
+
+    return "<?xml version=\"1.0\" encoding=\"UTF-8\"?><Response>
+                <Say voice=\"woman\">You have selected {$option->description}. Please wait while we connect you.</Say>
+            </Response>";
 }
 
 
-
-
-    public function handleSelection(Request $request)
-    {
-        $dtmfDigits = $request->input('dtmfDigits');
-        Log::info("📲 IVR selection received: {$dtmfDigits}");
-
-        $option = IVROption::where('option_number', $dtmfDigits)->first();
-
-        if (!$option) {
-            Log::warning("❌ Invalid IVR selection: {$dtmfDigits}");
-            return response($this->generateDynamicMenu(), 200)->header('Content-Type', 'application/xml');
-        }
-
-        // If the user selects "Speak to an Agent" (e.g., Option 6)
-        if ($option->option_number == 6) {
-            $agentNumber = $this->getAvailableAgent();
-            if ($agentNumber) {
-                return response($this->dialNumber($agentNumber), 200)->header('Content-Type', 'application/xml');
-            } else {
-                return response("<Response><Say voice=\"woman\">All agents are busy. Please call later.</Say></Response>", 200)
-                    ->header('Content-Type', 'application/xml');
-            }
-        }
-
-        // Forward the call to the assigned number
-        return response($this->dialNumber($option->forward_number), 200)->header('Content-Type', 'application/xml');
-    }
-
-
-        /**
-     * Helper function to generate Dial XML response.
-     */
     private function dialNumber($phoneNumber)
     {
         return "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
