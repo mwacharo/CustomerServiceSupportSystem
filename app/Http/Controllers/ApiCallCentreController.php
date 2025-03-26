@@ -599,7 +599,8 @@ class ApiCallCentreController extends Controller
 
     public function generateDynamicMenu($step)
     {
-        $options = IVROption::where('step', $step)->orderBy('option_number')->get();
+        // $options = IVROption::where('step', $step)->orderBy('option_number')->get();
+        $options = IVROption::orderBy('option_number')->get();
 
         $response = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<Response>\n";
         $response .= "<GetDigits timeout=\"3\" finishOnKey=\"#\" callbackUrl=\"https://support.solssa.com/api/v1/africastalking-handle-callback\">\n";
@@ -645,12 +646,17 @@ class ApiCallCentreController extends Controller
 
     private function createVoiceResponse($message, $phoneNumber = null)
     {
+        Log::info("Generating voice response", ['message' => $message, 'phoneNumber' => $phoneNumber]);
+
         $response = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<Response>\n";
         $response .= "<Say voice=\"woman\">{$message}</Say>\n";
         if ($phoneNumber) {
             $response .= "<Dial phoneNumbers=\"{$phoneNumber}\"/>\n";
         }
         $response .= "</Response>";
+
+        Log::debug("Voice response generated", ['response' => $response]);
+
         return $response;
     }
 }
