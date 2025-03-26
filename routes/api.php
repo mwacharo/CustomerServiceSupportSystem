@@ -88,8 +88,11 @@ Route::post('v1/africastalking-handle-callback', [ApiCallCentreController::class
 Route::post('v1/africastalking-handle-event', [ApiCallCentreController::class, 'handleEventCallback']);
 
 // make a new call
-Route::post('/v1/call-centre-make-call', [ApiCallCentreController::class, 'makeCall']);
+// Route::post('/v1/call-centre-make-call', [ApiCallCentreController::class, 'makeCall']);
 Route::get('v1/voice-token', [ApiCallCentreController::class, 'generateToken']);
+
+// Route::post('/africastalking-handle-selection', [ApiCallCentreController::class, 'handleSelection']);
+
 
 
 Route::get('/v1/queued-calls', [ApiCallCentreController::class, 'getQueuedCalls']);
