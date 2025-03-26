@@ -8,12 +8,8 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
-
 use Illuminate\Support\Facades\Validator;
-
-
 namespace App\Http\Controllers;
-
 use AfricasTalking\SDK\AfricasTalking;
 use App\Events\CallStatusUpdated;
 use App\Models\CallHistory;
@@ -188,6 +184,7 @@ class ApiCallCentreController extends Controller
 
 
 
+
     public function handleVoiceCallback(Request $request)
     {
         try {
@@ -211,23 +208,15 @@ class ApiCallCentreController extends Controller
             $clientDialedNumber = $request->input('clientDialedNumber', '');
             $callSessionState = $request->input('callSessionState', '');
 
-
-
             Log::info("📞 Caller Number received: $callerNumber");
-
 
             $isOutgoing = str_contains($callerNumber, 'Mwacharo.browser-client') ||
                 str_contains($callerNumber, 'BoxleoKenya.browser-client');
-
-
             // Log call session state for debugging
             Log::info("📞 Call session state: $callSessionState for session: $sessionId");
 
             // Handle outgoing calls
             if ($isOutgoing) {
-
-
-
                 Log::info("📞 Outgoing call check", [
                     'callerNumber' => $callerNumber,
                     'isOutgoing' => $isOutgoing
@@ -252,8 +241,6 @@ class ApiCallCentreController extends Controller
                         // Print & exit to ensure no extra output
                         echo trim($response);
                         exit;
-
-
                     case 'CallInitiated':
                         Log::info("🔄 Call initiated: $callerNumber -> $clientDialedNumber");
                         $this->updateCallHistory($sessionId, ['status' => 'initiated']);
@@ -315,8 +302,15 @@ class ApiCallCentreController extends Controller
         $dtmfDigits = $request->input('dtmfDigits');
         if ($dtmfDigits) {
             Log::info("📲 User input received: $dtmfDigits");
-            return response($this->handleSelection($dtmfDigits), 200)
-                ->header('Content-Type', 'application/xml');
+            // return response($this->handleSelection($dtmfDigits), 200)
+            //     ->header('Content-Type', 'application/xml');
+
+
+            // ✅ Create a new Request object and pass the input
+    $mockRequest = new Request(['dtmfDigits' => $dtmfDigits]);
+
+    return response($this->handleSelection($mockRequest), 200)
+        ->header('Content-Type', 'application/xml');
         }    
 
             Log::info("📲 Incoming call from $callerNumber to $destinationNumber");
@@ -358,8 +352,6 @@ class ApiCallCentreController extends Controller
 }
 
 
-
-    
 
 
     public function handleSelection(Request $request)
@@ -405,7 +397,7 @@ class ApiCallCentreController extends Controller
     private function getAvailableAgent()
 {
     $agent = User::where('status', 'available')
-        ->where('is_active', true)
+        // ->where('is_active', true)
         // ->where('can_receive_calls', true)
         ->first();
 
