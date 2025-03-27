@@ -566,9 +566,16 @@ export default {
                     this.$toastr.warning("Connection closed.");
                 });
 
+                // client.on('incomingcall', function (params) {
+                //     this.$toastr.success(`${params.from} is calling you`)
+                // }, false);
+
+
                 client.on('incomingcall', function (params) {
-                    this.$toastr.success(`${params.from} is calling you`)
-                }, false);
+                    console.log("incoming call.");
+
+    this.$toastr.success(`${params.from} is calling you`)
+}, false);
 
                 // Handle Incoming Calls
                 // client.on('incoming', (incomingCall) => {
