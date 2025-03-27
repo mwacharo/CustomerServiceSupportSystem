@@ -597,7 +597,6 @@ class ApiCallCentreController extends Controller
     //         ->header('Content-Type', 'application/xml');
     // }
 
-
     public function generateDynamicMenu($step)
 {
     $options = IVROption::orderBy('option_number')->get();
@@ -605,11 +604,16 @@ class ApiCallCentreController extends Controller
     $response = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<Response>\n";
     $response .= "<GetDigits timeout=\"3\" finishOnKey=\"#\" callbackUrl=\"https://support.solssa.com/api/v1/africastalking-handle-callback\">\n";
 
+    // Combine all options into a single prompt
+    $prompt = "";
     foreach ($options as $option) {
-        $response .= "<Say voice=\"woman\" barge-in=\"true\">Press {$option->option_number} for {$option->description}.</Say>\n";
+        $prompt .= "Press {$option->option_number} for {$option->description}. ";
     }
 
-    $response .= "</GetDigits>\n</Response>";
+    $response .= "<Say voice=\"woman\" barge-in=\"true\">{$prompt}</Say>\n";
+    $response .= "</GetDigits>\n";
+    $response .= "<Say voice=\"woman\">We did not receive any input. Goodbye.</Say>\n";
+    $response .= "</Response>";
 
     return $response;
 }
