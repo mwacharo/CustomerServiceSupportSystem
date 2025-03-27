@@ -210,10 +210,17 @@ class ApiCallCentreController extends Controller
 
             Log::info("📞 Caller Number received: $callerNumber");
 
-            $isOutgoing = str_contains($callerNumber, 'Mwacharo.browser-client') ||
-                str_contains($callerNumber, 'BoxleoKenya.browser-client');
-            // Log call session state for debugging
-            Log::info("📞 Call session state: $callSessionState for session: $sessionId");
+            // $isOutgoing = str_contains($callerNumber, 'Mwacharo.browser-client') ||
+            //     str_contains($callerNumber, 'BoxleoKenya.browser-client');
+            // // Log call session state for debugging
+            // Log::info("📞 Call session state: $callSessionState for session: $sessionId");
+
+
+            $isOutgoing = str_contains($callerNumber, ' BoxleoKenya') ||
+            str_contains($callerNumber, 'BoxleoKenya');
+        // Log call session state for debugging
+        Log::info("📞 Call session state: $callSessionState for session: $sessionId");
+
 
             // Handle outgoing calls
             if ($isOutgoing) {
@@ -298,13 +305,6 @@ class ApiCallCentreController extends Controller
 
 
 
-              // Check if the request contains DTMF input (user pressed a key)
-        // $dtmfDigits = $request->input('dtmfDigits');
-        // if ($dtmfDigits) {
-        //     Log::info("📲 User input received: $dtmfDigits");
-
-
-
         // ✅ PRIORITY: Process user input FIRST
         if ($request->has('dtmfDigits')) {
             return response($this->handleSelection($request->dtmfDigits))
@@ -320,17 +320,7 @@ class ApiCallCentreController extends Controller
  
            
 
-    // return response($this->handleSelection($dtmfDigits), 200)
-    //     ->header('Content-Type', 'application/xml');
-    //     }
-
-            // Log::info("📲 Incoming call from $callerNumber to $destinationNumber");
-            //       // Fetch the dynamic IVR menu
-            //       return response($this->generateDynamicMenu(), 200)
-            //       ->header('Content-Type', 'application/xml');
-
-            //       return $response;
-            // }
+            Log::info("📞 Call session state: $callSessionState for session: $sessionId");
             
         } catch (\Exception $e) {
             Log::error("❌ Error in handleVoiceCallback: " . $e->getMessage(), [
