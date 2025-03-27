@@ -597,23 +597,25 @@ class ApiCallCentreController extends Controller
     //         ->header('Content-Type', 'application/xml');
     // }
 
+
     public function generateDynamicMenu($step)
-    {
-        // $options = IVROption::where('step', $step)->orderBy('option_number')->get();
-        $options = IVROption::orderBy('option_number')->get();
+{
+    $options = IVROption::orderBy('option_number')->get();
 
-        $response = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<Response>\n";
-        $response .= "<GetDigits timeout=\"3\" finishOnKey=\"#\" callbackUrl=\"https://support.solssa.com/api/v1/africastalking-handle-callback\">\n";
+    $response = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<Response>\n";
+    $response .= "<GetDigits timeout=\"3\" finishOnKey=\"#\" callbackUrl=\"https://support.solssa.com/api/v1/africastalking-handle-callback\">\n";
 
-        foreach ($options as $option) {
-            $response .= "<Say voice=\"woman\">Press {$option->option_number} for {$option->description}.</Say>\n";
-        }
-
-        $response .= "</GetDigits>\n</Response>";
-
-        return $response;
+    foreach ($options as $option) {
+        $response .= "<Say voice=\"woman\" barge-in=\"true\">Press {$option->option_number} for {$option->description}.</Say>\n";
     }
 
+    $response .= "</GetDigits>\n</Response>";
+
+    return $response;
+}
+
+
+  
     public function handleSelection($dtmfDigits)
     {
         $options = IVROption::orderBy('option_number')->get();
