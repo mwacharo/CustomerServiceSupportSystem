@@ -568,13 +568,13 @@ class ApiCallCentreController extends Controller
 
 
 
-
-
     public function generateDynamicMenu($step)
     {
         $options = IVROption::orderBy('option_number')->get();
     
         $response = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<Response>\n";
+        // / Welcome message before GetDigits
+        $response .= "<Say voice=\"woman\">Welcome to Boxleo Courier and Fulfillment. Your trusted logistics partner.</Say>\n";
         $response .= "<GetDigits timeout=\"3\" finishOnKey=\"#\" callbackUrl=\"https://support.solssa.com/api/v1/africastalking-handle-callback\">\n";
     
         // Combine all options into a single prompt

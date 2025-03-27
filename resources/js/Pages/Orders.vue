@@ -576,28 +576,38 @@ export default {
 
     this.$toastr.success(`${params.from} is calling you`)
 }, false);
+registered 
+
+// eventdata	{…}
+// call_id	"3b88260a-8561-123e-c7ac-3ca82a0b7938"
+// result	{…}
+// displayname	'"+254741821113"'
+// event	"incomingcall"
+// username	"sip:+254741821113@ke.sip.africastalking.com"
+// sip	"event"
+
 
                 // Handle Incoming Calls
                 // client.on('incoming', (incomingCall) => {
                 //     console.log("Incoming call from:", incomingCall.remoteIdentity);
 
-                //     // Automatically answer the incoming call
-                //     incomingCall.accept();
+                    // Automatically answer the incoming call
+                    incomingCall.accept();
 
-                //     // Handle events for the ongoing call
-                //     incomingCall.on('established', () => {
-                //         console.log("Call established successfully.");
-                //         this.isCalling = true;
-                //     });
+                    // Handle events for the ongoing call
+                    incomingCall.on('established', () => {
+                        console.log("Call established successfully.");
+                        this.isCalling = true;
+                    });
 
-                //     incomingCall.on('terminated', (reason) => {
-                //         console.log("Call terminated:", reason);
-                //         this.isCalling = false;
-                //     });
+                    incomingCall.on('terminated', (reason) => {
+                        console.log("Call terminated:", reason);
+                        this.isCalling = false;
+                    });
 
-                //     incomingCall.on('error', (error) => {
-                //         console.error("Call Error:", error);
-                //     });
+                    incomingCall.on('error', (error) => {
+                        console.error("Call Error:", error);
+                    });
                 // });
 
                 // Save the client instance for later use
