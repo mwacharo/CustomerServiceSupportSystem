@@ -579,45 +579,29 @@ class ApiCallCentreController extends Controller
 
 
 
-    // test 
-
-
-    // public function handleIVRCallback(Request $request)
-    // {
-    //     $ivrHandler = new IVRHandler();
-
-    //     // ✅ PRIORITY: Process user input FIRST
-    //     if ($request->has('dtmfDigits')) {
-    //         return response($ivrHandler->handleSelection($request->dtmfDigits))
-    //             ->header('Content-Type', 'application/xml');
-    //     }
-
-    //     // ✅ If no input was received, continue IVR flow
-    //     return response($ivrHandler->generateDynamicMenu($request->input('step', 1)))
-    //         ->header('Content-Type', 'application/xml');
-    // }
 
     public function generateDynamicMenu($step)
-{
-    $options = IVROption::orderBy('option_number')->get();
-
-    $response = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<Response>\n";
-    $response .= "<GetDigits timeout=\"3\" finishOnKey=\"#\" callbackUrl=\"https://support.solssa.com/api/v1/africastalking-handle-callback\">\n";
-
-    // Combine all options into a single prompt
-    $prompt = "";
-    foreach ($options as $option) {
-        $prompt .= "Press {$option->option_number} for {$option->description}. ";
+    {
+        $options = IVROption::orderBy('option_number')->get();
+    
+        $response = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<Response>\n";
+        $response .= "<Say voice=\"woman\" barge-in=\"true\">Welcome to Boxleo Courier & Fulfillment. Please listen carefully to the following options.</Say>\n";
+        $response .= "<GetDigits timeout=\"3\" finishOnKey=\"#\" callbackUrl=\"https://support.solssa.com/api/v1/africastalking-handle-callback\">\n";
+    
+        // Combine all options into a single prompt
+        $prompt = "";
+        foreach ($options as $option) {
+            $prompt .= "Press {$option->option_number} for {$option->description}. ";
+        }
+    
+        $response .= "<Say voice=\"woman\" barge-in=\"true\">{$prompt}</Say>\n";
+        $response .= "</GetDigits>\n";
+        $response .= "<Say voice=\"woman\">We did not receive any input. Goodbye.</Say>\n";
+        $response .= "</Response>";
+    
+        return $response;
     }
-
-    $response .= "<Say voice=\"woman\" barge-in=\"true\">{$prompt}</Say>\n";
-    $response .= "</GetDigits>\n";
-    $response .= "<Say voice=\"woman\">We did not receive any input. Goodbye.</Say>\n";
-    $response .= "</Response>";
-
-    return $response;
-}
-
+    
 
   
     public function handleSelection($dtmfDigits)
