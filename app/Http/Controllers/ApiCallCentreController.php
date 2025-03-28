@@ -414,9 +414,22 @@ class ApiCallCentreController extends Controller
 
     public function uploadMediaFile()
     {
+
+
+        $username = env('AFRICASTALKING_USERNAME');
+        $apiKey = env('AFRICASTALKING_API_KEY');
+
         $AT = new AfricasTalking($this->username, $this->apiKey);
         $voice = $AT->voice();
-        $phoneNumber = "+254730731433";
+        // $phoneNumber = "+254730731433";
+
+        $phoneNumber = env('AFRICASTALKING_PHONE_NUMBER', '+254730731433'); // Fallback in case env is missing
+        if (!$phoneNumber) {
+            Log::error('Africa’s Talking phone number is missing.');
+            return response()->json(['error' => 'Internal Server Error.'], 500);
+        }
+        // URL of the media file to be uploaded
+        // $fileUrl = "https://support.solssa.com/api/v1/get-audio/playMusic.wav";
         $fileUrl = "https://support.solssa.com/api/v1/get-audio/playMusic.wav";
 
         try {
