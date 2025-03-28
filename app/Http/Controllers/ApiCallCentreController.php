@@ -463,7 +463,7 @@ class ApiCallCentreController extends Controller
               Log::warning("Unexpected response from Africa's Talking", ['response' => $response->getBody()]);
           }
 
-        Log::info("Media File Upload Response", $result);
+        // Log::info("Media File Upload Response", $result);
         return response()->json($result);
     } catch (\Exception $e) {
         Log::error("Error uploading media file: " . $e->getMessage());
