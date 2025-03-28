@@ -412,42 +412,7 @@ class ApiCallCentreController extends Controller
         }
     }
 
-    // public function uploadMediaFile()
-    // {
-
-
-    //     $username = env('AFRICASTALKING_USERNAME');
-    //     $apiKey = env('AFRICASTALKING_API_KEY');
-
-    //     $AT = new AfricasTalking($this->username, $this->apiKey);
-    //     $voice = $AT->voice();
-    //     // $phoneNumber = "+254730731433";
-
-    //     $phoneNumber = env('AFRICASTALKING_PHONE_NUMBER', '+254730731433'); // Fallback in case env is missing
-    //     if (!$phoneNumber) {
-    //         Log::error('Africa’s Talking phone number is missing.');
-    //         return response()->json(['error' => 'Internal Server Error.'], 500);
-    //     }
-    //     // URL of the media file to be uploaded
-    //     // $fileUrl = "https://support.solssa.com/api/v1/get-audio/playMusic.wav";
-    //     $fileUrl = "https://support.solssa.com/api/v1/get-audio/playMusic.wav";
-
-    //     try {
-    //         // Upload the file
-    //         $result = $voice->uploadMediaFile([
-    //             "phoneNumber" => $phoneNumber,
-    //             "url" => $fileUrl
-    //         ]);
-
-    //         // print_r($result);
-
-    //         Log::info("Media File Upload Response", $result);
-    //         return response()->json($result);
-    //     } catch (Exception $e) {
-    //         echo "Error: " . $e->getMessage();
-    //     }
-    // }
-
+    
 
 
     public function uploadMediaFile()
@@ -691,7 +656,7 @@ class ApiCallCentreController extends Controller
 
         return $this->createVoiceResponse(
             "You selected {$option->description}. Connecting your call.",
-            $option->forward_number ?? '+254707709370'
+            $option->forward_number ?? '+254741821113'
         );
     }
 
@@ -702,7 +667,8 @@ class ApiCallCentreController extends Controller
         $response = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<Response>\n";
         $response .= "<Say voice=\"woman\">{$message}</Say>\n";
         if ($phoneNumber) {
-            $response .= "<Dial record=\"true\" sequential=\"true\" ringbackTone=\"http://mymediafile.com/playme.mp3\" phoneNumbers=\"{$phoneNumber}\"/>\n";
+            $response .= "<Dial record=\"true\" sequential=\"true\" ringbackTone=\"https://support.solssa.com/audio/office_phone.mp3\" phoneNumbers=\"{$phoneNumber}\"/>\n";
+          
 
 
         }
