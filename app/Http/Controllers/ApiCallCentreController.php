@@ -485,7 +485,18 @@ class ApiCallCentreController extends Controller
             ],
         ]);
 
-        $result = json_decode($response->getBody(), true);
+        // $result = json_decode($response->getBody(), true);
+
+
+          // Decode response
+          $result = json_decode($response->getBody(), true);
+
+          // Ensure $result is an array before logging
+          if (is_array($result)) {
+              Log::info("Media File Upload Response", $result);
+          } else {
+              Log::warning("Unexpected response from Africa's Talking", ['response' => $response->getBody()]);
+          }
 
         Log::info("Media File Upload Response", $result);
         return response()->json($result);
