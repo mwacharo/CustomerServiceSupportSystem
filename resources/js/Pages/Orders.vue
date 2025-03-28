@@ -595,9 +595,6 @@ export default {
                 client.on('incomingcall', function (params) {
                     console.log("incoming call.");
                     this.incomingCallDialog = true;
-
-                
-
                      this.$toastr.success(`${params.from} is calling you`)
                     }, false);
                         registered 
@@ -605,6 +602,7 @@ export default {
 
                     // Automatically answer the incoming call
                     incomingCall.accept();
+                    console.log("Incoming call accepted.");
                     this.$toastr.success("Incoming call accepted.");
 
                     // Handle events for the ongoing call
