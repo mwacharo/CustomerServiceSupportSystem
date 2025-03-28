@@ -434,40 +434,60 @@ class ApiCallCentreController extends Controller
     }
     // Initialize Guzzle client
 
-    $client = new \GuzzleHttp\Client();
+    // $client = new \GuzzleHttp\Client();
+
+    // try {
+    //     $response = $client->post('https://voice.africastalking.com/mediaUpload', [
+    //         'headers' => [
+    //             'Accept' => 'application/json',
+    //             'apiKey'  => $apiKey,
+    //         ],
+    //         'form_params' => [
+    //             'username' => $username,
+    //             'url'      => $fileUrl,
+    //             "phoneNumber" => $phoneNumber,
+
+    //         ],
+    //     ]);
+
+    //     // $result = json_decode($response->getBody(), true);
+
+
+    //       // Decode response
+    //       $result = json_decode($response->getBody(), true);
+
+    //       // Ensure $result is an array before logging
+    //       if (is_array($result)) {
+    //           Log::info("Media File Upload Response", $result);
+    //       } else {
+    //           Log::warning("Unexpected response from Africa's Talking", ['response' => $response->getBody()]);
+    //       }
+
+    //     // Log::info("Media File Upload Response", $result);
+    //     return response()->json($result);
+    // } catch (\Exception $e) {
+    //     Log::error("Error uploading media file: " . $e->getMessage());
+    //     return response()->json(['error' => $e->getMessage()], 500);
+    // }
+
+
+    // Initialize the SDK
+$AT = new AfricasTalking($username, $apiKey);
+
+// Get the voice service
+$voice = $AT->voice();
+
 
     try {
-        $response = $client->post('https://voice.africastalking.com/mediaUpload', [
-            'headers' => [
-                'Accept' => 'application/json',
-                'apiKey'  => $apiKey,
-            ],
-            'form_params' => [
-                'username' => $username,
-                'url'      => $fileUrl,
-                "phoneNumber" => $phoneNumber,
-
-            ],
+        // Upload the file
+        $result = $voice->uploadMediaFile([
+            "phoneNumber" => $phoneNumber,
+            "url"         => $fileUrl
         ]);
-
-        // $result = json_decode($response->getBody(), true);
-
-
-          // Decode response
-          $result = json_decode($response->getBody(), true);
-
-          // Ensure $result is an array before logging
-          if (is_array($result)) {
-              Log::info("Media File Upload Response", $result);
-          } else {
-              Log::warning("Unexpected response from Africa's Talking", ['response' => $response->getBody()]);
-          }
-
-        // Log::info("Media File Upload Response", $result);
-        return response()->json($result);
-    } catch (\Exception $e) {
-        Log::error("Error uploading media file: " . $e->getMessage());
-        return response()->json(['error' => $e->getMessage()], 500);
+    
+        print_r($result);
+    } catch (Exception $e) {
+        echo "Error: ".$e->getMessage();
     }
 }
 
