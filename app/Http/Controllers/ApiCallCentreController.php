@@ -412,41 +412,73 @@ class ApiCallCentreController extends Controller
         }
     }
 
+    // public function uploadMediaFile()
+    // {
+
+
+    //     $username = env('AFRICASTALKING_USERNAME');
+    //     $apiKey = env('AFRICASTALKING_API_KEY');
+
+    //     $AT = new AfricasTalking($this->username, $this->apiKey);
+    //     $voice = $AT->voice();
+    //     // $phoneNumber = "+254730731433";
+
+    //     $phoneNumber = env('AFRICASTALKING_PHONE_NUMBER', '+254730731433'); // Fallback in case env is missing
+    //     if (!$phoneNumber) {
+    //         Log::error('Africa’s Talking phone number is missing.');
+    //         return response()->json(['error' => 'Internal Server Error.'], 500);
+    //     }
+    //     // URL of the media file to be uploaded
+    //     // $fileUrl = "https://support.solssa.com/api/v1/get-audio/playMusic.wav";
+    //     $fileUrl = "https://support.solssa.com/api/v1/get-audio/playMusic.wav";
+
+    //     try {
+    //         // Upload the file
+    //         $result = $voice->uploadMediaFile([
+    //             "phoneNumber" => $phoneNumber,
+    //             "url" => $fileUrl
+    //         ]);
+
+    //         // print_r($result);
+
+    //         Log::info("Media File Upload Response", $result);
+    //         return response()->json($result);
+    //     } catch (Exception $e) {
+    //         echo "Error: " . $e->getMessage();
+    //     }
+    // }
+
+
+
     public function uploadMediaFile()
-    {
+{
+    $username = env('AFRICASTALKING_USERNAME');
+    $apiKey = env('AFRICASTALKING_API_KEY');
+    $fileUrl = "https://support.solssa.com/audio/office_phone.mp3"; // Your file's public URL
 
+    $client = new \GuzzleHttp\Client();
 
-        $username = env('AFRICASTALKING_USERNAME');
-        $apiKey = env('AFRICASTALKING_API_KEY');
+    try {
+        $response = $client->post('https://voice.africastalking.com/mediaUpload', [
+            'headers' => [
+                'Accept' => 'application/json',
+                'apiKey'  => $apiKey,
+            ],
+            'form_params' => [
+                'username' => $username,
+                'url'      => $fileUrl,
+            ],
+        ]);
 
-        $AT = new AfricasTalking($this->username, $this->apiKey);
-        $voice = $AT->voice();
-        // $phoneNumber = "+254730731433";
+        $result = json_decode($response->getBody(), true);
 
-        $phoneNumber = env('AFRICASTALKING_PHONE_NUMBER', '+254730731433'); // Fallback in case env is missing
-        if (!$phoneNumber) {
-            Log::error('Africa’s Talking phone number is missing.');
-            return response()->json(['error' => 'Internal Server Error.'], 500);
-        }
-        // URL of the media file to be uploaded
-        // $fileUrl = "https://support.solssa.com/api/v1/get-audio/playMusic.wav";
-        $fileUrl = "https://support.solssa.com/api/v1/get-audio/playMusic.wav";
-
-        try {
-            // Upload the file
-            $result = $voice->uploadMediaFile([
-                "phoneNumber" => $phoneNumber,
-                "url" => $fileUrl
-            ]);
-
-            // print_r($result);
-
-            Log::info("Media File Upload Response", $result);
-            return response()->json($result);
-        } catch (Exception $e) {
-            echo "Error: " . $e->getMessage();
-        }
+        Log::info("Media File Upload Response", $result);
+        return response()->json($result);
+    } catch (\Exception $e) {
+        Log::error("Error uploading media file: " . $e->getMessage());
+        return response()->json(['error' => $e->getMessage()], 500);
     }
+}
 
 
 
