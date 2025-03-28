@@ -282,6 +282,9 @@
                             <v-btn color="red" @click="rejectCall">
                                 Reject
                             </v-btn>
+                            <v-btn color="primary" @click="transferCall">
+                                Reject
+                            </v-btn>
                         </v-card-actions>
                     </v-card>
                 </v-dialog>
@@ -591,7 +594,7 @@ export default {
                     this.$toastr.warning("Connection closed.");
                 });
 
-                client.on('incomingcall', (incomingCall) => {
+                client.on('incomingcall', (err) => {
                 console.log("Incoming call received.");
     
                 // Set dialog to true
@@ -601,8 +604,8 @@ export default {
                  this.incomingCall = {
                  from: incomingCall.from,
                  duration: 'Connecting...'
-    };
-});
+                          };
+                         });
 
                     // Handle events for the ongoing call
                     incomingCall.on('established', () => {
@@ -659,21 +662,20 @@ export default {
         }
         ,
 
-        //            // Answer the Call
-        //            answerCall() {
-        //     if (this.session) {
-        //         this.session.accept();
-        //         this.incomingCallDialog = false;
-        //     }
-        // },
+                  // Answer the Call
+                   answerCall() {
+             if (this.session) {
+                this.session.accept();
+       }
+},
 
         // // Reject the Call
-        // rejectCall() {
-        //     if (this.session) {
-        //         this.session.reject();
-        //         this.incomingCallDialog = false;
-        //     }
-        // },
+        rejectCall() {
+            if (this.session) {
+                this.session.reject();
+                this.incomingCallDialog = false;
+            }
+        },
 
         logEvent(message) {
             const timestamp = new Date().toLocaleTimeString();

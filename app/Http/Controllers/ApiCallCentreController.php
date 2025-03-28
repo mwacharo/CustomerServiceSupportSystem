@@ -432,45 +432,7 @@ class ApiCallCentreController extends Controller
         ]);
         return response()->json(['error' => 'Africa’s Talking credentials are missing.'], 500);
     }
-    // Initialize Guzzle client
-
-    // $client = new \GuzzleHttp\Client();
-
-    // try {
-    //     $response = $client->post('https://voice.africastalking.com/mediaUpload', [
-    //         'headers' => [
-    //             'Accept' => 'application/json',
-    //             'apiKey'  => $apiKey,
-    //         ],
-    //         'form_params' => [
-    //             'username' => $username,
-    //             'url'      => $fileUrl,
-    //             "phoneNumber" => $phoneNumber,
-
-    //         ],
-    //     ]);
-
-    //     // $result = json_decode($response->getBody(), true);
-
-
-    //       // Decode response
-    //       $result = json_decode($response->getBody(), true);
-
-    //       // Ensure $result is an array before logging
-    //       if (is_array($result)) {
-    //           Log::info("Media File Upload Response", $result);
-    //       } else {
-    //           Log::warning("Unexpected response from Africa's Talking", ['response' => $response->getBody()]);
-    //       }
-
-    //     // Log::info("Media File Upload Response", $result);
-    //     return response()->json($result);
-    // } catch (\Exception $e) {
-    //     Log::error("Error uploading media file: " . $e->getMessage());
-    //     return response()->json(['error' => $e->getMessage()], 500);
-    // }
-
-
+    
     // Initialize the SDK
 $AT = new AfricasTalking($username, $apiKey);
 
