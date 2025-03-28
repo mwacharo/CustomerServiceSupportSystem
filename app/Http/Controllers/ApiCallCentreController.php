@@ -419,7 +419,7 @@ class ApiCallCentreController extends Controller
 {
     $username = env('AFRICASTALKING_USERNAME');
     $apiKey = env('AFRICASTALKING_API_KEY');
-    $fileUrl = "https://support.solssa.com/audio/office_phone.mp3"; 
+    $fileUrl = "https://support.solssa.com/ringtones/office_phone.mp3"; 
     $phoneNumber = env('AFRICASTALKING_PHONE'); 
     if (!$phoneNumber) {
         Log::error('Africa’s Talking phone number is missing.');
@@ -667,7 +667,7 @@ class ApiCallCentreController extends Controller
         $response = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<Response>\n";
         $response .= "<Say voice=\"woman\">{$message}</Say>\n";
         if ($phoneNumber) {
-            $response .= "<Dial record=\"true\" sequential=\"true\" ringbackTone=\"https://support.solssa.com/audio/office_phone.mp3\" phoneNumbers=\"{$phoneNumber}\"/>\n";
+            $response .= "<Dial record=\"true\" sequential=\"true\" ringbackTone=\"http://support.solssa.com/ringtones/office_phone.mp3\" phoneNumbers=\"{$phoneNumber}\"/>\n";
           
 
 
