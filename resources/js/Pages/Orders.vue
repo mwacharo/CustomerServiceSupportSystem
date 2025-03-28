@@ -566,30 +566,14 @@ export default {
                     this.$toastr.warning("Connection closed.");
                 });
 
-                // client.on('incomingcall', function (params) {
-                //     this.$toastr.success(`${params.from} is calling you`)
-                // }, false);
-
 
                 client.on('incomingcall', function (params) {
                     console.log("incoming call.");
 
-    this.$toastr.success(`${params.from} is calling you`)
-}, false);
-registered 
+                     this.$toastr.success(`${params.from} is calling you`)
+                    }, false);
+                        registered 
 
-// eventdata	{…}
-// call_id	"3b88260a-8561-123e-c7ac-3ca82a0b7938"
-// result	{…}
-// displayname	'"+254741821113"'
-// event	"incomingcall"
-// username	"sip:+254741821113@ke.sip.africastalking.com"
-// sip	"event"
-
-
-                // Handle Incoming Calls
-                // client.on('incoming', (incomingCall) => {
-                //     console.log("Incoming call from:", incomingCall.remoteIdentity);
 
                     // Automatically answer the incoming call
                     incomingCall.accept();

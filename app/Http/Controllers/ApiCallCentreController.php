@@ -631,7 +631,9 @@ class ApiCallCentreController extends Controller
         $response = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<Response>\n";
         $response .= "<Say voice=\"woman\">{$message}</Say>\n";
         if ($phoneNumber) {
-            $response .= "<Dial phoneNumbers=\"{$phoneNumber}\"/>\n";
+            $response .= "<Dial record=\"true\" sequential=\"true\" ringbackTone=\"http://mymediafile.com/playme.mp3\" phoneNumbers=\"{$phoneNumber}\"/>\n";
+
+
         }
         $response .= "</Response>";
 
