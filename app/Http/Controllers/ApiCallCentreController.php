@@ -649,7 +649,7 @@ $voice = $AT->voice();
         $response = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<Response>\n";
         $response .= "<Say voice=\"woman\">{$message}</Say>\n";
         if ($phoneNumber) {
-            $response .= "<Dial record=\"true\" sequential=\"true\" ringbackTone=\"http://support.solssa.com/ringtones/office_phone.mp3\" phoneNumbers=\"{$phoneNumber}\"/>\n";
+            $response .= "<Dial record=\"true\" sequential=\"true\" ringbackTone=\"https://support.solssa.com/storage/ringtones/office_phone.mp3\" phoneNumbers=\"{$phoneNumber}\"/>\n";
           
 
 
