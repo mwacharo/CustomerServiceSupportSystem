@@ -552,6 +552,13 @@ export default {
     methods: {
 
         async initializeAfricastalking() {
+
+            const params = {
+                sounds: {
+                    dialing: 'https://support.solssa.com/storage/ringtones/office_phone.mp3',
+                    ringing: 'https://support.solssa.com/storage/ringtones/office_phone.mp3',
+                },
+            };
             try {
                 const response = await axios.get('/api/v1/voice-token');
                 console.log("API Response:", response.data);
@@ -602,7 +609,7 @@ export default {
     
                 // Set incoming call details
                  this.incomingCall = {
-                 from: incomingCall.from,
+                    incomingCallFrom : params.from,
                  duration: 'Connecting...'
                           };
                          });
@@ -646,6 +653,8 @@ export default {
                 });
 
                 this.afClient.on('callaccepted', () => {
+                    // this.$toastr.success(Call accepted!);
+                    console.log("callaccepted");
                     this.logEvent("Call accepted (bridged between caller and callee).");
                 });
 
