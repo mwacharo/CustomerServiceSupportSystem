@@ -261,6 +261,30 @@
                         </v-card-actions>
                     </v-card>
                 </v-dialog>
+                <!-- dialog for incoming call -->
+                <v-dialog v-model="incomingCallDialog" max-width="600">
+                    <v-card>
+                        <v-card-title>
+                            Incoming Call
+                            <v-spacer />
+                            <v-btn icon @click="incomingCallDialog = false">
+                                <v-icon>mdi-close</v-icon>
+                            </v-btn>
+                        </v-card-title>
+                        <v-card-text>
+                            <p>Call from: {{ incomingCall.from }}</p>
+                            <p>Duration: {{ incomingCall.duration }}</p>
+                        </v-card-text>
+                        <v-card-actions>
+                            <v-btn color="success" @click="answerCall">
+                                Answer
+                            </v-btn>
+                            <v-btn color="red" @click="rejectCall">
+                                Reject
+                            </v-btn>
+                        </v-card-actions>
+                    </v-card>
+                </v-dialog>
 
 
                 <!-- Transfer Dialog -->
@@ -511,6 +535,7 @@ export default {
         statusModal: false,
         phonePopup: false,
         newCall: false,
+        incomingCallDialog: false,
         selectedItem: null,
         afClient: null,
 
@@ -569,6 +594,9 @@ export default {
 
                 client.on('incomingcall', function (params) {
                     console.log("incoming call.");
+                    this.incomingCallDialog = true;
+
+                
 
                      this.$toastr.success(`${params.from} is calling you`)
                     }, false);
@@ -577,6 +605,7 @@ export default {
 
                     // Automatically answer the incoming call
                     incomingCall.accept();
+                    this.$toastr.success("Incoming call accepted.");
 
                     // Handle events for the ongoing call
                     incomingCall.on('established', () => {
@@ -592,6 +621,10 @@ export default {
                     incomingCall.on('error', (error) => {
                         console.error("Call Error:", error);
                     });
+
+
+
+          
                 // });
 
                 // Save the client instance for later use
@@ -601,6 +634,8 @@ export default {
                 this.$toastr.error("Failed to initialize WebRTC client: " + error.message);
             }
         },
+
+
 
         async callClient(phone) {
             try {
@@ -631,6 +666,22 @@ export default {
             }
         }
         ,
+
+                   // Answer the Call
+                   answerCall() {
+            if (this.session) {
+                this.session.accept();
+                this.incomingCallDialog = false;
+            }
+        },
+
+        // Reject the Call
+        rejectCall() {
+            if (this.session) {
+                this.session.reject();
+                this.incomingCallDialog = false;
+            }
+        },
 
         logEvent(message) {
             const timestamp = new Date().toLocaleTimeString();
