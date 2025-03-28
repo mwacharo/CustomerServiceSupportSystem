@@ -283,7 +283,17 @@
                                 Reject
                             </v-btn>
                             <v-btn color="primary" @click="transferCall">
-                                Reject
+                                Transfer 
+                            </v-btn>
+                            
+                            <v-btn v-if="isCalling" color="grey" @click="handleMute">
+                                <v-icon left>mdi-microphone-off</v-icon>
+                                Mute
+                            </v-btn>
+
+                            <v-btn v-if="isCalling" color="grey" @click="handleHold">
+                                <v-icon left>mdi-pause</v-icon>
+                                Hold
                             </v-btn>
                         </v-card-actions>
                     </v-card>
@@ -601,7 +611,7 @@ export default {
                     this.$toastr.warning("Connection closed.");
                 });
 
-                client.on('incomingcall', (err) => {
+                client.on('incomingcall', (event) => {
                 console.log("Incoming call received.");
     
                 // Set dialog to true
@@ -609,7 +619,7 @@ export default {
     
                 // Set incoming call details
                  this.incomingCall = {
-                    incomingCallFrom : params.from,
+                    incomingCallFrom : event.from,
                  duration: 'Connecting...'
                           };
                          });
