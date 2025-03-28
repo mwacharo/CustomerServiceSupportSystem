@@ -454,7 +454,20 @@ class ApiCallCentreController extends Controller
 {
     $username = env('AFRICASTALKING_USERNAME');
     $apiKey = env('AFRICASTALKING_API_KEY');
-    $fileUrl = "https://support.solssa.com/audio/office_phone.mp3"; // Your file's public URL
+    $fileUrl = "https://support.solssa.com/audio/office_phone.mp3"; 
+    $phoneNumber = env('AFRICASTALKING_PHONE'); 
+    if (!$phoneNumber) {
+        Log::error('Africa’s Talking phone number is missing.');
+        return response()->json(['error' => 'Internal Server Error.'], 500);
+    }
+    if (!$username || !$apiKey) {
+        Log::error('Africa’s Talking credentials are missing.', [
+            'username' => $username,
+            'apiKey'   => $apiKey
+        ]);
+        return response()->json(['error' => 'Africa’s Talking credentials are missing.'], 500);
+    }
+    // Initialize Guzzle client
 
     $client = new \GuzzleHttp\Client();
 
