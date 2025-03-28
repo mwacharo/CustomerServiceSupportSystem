@@ -591,19 +591,18 @@ export default {
                     this.$toastr.warning("Connection closed.");
                 });
 
-
-                client.on('incomingcall', function (params) {
-                    console.log("incoming call.");
-                    this.incomingCallDialog = true;
-                     this.$toastr.success(`${params.from} is calling you`)
-                    }, false);
-                        registered 
-
-
-                    // Automatically answer the incoming call
-                    incomingCall.accept();
-                    console.log("Incoming call accepted.");
-                    this.$toastr.success("Incoming call accepted.");
+                client.on('incomingcall', (incomingCall) => {
+                console.log("Incoming call received.");
+    
+                // Set dialog to true
+                this.incomingCallDialog = true;
+    
+                // Set incoming call details
+                 this.incomingCall = {
+                 from: incomingCall.from,
+                 duration: 'Connecting...'
+    };
+});
 
                     // Handle events for the ongoing call
                     incomingCall.on('established', () => {
@@ -619,11 +618,6 @@ export default {
                     incomingCall.on('error', (error) => {
                         console.error("Call Error:", error);
                     });
-
-
-
-          
-                // });
 
                 // Save the client instance for later use
                 this.$webrtcClient = client;
@@ -665,21 +659,21 @@ export default {
         }
         ,
 
-                   // Answer the Call
-                   answerCall() {
-            if (this.session) {
-                this.session.accept();
-                this.incomingCallDialog = false;
-            }
-        },
+        //            // Answer the Call
+        //            answerCall() {
+        //     if (this.session) {
+        //         this.session.accept();
+        //         this.incomingCallDialog = false;
+        //     }
+        // },
 
-        // Reject the Call
-        rejectCall() {
-            if (this.session) {
-                this.session.reject();
-                this.incomingCallDialog = false;
-            }
-        },
+        // // Reject the Call
+        // rejectCall() {
+        //     if (this.session) {
+        //         this.session.reject();
+        //         this.incomingCallDialog = false;
+        //     }
+        // },
 
         logEvent(message) {
             const timestamp = new Date().toLocaleTimeString();
