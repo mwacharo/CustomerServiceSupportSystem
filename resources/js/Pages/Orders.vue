@@ -554,6 +554,11 @@ export default {
             duration: 'Connecting...',
         },
         callId: null,
+        // callSessionState: null,
+        // callStatus: null,
+        // callAgentDialog: false,
+        // callAgent: null,
+        // callAgentDialog: false,
         selectedItem: null,
         afClient: null,
 
@@ -618,6 +623,8 @@ export default {
 
                 client.on('incomingcall', (event) => {
                 console.log("Incoming call received.");
+                console.log("Event Data:", event);
+                // this.$toastr.info("Incoming call from: " + event.from);
     
                 // Set dialog to true
                 this.incomingCallDialog = true;
@@ -628,6 +635,9 @@ export default {
                  duration: 'Connecting...'
                           };
                          });
+
+                            // Retrieve the call object correctly
+                        let incomingCall = event.call;  // ✅ Correct property
 
                     // Handle events for the ongoing call
                     incomingCall.on('established', () => {
@@ -670,6 +680,7 @@ export default {
                 this.afClient.on('callaccepted', () => {
                     // this.$toastr.success(Call accepted!);
                     console.log("callaccepted");
+                    this.$toastr.success("Call accepted!");
                     this.logEvent("Call accepted (bridged between caller and callee).");
                 });
 

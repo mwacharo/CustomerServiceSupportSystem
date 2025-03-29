@@ -27,43 +27,7 @@
     }
   });
 
-  // Initialize WebRTC when component mounts
-  // onMounted(() => {
-  //   loadWebRTCScript();
-  // });
-
-  // Function to dynamically load WebRTC script
-  // const loadWebRTCScript = () => {
-  //   if (document.querySelector('script[src*="africastalking.js"]')) {
-  //     return;
-  //   }
-
-  //   const script = document.createElement('script');
-  //   script.src = 'https://unpkg.com/africastalking-client@1.0.5/build/africastalking.js';
-  //   script.async = true;
-  //   script.onload = () => console.log("ATWebRTC script loaded successfully");
-  //   script.onerror = () => console.error("Failed to load ATWebRTC script");
-  //   document.head.appendChild(script);
-  // };
-
-
-
-  // const loadWebRTCScript = () => {
-  //   if (window.ATWebRTC) {
-  //     console.log("ATWebRTC is already loaded");
-  //     return;
-  //   }
-
-  //   const script = document.createElement("script");
-  //   script.src = "https://unpkg.com/africastalking-client@1.0.5/build/africastalking.js";
-  //   script.async = true;
-  //   script.onload = () => {
-  //     console.log("ATWebRTC script loaded successfully");
-  //   };
-  //   script.onerror = () => console.error("Failed to load ATWebRTC script");
-
-  //   document.head.appendChild(script);
-  // };
+  
 
   // Function to fetch token with enhanced logging
   const fetchToken = async () => {
