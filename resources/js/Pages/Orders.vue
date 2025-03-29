@@ -549,6 +549,11 @@ export default {
         phonePopup: false,
         newCall: false,
         incomingCallDialog: false,
+        incomingCall: {
+            from: '',
+            duration: 'Connecting...',
+        },
+        callId: null,
         selectedItem: null,
         afClient: null,
 
@@ -590,7 +595,7 @@ export default {
                 }
 
                 // Initialize Africastalking client with the valid token
-                const client = new Africastalking.Client(token);
+                const client = new Africastalking.Client(token,params);
                 console.log("Africastalking client initialized.");
                 this.afClient = client
 
