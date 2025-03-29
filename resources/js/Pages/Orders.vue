@@ -572,9 +572,7 @@ export default {
 
     methods: {
 
-        transferCall() {
-    this.openTransferDialog();
-},
+  
 
         async initializeAfricastalking() {
 
@@ -691,6 +689,10 @@ export default {
                 this.$toastr.error("Failed to initialize WebRTC client: " + error.message);
             }
         },
+
+        transferCall() {
+    this.openTransferDialog();
+},
 
 
 
@@ -884,12 +886,12 @@ export default {
 
        
     },
-    watch: {
-            // Watch for any change in the agents and filter again if needed
-            availableAgents(newAgents) {
-                this.availableAgents = newAgents.filter(agent => !agent.isInCall);
-            }
-        },
+    // watch: {
+    //         // Watch for any change in the agents and filter again if needed
+    //         availableAgents(newAgents) {
+    //             this.availableAgents = newAgents.filter(agent => !agent.isInCall);
+    //         }
+    //     },
     async mounted() {
         await this.initializeAfricastalking();
     }
