@@ -279,13 +279,13 @@
                             <v-btn color="success" @click="answerCall">
                                 Answer
                             </v-btn>
-                            <v-btn color="red" @click="rejectCall">
+                            <v-btn color="red" @click="hangupCall">
                                 Reject
                             </v-btn>
                             <v-btn color="primary" @click="transferCall">
-                                Transfer 
+                                Transfer
                             </v-btn>
-                            
+
                             <v-btn v-if="isCalling" color="grey" @click="handleMute">
                                 <v-icon left>mdi-microphone-off</v-icon>
                                 Mute
@@ -382,7 +382,6 @@
 <script>
 import AppLayout from "@/Layouts/AppLayout.vue";
 import { onMounted } from 'vue';
-
 import Africastalking from 'africastalking-client';
 import Pusher from "pusher-js";
 
@@ -550,7 +549,7 @@ export default {
         newCall: false,
         incomingCallDialog: false,
         incomingCall: {
-          
+
         },
         callId: null,
         // callSessionState: null,
@@ -601,7 +600,7 @@ export default {
                 }
 
                 // Initialize Africastalking client with the valid token
-                const client = new Africastalking.Client(token,params);
+                const client = new Africastalking.Client(token, params);
                 console.log("Africastalking client initialized.");
                 this.afClient = client
 
@@ -623,64 +622,64 @@ export default {
                 });
 
                 client.on('incomingcall', (event) => {
-                console.log("Incoming call received.");
-                console.log(`Incoming call from ${params.from}`);
+                    console.log("Incoming call received.");
+                    console.log(`Incoming call from ${params.from}`);
 
-                console.log("Event Data:", event);
-                // this.$toastr.info("Incoming call from: " + event.from);
-    
-                // Set dialog to true
-                this.incomingCallDialog = true;
-    
-                // Set incoming call details
-                 this.incomingCall = {
-                    incomingCallFrom : event.from,
-                 duration: 'Connecting...'
-                          };
-                         });
+                    console.log("Event Data:", event);
+                    // this.$toastr.info("Incoming call from: " + event.from);
 
-                            // Retrieve the call object correctly
-                        let incomingCall = event.call;  // ✅ Correct property
+                    // Set dialog to true
+                    this.incomingCallDialog = true;
+
+                    // Set incoming call details
+                    this.incomingCall = {
+                        incomingCallFrom: event.from,
+                        duration: 'Connecting...'
+                    };
+                });
+
+                // Retrieve the call object correctly
+                let incomingCall = event.call;  // ✅ Correct property
 
 
 
-                         // Answer the incoming call
-    // if (incomingCall.answer) {
-    //     console.log("Answering call...");
-    //     incomingCall.answer();  // This is the correct way to answer the call
-    // } else {
-    //     console.error("No answer function found in event.");
-    // }
+                // Answer the incoming call
+                // if (incomingCall.answer) {
+                //     console.log("Answering call...");
+                //     incomingCall.answer();  // This is the correct way to answer the call
+                // } else {
+                //     console.error("No answer function found in event.");
+                // }
 
-    // // Handle events for the active call
-    // incomingCall.on('established', () => {
-    //     console.log("Call established successfully.");
-    //     this.isCalling = true;
-    // });
+                // // Handle events for the active call
+                // incomingCall.on('established', () => {
+                //     console.log("Call established successfully.");
+                //     this.isCalling = true;
+                // });
 
-    // incomingCall.on('terminated', (reason) => {
-    //     console.log("Call terminated:", reason);
-    //     this.isCalling = false;
-    // });
+                // incomingCall.on('terminated', (reason) => {
+                //     console.log("Call terminated:", reason);
+                //     this.isCalling = false;
+                // });
 
-    // incomingCall.on('error', (error) => {
-    //     console.error("Call Error:", error);
-    // });
+                // incomingCall.on('error', (error) => {
+                //     console.error("Call Error:", error);
+                // });
 
-                    // Handle events for the ongoing call
-                    // incomingCall.on('established', () => {
-                    //     console.log("Call established successfully.");
-                    //     this.isCalling = true;
-                    // });
+                // Handle events for the ongoing call
+                // incomingCall.on('established', () => {
+                //     console.log("Call established successfully.");
+                //     this.isCalling = true;
+                // });
 
-                    // incomingCall.on('terminated', (reason) => {
-                    //     console.log("Call terminated:", reason);
-                    //     this.isCalling = false;
-                    // });
+                // incomingCall.on('terminated', (reason) => {
+                //     console.log("Call terminated:", reason);
+                //     this.isCalling = false;
+                // });
 
-                    // incomingCall.on('error', (error) => {
-                    //     console.error("Call Error:", error);
-                    // });
+                // incomingCall.on('error', (error) => {
+                //     console.error("Call Error:", error);
+                // });
 
                 // Save the client instance for later use
                 this.$webrtcClient = client;
@@ -691,8 +690,8 @@ export default {
         },
 
         transferCall() {
-    this.openTransferDialog();
-},
+            this.openTransferDialog();
+        },
 
 
 
@@ -729,15 +728,15 @@ export default {
         }
         ,
 
-                  // Answer the Call
-                   answerCall() {
-    //          if (this.session) {
-    //             this.session.accept();
-    if (this.incomingCall) {
+        // Answer the Call
+        answerCall() {
+            //          if (this.session) {
+            //             this.session.accept();
+            if (this.incomingCall) {
                 this.afClient.answer();
             }
-    //    }
-},
+            //    }
+        },
 
         // // Reject the Call
         // rejectCall() {
@@ -893,7 +892,7 @@ export default {
             console.log('Calling agent:', agent);
         },
 
-       
+
     },
     // watch: {
     //         // Watch for any change in the agents and filter again if needed
