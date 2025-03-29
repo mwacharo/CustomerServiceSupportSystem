@@ -272,7 +272,7 @@
                             </v-btn>
                         </v-card-title>
                         <v-card-text>
-                            <p>Call from: {{ incomingCallFrom.from }}</p>
+                            <p>Call from: {{ incomingCall.from }}</p>
                             <p>Duration: {{ incomingCall.duration }}</p>
                         </v-card-text>
                         <v-card-actions>
@@ -558,8 +558,10 @@ export default {
         // callAgentDialog: false,
         // callAgent: null,
         // callAgentDialog: false,
-        selectedItem: null,
+        // selectedItem: null,
         afClient: null,
+
+        session: null,
 
 
         selectedItem: {
@@ -569,6 +571,10 @@ export default {
     }),
 
     methods: {
+
+        transferCall() {
+    this.openTransferDialog();
+},
 
         async initializeAfricastalking() {
 
@@ -638,20 +644,45 @@ export default {
                             // Retrieve the call object correctly
                         let incomingCall = event.call;  // ✅ Correct property
 
+
+
+                         // Answer the incoming call
+    if (event.answer) {
+        console.log("Answering call...");
+        event.answer();  // This is the correct way to answer the call
+    } else {
+        console.error("No answer function found in event.");
+    }
+
+    // Handle events for the active call
+    event.on('established', () => {
+        console.log("Call established successfully.");
+        this.isCalling = true;
+    });
+
+    event.on('terminated', (reason) => {
+        console.log("Call terminated:", reason);
+        this.isCalling = false;
+    });
+
+    event.on('error', (error) => {
+        console.error("Call Error:", error);
+    });
+
                     // Handle events for the ongoing call
-                    incomingCall.on('established', () => {
-                        console.log("Call established successfully.");
-                        this.isCalling = true;
-                    });
+                    // incomingCall.on('established', () => {
+                    //     console.log("Call established successfully.");
+                    //     this.isCalling = true;
+                    // });
 
-                    incomingCall.on('terminated', (reason) => {
-                        console.log("Call terminated:", reason);
-                        this.isCalling = false;
-                    });
+                    // incomingCall.on('terminated', (reason) => {
+                    //     console.log("Call terminated:", reason);
+                    //     this.isCalling = false;
+                    // });
 
-                    incomingCall.on('error', (error) => {
-                        console.error("Call Error:", error);
-                    });
+                    // incomingCall.on('error', (error) => {
+                    //     console.error("Call Error:", error);
+                    // });
 
                 // Save the client instance for later use
                 this.$webrtcClient = client;
@@ -851,13 +882,14 @@ export default {
             console.log('Calling agent:', agent);
         },
 
-        watch: {
+       
+    },
+    watch: {
             // Watch for any change in the agents and filter again if needed
             availableAgents(newAgents) {
                 this.availableAgents = newAgents.filter(agent => !agent.isInCall);
             }
-        }
-    },
+        },
     async mounted() {
         await this.initializeAfricastalking();
     }
