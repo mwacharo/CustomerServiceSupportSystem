@@ -647,25 +647,25 @@ export default {
 
 
                          // Answer the incoming call
-    if (event.answer) {
+    if (incomingCall.answer) {
         console.log("Answering call...");
-        event.answer();  // This is the correct way to answer the call
+        incomingCall.answer();  // This is the correct way to answer the call
     } else {
         console.error("No answer function found in event.");
     }
 
     // Handle events for the active call
-    event.on('established', () => {
+    incomingCall.on('established', () => {
         console.log("Call established successfully.");
         this.isCalling = true;
     });
 
-    event.on('terminated', (reason) => {
+    incomingCall.on('terminated', (reason) => {
         console.log("Call terminated:", reason);
         this.isCalling = false;
     });
 
-    event.on('error', (error) => {
+    incomingCall.on('error', (error) => {
         console.error("Call Error:", error);
     });
 
