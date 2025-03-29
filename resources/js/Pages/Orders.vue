@@ -272,7 +272,7 @@
                             </v-btn>
                         </v-card-title>
                         <v-card-text>
-                            <p>Call from: {{ incomingCall.from }}</p>
+                            <p>Call from: {{ incomingCallFrom.from }}</p>
                             <p>Duration: {{ incomingCall.duration }}</p>
                         </v-card-text>
                         <v-card-actions>
@@ -550,8 +550,7 @@ export default {
         newCall: false,
         incomingCallDialog: false,
         incomingCall: {
-            from: '',
-            duration: 'Connecting...',
+          
         },
         callId: null,
         // callSessionState: null,
