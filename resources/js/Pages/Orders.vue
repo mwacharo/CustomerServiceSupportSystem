@@ -734,7 +734,7 @@ export default {
     //          if (this.session) {
     //             this.session.accept();
     if (this.incomingCall) {
-                this.client.answer();
+                this.afClient.answer();
             }
     //    }
 },
@@ -748,8 +748,8 @@ export default {
         // },
 
         hangupCall() {
-            if (this.client) {
-                this.client.hangup();
+            if (this.incomingCall) {
+                this.afClient.hangup();
             }
         },
 
