@@ -572,8 +572,6 @@ export default {
 
     methods: {
 
-  
-
         async initializeAfricastalking() {
 
             const params = {
@@ -626,6 +624,8 @@ export default {
 
                 client.on('incomingcall', (event) => {
                 console.log("Incoming call received.");
+                console.log(`Incoming call from ${params.from}`);
+
                 console.log("Event Data:", event);
                 // this.$toastr.info("Incoming call from: " + event.from);
     
@@ -645,27 +645,27 @@ export default {
 
 
                          // Answer the incoming call
-    if (incomingCall.answer) {
-        console.log("Answering call...");
-        incomingCall.answer();  // This is the correct way to answer the call
-    } else {
-        console.error("No answer function found in event.");
-    }
+    // if (incomingCall.answer) {
+    //     console.log("Answering call...");
+    //     incomingCall.answer();  // This is the correct way to answer the call
+    // } else {
+    //     console.error("No answer function found in event.");
+    // }
 
-    // Handle events for the active call
-    incomingCall.on('established', () => {
-        console.log("Call established successfully.");
-        this.isCalling = true;
-    });
+    // // Handle events for the active call
+    // incomingCall.on('established', () => {
+    //     console.log("Call established successfully.");
+    //     this.isCalling = true;
+    // });
 
-    incomingCall.on('terminated', (reason) => {
-        console.log("Call terminated:", reason);
-        this.isCalling = false;
-    });
+    // incomingCall.on('terminated', (reason) => {
+    //     console.log("Call terminated:", reason);
+    //     this.isCalling = false;
+    // });
 
-    incomingCall.on('error', (error) => {
-        console.error("Call Error:", error);
-    });
+    // incomingCall.on('error', (error) => {
+    //     console.error("Call Error:", error);
+    // });
 
                     // Handle events for the ongoing call
                     // incomingCall.on('established', () => {
@@ -731,16 +731,25 @@ export default {
 
                   // Answer the Call
                    answerCall() {
-             if (this.session) {
-                this.session.accept();
-       }
+    //          if (this.session) {
+    //             this.session.accept();
+    if (this.incomingCall) {
+                this.client.answer();
+            }
+    //    }
 },
 
         // // Reject the Call
-        rejectCall() {
-            if (this.session) {
-                this.session.reject();
-                this.incomingCallDialog = false;
+        // rejectCall() {
+        //     if (this.session) {
+        //         this.session.reject();
+        //         this.incomingCallDialog = false;
+        //     }
+        // },
+
+        hangupCall() {
+            if (this.client) {
+                this.client.hangup();
             }
         },
 
