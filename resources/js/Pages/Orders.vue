@@ -147,7 +147,7 @@
 
 
                             <!-- Hangup Button -->
-                            <v-btn v-if="isCalling" color="red" @click="handleHangup">
+                            <v-btn v-if="isCalling" color="red" @click="hangupCall">
                                 <v-icon left>mdi-phone-off</v-icon>
                                 Hangup
                             </v-btn>
@@ -234,7 +234,7 @@
                                 </v-btn>
 
                                 <!-- Hangup Button -->
-                                <v-btn v-if="isCalling" color="red" @click="handleHangup">
+                                <v-btn v-if="isCalling" color="red" @click="hangupCall">
                                     <v-icon left>mdi-phone-off</v-icon>
                                     Hangup
                                 </v-btn>
@@ -244,6 +244,27 @@
                                     <v-icon left>mdi-pause</v-icon>
                                     Hold
                                 </v-btn>
+
+
+
+                                <v-btn v-if="isCalling" color="grey" @click="handleMute">
+                                <v-icon left>mdi-microphone-off</v-icon>
+                                Mute
+                            </v-btn>
+
+                            <v-btn v-if="isCalling" color="grey" @click="unmute">
+                                <v-icon left>mdi-microphone-on</v-icon>
+                                Unmute
+                            </v-btn>
+
+                            <v-btn v-if="isCalling" color="grey" @click="handleHold">
+                                <v-icon left>mdi-pause</v-icon>
+                                Hold
+                            </v-btn>
+                            <v-btn v-if="isCalling" color="blue" @click="unhold">
+                                <v-icon left>mdi-phone-transfer</v-icon>
+                                Unhold
+                            </v-btn>
 
                                 <!-- Transfer Button -->
                                 <!-- <v-btn v-if="isCalling" color="blue" @click="handleTransfer">
@@ -291,9 +312,18 @@
                                 Mute
                             </v-btn>
 
+                            <v-btn v-if="isCalling" color="grey" @click="unmute">
+                                <v-icon left>mdi-microphone-on</v-icon>
+                                Unmute
+                            </v-btn>
+
                             <v-btn v-if="isCalling" color="grey" @click="handleHold">
                                 <v-icon left>mdi-pause</v-icon>
                                 Hold
+                            </v-btn>
+                            <v-btn v-if="isCalling" color="blue" @click="unhold">
+                                <v-icon left>mdi-phone-transfer</v-icon>
+                                Unhold
                             </v-btn>
                         </v-card-actions>
                     </v-card>
@@ -721,6 +751,26 @@ export default {
                     this.isCalling = false;
                     this.activeCall = null;
                 });
+
+                this.afClient.on('mute', () => {
+                    this.logEvent("Call muted.");
+                    this.$toastr.info("Call muted.");
+                });
+
+                this.afClient.on('unmute', () => {
+                    this.logEvent("Call unmuted.");
+                    this.$toastr.info("Call unmuted.");
+                });
+
+
+                this.afClient.on('hold', () => {
+                    this.logEvent("Call on hold.");
+                    this.$toastr.info("Call on hold.");
+                });
+                this.afClient.on('unhold', () => {
+                    this.logEvent("Call resumed from hold.");
+                    this.$toastr.info("Call resumed from hold.");
+                });
             } catch (error) {
                 console.error("Call initiation error:", error);
                 this.$toastr.error("Call failed: " + error.message);
@@ -739,14 +789,15 @@ export default {
             if (this.incomingCall) {
                 this.afClient.hangup();
 
-               console.log('call rejected');
+                console.log('call rejected');
                 this.$toastr.error("Call rejected.");
                 this.incomingCallDialog = false;
                 this.isCalling = false;
-            }else{
+            } else {
 
             }
         },
+        
 
         logEvent(message) {
             const timestamp = new Date().toLocaleTimeString();
@@ -762,24 +813,25 @@ export default {
         // Open the transfer dialog
         openTransferDialog() {
             this.transferDialog = true;
-        },
-        // Handle transferring the call to the selected agent
-        handleTransfer() {
-            if (this.selectedAgent) {
-                // Send transfer request to the backend with selected agent
-                axios.post('/api/v1/transfer-call', { agentId: this.selectedAgent })
-                    .then(response => {
-                        console.log('Call transferred successfully');
-                        // Close the dialog after transfer
-                        this.transferDialog = false;
-                    })
-                    .catch(error => {
-                        console.error('Error transferring call:', error);
-                    });
-            } else {
-                console.log('No agent selected');
-            }
         }
+        // ,
+        // Handle transferring the call to the selected agent
+        // handleTransfer() {
+        //     if (this.selectedAgent) {
+        //         // Send transfer request to the backend with selected agent
+        //         axios.post('/api/v1/transfer-call', { agentId: this.selectedAgent })
+        //             .then(response => {
+        //                 console.log('Call transferred successfully');
+        //                 // Close the dialog after transfer
+        //                 this.transferDialog = false;
+        //             })
+        //             .catch(error => {
+        //                 console.error('Error transferring call:', error);
+        //             });
+        //     } else {
+        //         console.log('No agent selected');
+        //     }
+        // }
 
         // Open the dialog to show the queued calls
         , openQueueDialog() {
@@ -787,76 +839,76 @@ export default {
             this.queueDialog = true;
         },
         // Fetch queued calls from the backend
-        fetchQueuedCalls() {
-            axios.get('/api/v1/queued-calls')
-                .then(response => {
-                    this.queuedCalls = response.data; // Assign fetched queued calls
-                })
-                .catch(error => {
-                    console.error('Error fetching queued calls:', error);
-                });
-        },
+        // fetchQueuedCalls() {
+        //     axios.get('/api/v1/queued-calls')
+        //         .then(response => {
+        //             this.queuedCalls = response.data; // Assign fetched queued calls
+        //         })
+        //         .catch(error => {
+        //             console.error('Error fetching queued calls:', error);
+        //         });
+        // },
         // Dequeue a call
-        dequeueCall(callId) {
-            axios.post('/api/v1/dequeue-call', { callId })
-                .then(response => {
-                    console.log('Call dequeued:', response.data);
-                    this.fetchQueuedCalls(); // Re-fetch the queued calls after dequeuing
-                })
-                .catch(error => {
-                    console.error('Error dequeuing call:', error);
-                });
-        },
+        // dequeueCall(callId) {
+        //     axios.post('/api/v1/dequeue-call', { callId })
+        //         .then(response => {
+        //             console.log('Call dequeued:', response.data);
+        //             this.fetchQueuedCalls(); // Re-fetch the queued calls after dequeuing
+        //         })
+        //         .catch(error => {
+        //             console.error('Error dequeuing call:', error);
+        //         });
+        // },
 
-        handleHangup() {
-            // Check if the callId exists
-            if (this.callId) {
-                axios.post('/api/v1/hangup-call', { callId: this.callId })
-                    .then(response => {
-                        this.isCalling = false;  // Set calling state to false
-                        console.log('Call ended', response.data);
-                    })
-                    .catch(error => {
-                        console.error('Error ending the call', error);
-                    });
-            } else {
-                console.log('Call ID not available');
-            }
-        }
-        ,
-        handleHold() {
-            // Check if the callId exists
-            if (this.callId) {
-                axios.post('/api/v1/hold-call', { callId: this.callId })
-                    .then(response => {
-                        console.log('Call on hold', response.data);
-                        // Handle UI updates for putting the call on hold, if needed
-                    })
-                    .catch(error => {
-                        console.error('Error putting the call on hold', error);
-                    });
-            } else {
-                console.log('Call ID not available');
-            }
-        }
-        ,
-        handleTransfer() {
-            const transferToPhone = '254700000000'; // Replace with the destination phone number
+        // handleHangup() {
+        //     // Check if the callId exists
+        //     if (this.callId) {
+        //         axios.post('/api/v1/hangup-call', { callId: this.callId })
+        //             .then(response => {
+        //                 this.isCalling = false;  // Set calling state to false
+        //                 console.log('Call ended', response.data);
+        //             })
+        //             .catch(error => {
+        //                 console.error('Error ending the call', error);
+        //             });
+        //     } else {
+        //         console.log('Call ID not available');
+        //     }
+        // }
+        // ,
+        // handleHold() {
+        //     // Check if the callId exists
+        //     if (this.callId) {
+        //         axios.post('/api/v1/hold-call', { callId: this.callId })
+        //             .then(response => {
+        //                 console.log('Call on hold', response.data);
+        //                 // Handle UI updates for putting the call on hold, if needed
+        //             })
+        //             .catch(error => {
+        //                 console.error('Error putting the call on hold', error);
+        //             });
+        //     } else {
+        //         console.log('Call ID not available');
+        //     }
+        // }
+        // ,
+        // handleTransfer() {
+        //     const transferToPhone = '254700000000'; // Replace with the destination phone number
 
-            // Check if the callId exists
-            if (this.callId) {
-                axios.post('/api/v1/transfer-call', { callId: this.callId, destination: transferToPhone })
-                    .then(response => {
-                        console.log('Call transferred', response.data);
-                    })
-                    .catch(error => {
-                        console.error('Error transferring the call', error);
-                    });
-            } else {
-                console.log('Call ID not available');
-            }
-        }
-        ,
+        //     // Check if the callId exists
+        //     if (this.callId) {
+        //         axios.post('/api/v1/transfer-call', { callId: this.callId, destination: transferToPhone })
+        //             .then(response => {
+        //                 console.log('Call transferred', response.data);
+        //             })
+        //             .catch(error => {
+        //                 console.error('Error transferring the call', error);
+        //             });
+        //     } else {
+        //         console.log('Call ID not available');
+        //     }
+        // }
+        // ,
         loadItems({ page, itemsPerPage, sortBy }) {
             this.loading = true;
             FakeAPI.fetch({
