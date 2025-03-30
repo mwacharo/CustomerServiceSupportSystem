@@ -12,11 +12,7 @@
                                     <v-icon color="green">mdi-phone</v-icon>
                                     <span class="ml-3">Make a new Call</span>
                                 </div>
-                                <!-- <div class="d-flex align-center mt-2">
-                                    <v-icon color="blue">mdi-account</v-icon>
-                                    <span class="ml-3">Call an agent</span>
-                                </div> -->
-
+                            
                                 <!-- Call Agent Trigger -->
                                 <div class="d-flex align-center mt-2" @click="openCallAgent">
                                     <v-icon color="blue">mdi-account</v-icon>
@@ -27,13 +23,7 @@
                                     <span class="ml-3">Missed Calls</span>
                                     <span class="ml-auto">60,400</span>
                                 </div>
-                                <!-- <div class="d-flex align-center mt-2">
-                                    <v-icon color="orange">mdi-check-decagram</v-icon>
-                                    <span class="ml-3">Check Queue</span>
-                                    <span class="ml-auto">...</span>
-                                </div> -->
-
-
+            
                                 <div class="d-flex align-center mt-2" @click="openQueueDialog">
                                     <v-icon color="orange">mdi-check-decagram</v-icon>
                                     <span class="ml-3">Check Queue</span>
@@ -70,17 +60,30 @@
 
                 <v-card>
 
+                    <!-- Include search area with mdi magnify icon -->
+                   
+                    <v-text-field
+                                v-model="searchQuery"
+                                label="Search"
+                                prepend-inner-icon="mdi-magnify"
+                                outlined
+                                dense
+                                clearable
+                            ></v-text-field>
                     <!-- Tabs at the top -->
                     <v-tabs v-model="tab" color="primary">
+
+                         
+                   
                         <v-tab value="calls">Calls</v-tab>
                         <v-tab value="orders">Orders</v-tab>
                     </v-tabs>
 
                     <!-- Tab content -->
-                    <v-tabs-items v-model="tab">
+                    <v-window v-model="tab">
 
                         <!-- Calls Tab -->
-                        <v-tab-item value="calls">
+                        <v-window-item value="tabs">
                             <v-data-table :headers="callsheaders" :items="calls" item-value="id"
                                 class="elevation-1 mt-4" :items-per-page="15">
                                 <!-- Example of a custom slot for an actions column -->
@@ -96,10 +99,10 @@
                                 </template>
 
                             </v-data-table>
-                        </v-tab-item>
+                        </v-window-item>
 
                         <!-- Orders Tab -->
-                        <v-tab-item value="orders">
+                        <v-window-item value="orders">
                             <v-data-table :headers="headers" :items="serverItems" :loading="loading"
                                 class="elevation-1 mt-4">
                                 <!-- Example of customizing the table body -->
@@ -121,9 +124,9 @@
                                     </tr>
                                 </template>
                             </v-data-table>
-                        </v-tab-item>
+                        </v-window-item>
 
-                    </v-tabs-items>
+                    </v-window>
 
                 </v-card>
                 <!-- Dialog for Calling an Agent -->
@@ -433,6 +436,11 @@ const FakeAPI = {
         });
     },
 };
+
+
+const tab = ref("orders");
+const searchQuery = ref("");
+
 
 export default {
 
