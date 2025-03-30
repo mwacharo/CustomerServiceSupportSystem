@@ -800,9 +800,11 @@ export default {
             if (this.isCalling) {
                 this.afClient.mute();
                 this.isMuted = !this.isMuted;
-                this.logEvent(this.isMuted ? "Call muted." : "Call unmuted.");
-            }
-        },
+                console.log('call is muted');
+
+                // this.logEvent(this.isMuted ? "Call muted." : "Call unmuted.");
+        }
+    },
         // hold the call and unhold the call
         handleHoldToggle() {
             if (this.isCalling) {
@@ -811,7 +813,6 @@ export default {
                 this.logEvent(this.isOnHold ? "Call on hold." : "Call resumed from hold.");
             }
         },
-
 
         logEvent(message) {
             const timestamp = new Date().toLocaleTimeString();
