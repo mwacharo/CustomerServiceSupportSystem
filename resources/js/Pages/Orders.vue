@@ -956,6 +956,15 @@ export default {
                     console.error('Error fetching call history:', error);
                 });
         },
+        fetchOrders(){
+            axios.get('/api/v1/orders')
+                .then(response => {
+                    this.orders = response.data.orders;
+                })
+                .catch(error => {
+                    console.error('Error fetching orders:', error);
+                });
+        }
 
 
     },
@@ -968,6 +977,7 @@ export default {
     async mounted() {
         await this.initializeAfricastalking();
         this.fetchCallHistory();
+        this.fetchOrders();
     }
 
 };
