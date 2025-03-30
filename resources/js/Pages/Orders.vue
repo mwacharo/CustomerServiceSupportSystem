@@ -85,24 +85,14 @@
                                 class="elevation-1 mt-4" :items-per-page="15">
                                 <!-- Example of a custom slot for an actions column -->
                                 <template #item.actions="{ item }">
-                                    <!-- <v-btn color="red" @click="recordCall(item)" rounded="lg" block>
-                                        <v-icon>mdi-record</v-icon> Record
-                                    </v-btn> -->
+                                 
                                     <v-btn color="blue" @click="playRecording(item)" rounded="lg" block>
                                         <v-icon>mdi-play</v-icon> Play
                                     </v-btn>
-                                    <v-btn color="green" @click="downloadRecording(item)" rounded="lg" block>
+                                    <!-- <v-btn color="green" @click="downloadRecording(item)" rounded="lg" block>
                                         <v-icon>mdi-download</v-icon> Download
-                                    </v-btn>
-                                    <v-tooltip bottom>
-                                        <template #activator="{ on, attrs }">
-                                            <v-btn color="orange" v-bind="attrs" v-on="on" @click="viewDetails(item)"
-                                                rounded="lg" block>
-                                                <v-icon>mdi-information</v-icon> Details
-                                            </v-btn>
-                                        </template>
-                                        <span>View Call Details</span>
-                                    </v-tooltip>
+                                    </v-btn> -->
+                                   
                                 </template>
 
                             </v-data-table>
@@ -547,11 +537,11 @@ export default {
             { title: "Call Status", value: "status" },
             // { title: "Direction", value: "direction" },
             // { title: "Currency Code", value: "currencyCode" },
-            { title: "Recording URL", value: "recordingUrl" },
+            // { title: "Recording URL", value: "recordingUrl" },
             // { title: "Hangup Cause", value: "hangupCause" },
             { title: "HangupCause", value: "lastBridgeHangupCause" },
             { title: "Call Session State", value: "callSessionState" },
-            { title: "Session ID", value: "sessionId" },
+            // { title: "Session ID", value: "sessionId" },
 
             // { title: "Admin ID", value: "adminId" },
             // { title: "Agent ID", value: "agentId" },
