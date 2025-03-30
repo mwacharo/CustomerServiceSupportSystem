@@ -85,9 +85,23 @@
                                 class="elevation-1 mt-4" :items-per-page="15">
                                 <!-- Example of a custom slot for an actions column -->
                                 <template #item.actions="{ item }">
-                                    <v-btn icon color="red">
+                                    <v-btn icon color="red" @click="recordCall(item)">
                                         <v-icon>mdi-record-circle</v-icon>
                                     </v-btn>
+                                    <v-btn icon color="blue" @click="playRecording(item)">
+                                        <v-icon>mdi-play-circle</v-icon>
+                                    </v-btn>
+                                    <v-btn icon color="green" @click="downloadRecording(item)">
+                                        <v-icon>mdi-download-circle</v-icon>
+                                    </v-btn>
+                                    <v-tooltip bottom>
+                                        <template #activator="{ on, attrs }">
+                                            <v-btn icon color="orange" v-bind="attrs" v-on="on" @click="viewDetails(item)">
+                                                <v-icon>mdi-information</v-icon>
+                                            </v-btn>
+                                        </template>
+                                        <span>View Call Details</span>
+                                    </v-tooltip>
                                 </template>
                             </v-data-table>
                         </v-tab-item>
@@ -520,22 +534,23 @@ export default {
             { title: "Phone", key: "phone", align: "start" },
         ],
         callsheaders: [
-            { title: "Created At", value: "created_at" },
+            { title: "Date", value: "created_at" },
             { title: "Caller No.", value: "callerNumber" },
             { title: "Destination Number", value: "destinationNumber" },
             { title: "clientDialed Number", value: "clientDialedNumber" },
             // { title: "Phone", value: "phone" },
-            { title: "Call Session State", value: "callSessionState" },
             { title: "Duration In Seconds", value: "durationInSeconds" },
             { title: "Amount", value: "amount" },
             { title: "Caller Carrier", value: "callerCarrier" },
             { title: "Call Status", value: "status" },
             // { title: "Direction", value: "direction" },
-            { title: "Session ID", value: "sessionId" },
-            { title: "Currency Code", value: "currencyCode" },
+            // { title: "Currency Code", value: "currencyCode" },
             { title: "Recording URL", value: "recordingUrl" },
-            { title: "Hangup Cause", value: "hangupCause" },
-            { title: "lastBridgeHangupCause", value: "lastBridgeHangupCause" },
+            // { title: "Hangup Cause", value: "hangupCause" },
+            { title: "HangupCause", value: "lastBridgeHangupCause" },
+            { title: "Call Session State", value: "callSessionState" },
+            { title: "Session ID", value: "sessionId" },
+
             // { title: "Admin ID", value: "adminId" },
             // { title: "Agent ID", value: "agentId" },
             // { title: "Order No.", value: "orderNo" },
