@@ -20,15 +20,15 @@ export default defineConfig({
     ],
     
 
-    build: {
+    // build: {
 
-        rollupOptions: {
+    //     rollupOptions: {
 
-            external: ['pusher-js'],
+    //         external: ['pusher-js'],
 
-        },
+    //     },
 
-    },
+    // },
 });
 
 

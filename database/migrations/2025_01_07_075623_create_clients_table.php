@@ -18,6 +18,12 @@ return new class extends Migration
             $table->string('alt_phone_number', 15)->unique();
             $table->string('name');
             $table->string('email')->nullable();
+            $table->string('address')->nullable();
+            $table->string('city')->nullable();
+            $table->string('state')->nullable();
+            // $table->string('zip')->nullable();
+            // $table->string('country')->nullable();
+            // $table->string('company')->nullable();
             $table->timestamps();
             $table->softDeletes();
         });

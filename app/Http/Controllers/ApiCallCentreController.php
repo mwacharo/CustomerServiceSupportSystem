@@ -17,7 +17,6 @@ use App\Models\CallQueue;
 use App\Models\IvrOption;
 use App\Models\Officer;
 use App\Models\User;
-use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
@@ -398,9 +397,13 @@ class ApiCallCentreController extends Controller
                     'callerCarrierName' => $payload['callerCarrierName'] ?? null,
                     'dialStartTime' => $payload['dialStartTime'] ?? null,
                     'dialDurationInSeconds' => $payload['dialDurationInSeconds'] ?? null,
-                    // 'clientDialedNumber' => $payload['clientDialedNumber'] ?? null,
+                    'clientDialedNumber' => $payload['clientDialedNumber'] ?? null,
                     'callerNumber' => $payload['callerNumber'] ?? null,
                     'recordingUrl' => $payload['recordingUrl'] ?? null,
+                    'hangupCause' => $payload['hangupCause'] ?? null,
+                    'callSessionState' => $payload['callSessionState'] ?? null,
+                    'lastBridgeHangupCause' => $payload['lastBridgeHangupCause'] ?? null,
+                    
                 ]
             );
 
