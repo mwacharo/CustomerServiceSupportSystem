@@ -85,24 +85,26 @@
                                 class="elevation-1 mt-4" :items-per-page="15">
                                 <!-- Example of a custom slot for an actions column -->
                                 <template #item.actions="{ item }">
-                                    <v-btn icon color="red" @click="recordCall(item)">
-                                        <v-icon>mdi-record-circle</v-icon>
+                                    <!-- <v-btn color="red" @click="recordCall(item)" rounded="lg" block>
+                                        <v-icon>mdi-record</v-icon> Record
+                                    </v-btn> -->
+                                    <v-btn color="blue" @click="playRecording(item)" rounded="lg" block>
+                                        <v-icon>mdi-play</v-icon> Play
                                     </v-btn>
-                                    <v-btn icon color="blue" @click="playRecording(item)">
-                                        <v-icon>mdi-play-circle</v-icon>
-                                    </v-btn>
-                                    <v-btn icon color="green" @click="downloadRecording(item)">
-                                        <v-icon>mdi-download-circle</v-icon>
+                                    <v-btn color="green" @click="downloadRecording(item)" rounded="lg" block>
+                                        <v-icon>mdi-download</v-icon> Download
                                     </v-btn>
                                     <v-tooltip bottom>
                                         <template #activator="{ on, attrs }">
-                                            <v-btn icon color="orange" v-bind="attrs" v-on="on" @click="viewDetails(item)">
-                                                <v-icon>mdi-information</v-icon>
+                                            <v-btn color="orange" v-bind="attrs" v-on="on" @click="viewDetails(item)"
+                                                rounded="lg" block>
+                                                <v-icon>mdi-information</v-icon> Details
                                             </v-btn>
                                         </template>
                                         <span>View Call Details</span>
                                     </v-tooltip>
                                 </template>
+
                             </v-data-table>
                         </v-tab-item>
 
@@ -559,7 +561,7 @@ export default {
             // { title: "Conference", value: "conference" },
             { title: "Actions", value: "actions", sortable: false },
         ],
-     
+
         serverItems: [
             {
                 product: "Phone",
@@ -963,8 +965,7 @@ export default {
             console.log('Calling agent:', agent);
         },
 
-        fetchCallHistory()
-        {
+        fetchCallHistory() {
             axios.get('/api/v1/call-history')
                 .then(response => {
                     this.calls = response.data.callHistories;
@@ -973,7 +974,7 @@ export default {
                     console.error('Error fetching call history:', error);
                 });
         },
-        fetchOrders(){
+        fetchOrders() {
             axios.get('/api/v1/orders')
                 .then(response => {
                     this.orders = response.data.orders;
