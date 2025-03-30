@@ -16,5 +16,20 @@ export default defineConfig({
                 },
             },
         }),
+        
     ],
+    
+
+    build: {
+
+        rollupOptions: {
+
+            external: ['pusher-js'],
+
+        },
+
+    },
 });
+
+
+
