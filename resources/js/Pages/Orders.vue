@@ -446,20 +446,20 @@ export default {
     },
 
 
-    mounted() {
-        const pusher = new Pusher("your_app_key", {
-            cluster: "your_cluster",
-            encrypted: true
-        });
+    // mounted() {
+    //     const pusher = new Pusher("your_app_key", {
+    //         cluster: "your_cluster",
+    //         encrypted: true
+    //     });
 
-        const channel = pusher.subscribe("call-updates");
-        channel.bind("call.status", (data) => {
-            console.log("Call status update:", data);
-            this.$toastr.info(`Call status: ${data.status}`);
-        });
+    //     const channel = pusher.subscribe("call-updates");
+    //     channel.bind("call.status", (data) => {
+    //         console.log("Call status update:", data);
+    //         this.$toastr.info(`Call status: ${data.status}`);
+    //     });
 
-        this.fetchCallHistory();
-    },
+    //     console.log('testing');
+    // },
 
     components: { AppLayout },
     data: () => ({
@@ -955,6 +955,7 @@ export default {
     //     },
     async mounted() {
         await this.initializeAfricastalking();
+        this.fetchCallHistory();
     }
 
 };
