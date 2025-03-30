@@ -693,7 +693,7 @@ private function recordVoicemail()
         try {
             
             $callHistories = CallHistory::where('created_at', '>=', Carbon::now()->subDays(1))
-                ->orderBy('created_at', 'desc')
+                ->orderBy('created_at', 'asc')
                 ->get();
 
             return response()->json([
