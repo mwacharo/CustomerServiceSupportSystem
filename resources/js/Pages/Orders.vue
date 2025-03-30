@@ -781,7 +781,7 @@ export default {
                 this.afClient.answer();
             }
         },
-
+        //  hangup the call
         hangupCall() {
             if (this.incomingCall) {
                 this.afClient.hangup();
@@ -792,6 +792,23 @@ export default {
                 this.isCalling = false;
             } else {
 
+            }
+        },
+
+        // mute the call and unmute the call
+        handleMute() {
+            if (this.isCalling) {
+                this.afClient.mute();
+                this.isMuted = !this.isMuted;
+                this.logEvent(this.isMuted ? "Call muted." : "Call unmuted.");
+            }
+        },
+        // hold the call and unhold the call
+        handleHoldToggle() {
+            if (this.isCalling) {
+                this.afClient.hold();
+                this.isOnHold = !this.isOnHold;
+                this.logEvent(this.isOnHold ? "Call on hold." : "Call resumed from hold.");
             }
         },
 
