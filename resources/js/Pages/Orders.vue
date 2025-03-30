@@ -82,7 +82,7 @@
                         <!-- Calls Tab -->
                         <v-tab-item value="calls">
                             <v-data-table :headers="callsheaders" :items="calls" item-value="id"
-                                class="elevation-1 mt-4" :items-per-page="10">
+                                class="elevation-1 mt-4" :items-per-page="15">
                                 <!-- Example of a custom slot for an actions column -->
                                 <template #item.actions="{ item }">
                                     <v-btn icon color="red">
