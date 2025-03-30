@@ -730,25 +730,21 @@ export default {
 
         // Answer the Call
         answerCall() {
-            //          if (this.session) {
-            //             this.session.accept();
             if (this.incomingCall) {
                 this.afClient.answer();
             }
-            //    }
         },
-
-        // // Reject the Call
-        // rejectCall() {
-        //     if (this.session) {
-        //         this.session.reject();
-        //         this.incomingCallDialog = false;
-        //     }
-        // },
 
         hangupCall() {
             if (this.incomingCall) {
                 this.afClient.hangup();
+
+               console.log('call rejected');
+                this.$toastr.error("Call rejected.");
+                this.incomingCallDialog = false;
+                this.isCalling = false;
+            }else{
+
             }
         },
 
