@@ -239,32 +239,16 @@
                                     Hangup
                                 </v-btn>
 
-                                <!-- Hold Button -->
-                                <v-btn v-if="isCalling" color="grey" @click="handleHold">
-                                    <v-icon left>mdi-pause</v-icon>
-                                    Hold
+
+                                <v-btn v-if="isCalling" color="warning" @click="handleMute">
+                                    <v-icon left>{{ isMuted ? 'mdi-microphone-off' : 'mdi-microphone' }}</v-icon>
+                                    {{ isMuted ? 'Unmute' : 'Mute' }}
                                 </v-btn>
 
-
-
-                                <v-btn v-if="isCalling" color="grey" @click="handleMute">
-                                <v-icon left>mdi-microphone-off</v-icon>
-                                Mute
-                            </v-btn>
-
-                            <v-btn v-if="isCalling" color="grey" @click="unmute">
-                                <v-icon left>mdi-microphone-on</v-icon>
-                                Unmute
-                            </v-btn>
-
-                            <v-btn v-if="isCalling" color="grey" @click="handleHold">
-                                <v-icon left>mdi-pause</v-icon>
-                                Hold
-                            </v-btn>
-                            <v-btn v-if="isCalling" color="blue" @click="unhold">
-                                <v-icon left>mdi-phone-transfer</v-icon>
-                                Unhold
-                            </v-btn>
+                                <v-btn v-if="isCalling" color="primary" @click="handleHoldToggle">
+                                    <v-icon left>{{ isOnHold ? 'mdi-phone-transfer' : 'mdi-pause' }}</v-icon>
+                                    {{ isOnHold ? 'Unhold' : 'Hold' }}
+                                </v-btn>
 
                                 <!-- Transfer Button -->
                                 <!-- <v-btn v-if="isCalling" color="blue" @click="handleTransfer">
@@ -307,24 +291,15 @@
                                 Transfer
                             </v-btn>
 
-                            <v-btn v-if="isCalling" color="grey" @click="handleMute">
-                                <v-icon left>mdi-microphone-off</v-icon>
-                                Mute
-                            </v-btn>
+                            <v-btn v-if="isCalling" color="warning" @click="handleMute">
+                                    <v-icon left>{{ isMuted ? 'mdi-microphone-off' : 'mdi-microphone' }}</v-icon>
+                                    {{ isMuted ? 'Unmute' : 'Mute' }}
+                                </v-btn>
+                            <v-btn v-if="isCalling" color="primary" @click="handleHoldToggle">
+                                <v-icon left>{{ isOnHold ? 'mdi-phone-transfer' : 'mdi-pause' }}</v-icon>
+                                {{ isOnHold ? 'Unhold' : 'Hold' }}  </v-btn>
 
-                            <v-btn v-if="isCalling" color="grey" @click="unmute">
-                                <v-icon left>mdi-microphone-on</v-icon>
-                                Unmute
-                            </v-btn>
-
-                            <v-btn v-if="isCalling" color="grey" @click="handleHold">
-                                <v-icon left>mdi-pause</v-icon>
-                                Hold
-                            </v-btn>
-                            <v-btn v-if="isCalling" color="blue" @click="unhold">
-                                <v-icon left>mdi-phone-transfer</v-icon>
-                                Unhold
-                            </v-btn>
+                        
                         </v-card-actions>
                     </v-card>
                 </v-dialog>
@@ -414,6 +389,8 @@ import AppLayout from "@/Layouts/AppLayout.vue";
 import { onMounted } from 'vue';
 import Africastalking from 'africastalking-client';
 import Pusher from "pusher-js";
+import { ref } from "vue";
+
 
 const orders = [
     {
@@ -453,6 +430,21 @@ const FakeAPI = {
 
 export default {
 
+    setup() {
+    const isMuted = ref(false);
+    const isOnHold = ref(false);
+
+    const handleMute = () => {
+      isMuted.value = !isMuted.value;
+    };
+
+    const handleHoldToggle = () => {
+      isOnHold.value = !isOnHold.value;
+    };
+
+    return { isMuted, isOnHold, handleMute, handleHoldToggle };
+  },
+
 
     mounted() {
         const pusher = new Pusher("your_app_key", {
@@ -469,6 +461,8 @@ export default {
 
     components: { AppLayout },
     data: () => ({
+        isMuted: false, // Initially not muted
+        isOnHold: false, // Initially not on hold
         itemsPerPage: 5,
         tab: "calls",
 
@@ -479,6 +473,9 @@ export default {
         callAgentDialog: false,
         queuedCalls: [],
         selectedAgent: null,
+
+
+
         // eventLog: null,
 
 
@@ -797,7 +794,7 @@ export default {
 
             }
         },
-        
+
 
         logEvent(message) {
             const timestamp = new Date().toLocaleTimeString();
