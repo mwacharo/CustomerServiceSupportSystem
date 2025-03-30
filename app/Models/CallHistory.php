@@ -9,6 +9,10 @@ class CallHistory extends Model
 {
     use HasFactory;
 
+    protected $casts = [
+        'created_at' => 'datetime:Y-m-d H:i:s',
+    ];
+    
 
     protected $fillable = [
         'isActive',
@@ -33,7 +37,11 @@ class CallHistory extends Model
         'callerCountryCode',
         'callerCarrierName',
         'callStartTime',
-        'callStartTime',
-        'hangupCause',
+        'lastBridgeHangupCause'
     ];
+
+    // public function getAttributeCreatedAt()
+    // {
+    //     return $this->attributes['created_at'] ?? null;
+    // }
 }
