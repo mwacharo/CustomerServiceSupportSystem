@@ -634,6 +634,9 @@ $voice = $AT->voice();
             return $agentNumber 
                 ? $this->createVoiceResponse("Connecting you to an agent.", $agentNumber)
                 : $this->createVoiceResponse("All agents are currently busy. Please try again later.");
+                // if agents are busy leave a message after the beep
+                // if agets are busy  please wait in the queue
+                // play did you know boxleo courier & Fullfillment blah blah 
         }
 
         return $this->createVoiceResponse(
@@ -659,5 +662,38 @@ $voice = $AT->voice();
         Log::debug("Voice response generated", ['response' => $response]);
 
         return $response;
+    }
+
+
+    /**
+ * Handle voicemail recording if agents are busy
+ */
+private function recordVoicemail()
+{
+    return response()->json([
+        "actions" => [
+            ["say" => "All agents are busy. Please leave a message after the beep."],
+            ["record" => [
+                "maxDuration" => 30,
+                "beep" => true,
+                "finishOnKey" => "#"
+            ]],
+            ["say" => "Thank you for your message. We will get back to you soon."]
+        ]
+    ]);
+}
+
+    public function fetchCallhistory()
+    {
+        try {
+            
+            $callHistories = CallHistory::all();
+            return response()->json([
+                'callHistories' => $callHistories,
+            ], 200);
+        } catch (Exception $e) {
+            Log::error("Error fetching call history: " . $e->getMessage());
+            return response()->json(['error' => 'Failed to fetch call history'], 500);
+        }
     }
 }

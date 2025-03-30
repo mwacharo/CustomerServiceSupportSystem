@@ -86,12 +86,12 @@ Route::apiResource('v1/branches', ApiBranchController::class)->only([
 
 Route::post('v1/africastalking-handle-callback', [ApiCallCentreController::class, 'handleVoiceCallback']);
 Route::post('v1/africastalking-handle-event', [ApiCallCentreController::class, 'handleEventCallback']);
-
-// make a new call
-// Route::post('/v1/call-centre-make-call', [ApiCallCentreController::class, 'makeCall']);
 Route::get('v1/voice-token', [ApiCallCentreController::class, 'generateToken']);
+Route::post('v1/call-history', [ApiCallCentreController::class, 'fetchCallHistory']);
 
 // Route::post('/africastalking-handle-selection', [ApiCallCentreController::class, 'handleSelection']);
+// make a new call
+// Route::post('/v1/call-centre-make-call', [ApiCallCentreController::class, 'makeCall']);
 
 
 

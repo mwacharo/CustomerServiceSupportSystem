@@ -292,14 +292,14 @@
                             </v-btn>
 
                             <v-btn v-if="isCalling" color="warning" @click="handleMute">
-                                    <v-icon left>{{ isMuted ? 'mdi-microphone-off' : 'mdi-microphone' }}</v-icon>
-                                    {{ isMuted ? 'Unmute' : 'Mute' }}
-                                </v-btn>
+                                <v-icon left>{{ isMuted ? 'mdi-microphone-off' : 'mdi-microphone' }}</v-icon>
+                                {{ isMuted ? 'Unmute' : 'Mute' }}
+                            </v-btn>
                             <v-btn v-if="isCalling" color="primary" @click="handleHoldToggle">
                                 <v-icon left>{{ isOnHold ? 'mdi-phone-transfer' : 'mdi-pause' }}</v-icon>
-                                {{ isOnHold ? 'Unhold' : 'Hold' }}  </v-btn>
+                                {{ isOnHold ? 'Unhold' : 'Hold' }} </v-btn>
 
-                        
+
                         </v-card-actions>
                     </v-card>
                 </v-dialog>
@@ -431,19 +431,19 @@ const FakeAPI = {
 export default {
 
     setup() {
-    const isMuted = ref(false);
-    const isOnHold = ref(false);
+        const isMuted = ref(false);
+        const isOnHold = ref(false);
 
-    const handleMute = () => {
-      isMuted.value = !isMuted.value;
-    };
+        const handleMute = () => {
+            isMuted.value = !isMuted.value;
+        };
 
-    const handleHoldToggle = () => {
-      isOnHold.value = !isOnHold.value;
-    };
+        const handleHoldToggle = () => {
+            isOnHold.value = !isOnHold.value;
+        };
 
-    return { isMuted, isOnHold, handleMute, handleHoldToggle };
-  },
+        return { isMuted, isOnHold, handleMute, handleHoldToggle };
+    },
 
 
     mounted() {
@@ -457,6 +457,8 @@ export default {
             console.log("Call status update:", data);
             this.$toastr.info(`Call status: ${data.status}`);
         });
+
+        this.fetchCallHistory();
     },
 
     components: { AppLayout },
@@ -528,30 +530,7 @@ export default {
             { title: "Call Status", value: "callStatus" },
             { title: "Actions", value: "actions", sortable: false },
         ],
-        calls: [
-            {
-                id: 1,
-                createdAt: "2025-01-26 10:00",
-                callerNo: "254712345678",
-                phone: "254723456789",
-                callSessionState: "Completed",
-                duration: 120,
-                amount: "KES 30",
-                callerCarrier: "Safaricom",
-                callStatus: "Success",
-            },
-            {
-                id: 2,
-                createdAt: "2025-01-26 10:30",
-                callerNo: "254723456789",
-                phone: "254734567890",
-                callSessionState: "Missed",
-                duration: 0,
-                amount: "KES 0",
-                callerCarrier: "Airtel",
-                callStatus: "Missed",
-            },
-        ],
+     
         serverItems: [
             {
                 product: "Phone",
@@ -803,8 +782,8 @@ export default {
                 console.log('call is muted');
 
                 // this.logEvent(this.isMuted ? "Call muted." : "Call unmuted.");
-        }
-    },
+            }
+        },
         // hold the call and unhold the call
         handleHoldToggle() {
             if (this.isCalling) {
@@ -953,6 +932,17 @@ export default {
             this.selectedAgent = agent;
             this.callAgentDialog = false;
             console.log('Calling agent:', agent);
+        },
+
+        fetchCallHistory()
+        {
+            axios.get('/api/v1/call-history')
+                .then(response => {
+                    this.calls = response.data.callHistories;
+                })
+                .catch(error => {
+                    console.error('Error fetching call history:', error);
+                });
         },
 
 
