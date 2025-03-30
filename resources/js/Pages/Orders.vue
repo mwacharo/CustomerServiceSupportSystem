@@ -388,7 +388,7 @@
 import AppLayout from "@/Layouts/AppLayout.vue";
 import { onMounted } from 'vue';
 import Africastalking from 'africastalking-client';
-import Pusher from "pusher-js";
+// import Pusher from "pusher-js";
 import { ref } from "vue";
 
 
