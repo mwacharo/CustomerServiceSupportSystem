@@ -17,6 +17,7 @@ use App\Models\CallQueue;
 use App\Models\IvrOption;
 use App\Models\Officer;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
@@ -687,7 +688,10 @@ private function recordVoicemail()
     {
         try {
             
-            $callHistories = CallHistory::all();
+            $callHistories = CallHistory::where('created_at', '>=', Carbon::now()->subDays(1))
+                ->orderBy('created_at', 'desc')
+                ->get();
+
             return response()->json([
                 'callHistories' => $callHistories,
             ], 200);
