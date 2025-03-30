@@ -77,11 +77,9 @@ Route::middleware([
 
 
 
-    Route::group(['middleware' => ['role:SuperAdmin']], function () {
+    // Route::group(['middleware' => ['role:SuperAdmin']], function () {
 
-        Route::get('/sector', function () {
-            return Inertia::render('SasraEconSectors');
-        })->name('sector');
+        
         // Route::get('v1/users', [ApiUserController::class, 'index']);
         Route::post('v1/user', [ApiUserController::class, 'store']);
         Route::put('v1/user/{id}', [ApiUserController::class, 'update'])->name('user.update');
@@ -104,7 +102,7 @@ Route::middleware([
     });
 
  
-});
+// });
 
 
 

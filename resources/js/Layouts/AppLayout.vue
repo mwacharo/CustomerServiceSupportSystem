@@ -119,9 +119,15 @@
       title: 'Users',
       icon: 'mdi-account-circle-outline',
       items: [
-        { route: 'user', icon: 'mdi-account-group-outline', title: 'User', permission: 'view users' },
-        { route: 'user-roles', icon: 'mdi-account-key-outline', title: 'User Roles', role: 'SuperAdmin' },
-        { route: 'permissions', icon: 'mdi-account-key-outline', title: 'Permissions', role: 'SuperAdmin' },
+        // { route: 'user', icon: 'mdi-account-group-outline', title: 'User', permission: 'view users' },
+        { route: 'user', icon: 'mdi-account-group-outline', title: 'User', },
+
+        // { route: 'user-roles', icon: 'mdi-account-key-outline', title: 'User Roles', role: 'SuperAdmin' },
+        { route: 'user-roles', icon: 'mdi-account-key-outline', title: 'User Roles' },
+
+        // { route: 'permissions', icon: 'mdi-account-key-outline', title: 'Permissions', role: 'SuperAdmin' },
+        { route: 'permissions', icon: 'mdi-account-key-outline', title: 'Permissions' },
+
       ],
     },
     {

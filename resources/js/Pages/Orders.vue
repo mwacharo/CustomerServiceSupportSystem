@@ -397,9 +397,7 @@
 import AppLayout from "@/Layouts/AppLayout.vue";
 import { onMounted } from 'vue';
 import Africastalking from 'africastalking-client';
-// import Pusher from "pusher-js";
 import { ref } from "vue";
-
 
 const orders = [
     {
@@ -494,7 +492,6 @@ export default {
 
         // eventLog: null,
 
-
         agents: [
             { name: "Mark D", status: "available" },
             { name: "Pippa M", status: "engaged" },
@@ -502,7 +499,6 @@ export default {
             { name: "Elif T", status: "engaged" },
 
         ],
-
 
         // availableAgents: [
         //     { id: 1, name: 'Agent 1', isInCall: false },
@@ -538,25 +534,24 @@ export default {
             { title: "Caller No.", value: "callerNumber" },
             { title: "Destination Number", value: "destinationNumber" },
             { title: "clientDialed Number", value: "clientDialedNumber" },
-            // { title: "Phone", value: "phone" },
             { title: "Duration In Seconds", value: "durationInSeconds" },
-            { title: "Amount", value: "amount" },
             { title: "Caller Carrier", value: "callerCarrier" },
             { title: "Call Status", value: "status" },
-            // { title: "Direction", value: "direction" },
+            { title: "HangupCause", value: "lastBridgeHangupCause" },
+            { title: "Call Session State", value: "callSessionState" },
+             // { title: "Direction", value: "direction" },
             // { title: "Currency Code", value: "currencyCode" },
             // { title: "Recording URL", value: "recordingUrl" },
             // { title: "Hangup Cause", value: "hangupCause" },
-            { title: "HangupCause", value: "lastBridgeHangupCause" },
-            { title: "Call Session State", value: "callSessionState" },
             // { title: "Session ID", value: "sessionId" },
-
             // { title: "Admin ID", value: "adminId" },
             // { title: "Agent ID", value: "agentId" },
             // { title: "Order No.", value: "orderNo" },
             // { title: "Notes", value: "notes" },
             // { title: "Next Call Step", value: "nextCallStep" },
             // { title: "Conference", value: "conference" },
+              // { title: "Amount", value: "amount" },
+                   // { title: "Phone", value: "phone" },
             { title: "Actions", value: "actions", sortable: false },
         ],
 
@@ -566,14 +561,14 @@ export default {
                 status: "Shipped",
                 COD: 500,
                 client: "John Doe",
-                phone: "123-456-7890",
+                phone: "741821113",
             },
             {
                 product: "Tablet",
                 status: "Pending",
                 COD: 700,
                 client: "Jane Doe",
-                phone: "234-567-8901",
+                phone: "751458911",
             },
         ],
         loading: false,
@@ -972,7 +967,7 @@ export default {
                     console.error('Error fetching call history:', error);
                 });
         },
-        fetchOrders() {
+        async fetchOrders() {
             axios.get('/api/v1/orders')
                 .then(response => {
                     this.orders = response.data.orders;
@@ -992,7 +987,7 @@ export default {
     //     },
     async mounted() {
         await this.initializeAfricastalking();
-        this.fetchCallHistory();
+        await this.fetchCallHistory();
         this.fetchOrders();
     }
 
