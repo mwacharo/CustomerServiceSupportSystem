@@ -28,6 +28,12 @@ class CallHistory extends Model
         'nextCallStep',
         'conference',
         'status',
-        'clientDialedNumber'
+        'clientDialedNumber',
+        'callSessionState',
+        'callerCountryCode',
+        'callerCarrierName',
+        'callStartTime',
+        'callStartTime',
+        'hangupCause',
     ];
 }
