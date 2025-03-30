@@ -83,7 +83,7 @@
                     <v-window v-model="tab">
 
                         <!-- Calls Tab -->
-                        <v-window-item value="tabs">
+                        <v-window-item value="calls">
                             <v-data-table :headers="callsheaders" :items="calls" item-value="id"
                                 class="elevation-1 mt-4" :items-per-page="15">
                                 <!-- Example of a custom slot for an actions column -->
