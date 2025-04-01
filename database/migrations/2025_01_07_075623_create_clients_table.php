@@ -21,9 +21,14 @@ return new class extends Migration
             $table->string('address')->nullable();
             $table->string('city')->nullable();
             $table->string('state')->nullable();
-            // $table->string('zip')->nullable();
-            // $table->string('country')->nullable();
-            // $table->string('company')->nullable();
+            $table->string('zip')->nullable();
+            $table->string('zip_code')->nullable();
+            $table->foreignId('country_id')->constrained('countries')->onDelete('cascade');
+            $table->foreignId('branch_id')->constrained('branches')->onDelete('cascade');
+            $table->text('notes')->nullable();
+            $table->foreignId('vendor_id')->nullable()->constrained('vendors')->onDelete('cascade');
+            $table->enum('status', ['active', 'inactive'])->default('active');
+            $table->foreignId('user_id')->nullable()->constrained('users')->onDelete('cascade');
             $table->timestamps();
             $table->softDeletes();
         });

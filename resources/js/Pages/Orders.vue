@@ -657,7 +657,7 @@ export default {
 
                 client.on('incomingcall', (event) => {
                     console.log("Incoming call received.");
-                    console.log(`Incoming call from ${params.from}`);
+                    console.log(`Incoming call from ${event.from}`);
 
                     console.log("Event Data:", event);
                     // this.$toastr.info("Incoming call from: " + event.from);
@@ -667,7 +667,7 @@ export default {
 
                     // Set incoming call details
                     this.incomingCall = {
-                        incomingCallFrom: event.from,
+                        from: event.from,  
                         duration: 'Connecting...'
                     };
                 });
