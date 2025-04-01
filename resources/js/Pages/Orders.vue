@@ -574,6 +574,7 @@ export default {
 
         selectedItem: {
             phone: '',
+            phone_number:'',
         },
         eventLog: [],
     }),
