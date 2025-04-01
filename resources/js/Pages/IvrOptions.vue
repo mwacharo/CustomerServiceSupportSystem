@@ -109,7 +109,7 @@ export default {
         initialize() {
             axios.get("api/v1/ivr-options")
                 .then(response => {
-                    this.ivrOptions = response.data;
+                    this.ivrOptions = response.data.ivrOptions;
                 })
                 .catch(error => console.error("API Error:", error));
         },
