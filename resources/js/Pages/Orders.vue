@@ -727,10 +727,13 @@ export default {
 
         handleCall(agent) {
             this.selectedAgent = agent;
-           this.phone_number =agent.phone_number
-            this.afClient.call(phone_number);
-            // this.callAgentDialog = false;
             console.log('Calling agent:', agent);
+
+           this.phone_number =agent.phone_number;
+           
+           console.log('agentsip:',this.phone_number)
+            this.afClient.call(this.phone_number);
+            // this.callAgentDialog = false;
         },
         //  hangup the call
         hangupCall() {
