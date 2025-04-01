@@ -485,21 +485,6 @@ export default {
     },
 
 
-    // mounted() {
-    //     const pusher = new Pusher("your_app_key", {
-    //         cluster: "your_cluster",
-    //         encrypted: true
-    //     });
-
-    //     const channel = pusher.subscribe("call-updates");
-    //     channel.bind("call.status", (data) => {
-    //         console.log("Call status update:", data);
-    //         this.$toastr.info(`Call status: ${data.status}`);
-    //     });
-
-    //     console.log('testing');
-    // },
-
     components: { AppLayout },
     data: () => ({
         isMuted: false, // Initially not muted
@@ -652,32 +637,22 @@ export default {
                 client.on('incomingcall', (event) => {
                     console.log("Incoming call received.");
                     console.log(`Incoming call from ${event.from}`);
-
                     console.log("Event Data:", event);
                     // this.$toastr.info("Incoming call from: " + event.from);
-
                     // Set dialog to true
                     this.incomingCallDialog = true;
-
                     // Set incoming call details
                     this.incomingCall = {
                         from: event.from,
                         duration: 'Connecting...'
-                    };
-
-
-                 
+                    };          
                 });
-
-                   // Listen for the hangup event on the client
-                   client.on('hangup', (event) => {
-                        console.log("Incoming call hung up:", hangup.reason);
-                        this.$toastr.error("Incoming call hung up: " + hangup.reason);
+                  // Listen for the hangup event on the client
+                client.on('hangup', (event) => {
+                        console.log("Incoming call hung up:", event.reason);
+                        this.$toastr.error("Incoming call hung up: ", event.reason);
                         this.incomingCallDialog = false;
                     });
-
-
-
                 // Retrieve the call object correctly
                 let incomingCall = event.call;  // ✅ Correct property
 
