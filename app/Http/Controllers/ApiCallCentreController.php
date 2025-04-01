@@ -586,131 +586,107 @@ class ApiCallCentreController extends Controller
     // Fetch Africa's Talking API credentials from config.
     $apiKey    = config('services.africastalking.api_key');
     $username  = config('services.africastalking.username');
-    $phoneNumber = config('services.africastalking.phone'); // This is Africa's Talking phone number
+    $phoneNumber = config('services.africastalking.phone'); 
 
-   
+    // Validate credentials
+    if (!$username || !$apiKey) {
+        Log::error('Africa’s Talking credentials are missing.', [
+            'username' => $username,
+            'apiKey'   => $apiKey
+        ]);
+        return response()->json(['error' => 'Africa’s Talking credentials are missing.'], 500);
+    }
 
-          if (!$username || !$apiKey) {
-            Log::error('Africa’s Talking credentials are missing.', [
-                'username' => $username,
-                'apiKey'   => $apiKey
-            ]);
-            return response()->json(['error' => 'Africa’s Talking credentials are missing.'], 500);
-        }
-
-
-    // Retrieve all users (or filter to specific users if needed).
+    // Retrieve all users
     $users = User::all();
     $updatedTokens = [];
     $failedUpdates = [];
 
     foreach ($users as $user) {
-        // Use the user's client_name if it exists, otherwise generate a unique one
-        // and save it to the user record for consistency
-        if (empty($user->client_name)) {
-            $user->client_name = 'client-' . $user->id . '-' . substr(uniqid(), -6);
-            $user->save();
-        }
-        
-        $clientName = $user->client_name;
-
-        // Decide if the user can receive or make calls
-        $incoming = isset($user->can_receive_calls) ? $user->can_receive_calls : true;
-        $outgoing = isset($user->can_call) ? $user->can_call : true;
-
-        Log::info('Generating token for user', [
-            'user_id'     => $user->id,
-            'clientName'  => $clientName,
-            'phoneNumber' => $phoneNumber  // Using the Africa's Talking phone number
-        ]);
-
-        // Prepare the JSON payload.
-        $payload = [
-            'username'    => $username,
-            'clientName'  => $clientName,          // User-specific client name
-            'phoneNumber' => $phoneNumber,         // Africa's Talking phone number from config
-            'incoming'    => $incoming ? "true" : "false",
-            'outgoing'    => $outgoing ? "true" : "false",
-            'lifeTimeSec' => "86400"               // 24 hours in seconds
-        ];
-
-        // Africa's Talking WebRTC token endpoint
-        $url = 'https://webrtc.africastalking.com/capability-token/request';
-
-        // cURL to Africa's Talking
-        $ch = curl_init($url);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_POST, true);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
-        curl_setopt($ch, CURLOPT_HTTPHEADER, [
-            'apiKey: ' . $apiKey,
-            'Accept: application/json',
-            'Content-Type: application/json'
-        ]);
-
-        // Execute the cURL request.
-        $response = curl_exec($ch);
-        if (curl_errno($ch)) {
-            Log::error("cURL Error for user {$user->id}: " . curl_error($ch));
-            $failedUpdates[] = [
-                'user_id' => $user->id,
-                'error' => curl_error($ch)
-            ];
-            curl_close($ch);
-            continue; // Move to next user
-        }
-        curl_close($ch);
-
-        // Decode the response from Africa's Talking
-        $responseData = json_decode($response, true);
-
-        if (isset($responseData['token'])) {
-            $newToken = $responseData['token'];
-
-            Log::info("Updating token in database for user {$user->id}", [
-                'old_token'  => $user->token,
-                'new_token'  => $newToken
-            ]);
-
-            // Update the token in your database
-            $updateSuccess = $user->update([
-                'token' => $newToken
-            ]);
-
-            if ($updateSuccess) {
-                Log::info("Database update successful for user {$user->id}");
-                // Include all relevant response data
-                $updatedTokens[] = [
-                    'user_id'     => $user->id,
-                    'token'       => $responseData['token'],
-                    'clientName'  => $responseData['clientName'] ?? $clientName,
-                    'incoming'    => $responseData['incoming'] ?? null,
-                    'outgoing'    => $responseData['outgoing'] ?? null,
-                    'lifeTimeSec' => $responseData['lifeTimeSec'] ?? null,
-                    'message'     => $responseData['message'] ?? null,
-                    'success'     => $responseData['success'] ?? false
-                ];
-            } else {
-                Log::warning("Database update failed for user {$user->id}");
-                $failedUpdates[] = [
-                    'user_id' => $user->id,
-                    'error' => 'Database update failed'
-                ];
+        try {
+            // Ensure a unique clientName per user
+            if (empty($user->client_name)) {
+                $user->client_name = 'client_' . $user->id . '_' . substr(md5(uniqid()), 0, 6);
+                $user->save();
             }
-        } else {
-            Log::error('Failed to generate token for user', [
-                'user_id'  => $user->id,
-                'response' => $responseData
+
+            $clientName = str_replace(' ', '', $user->client_name); // Remove spaces
+
+            // Determine permissions
+            $incoming = $user->can_receive_calls ?? true;
+            $outgoing = $user->can_call ?? true;
+
+            Log::info('Generating token for user', [
+                'user_id'     => $user->id,
+                'clientName'  => $clientName,
+                'phoneNumber' => $phoneNumber
             ]);
+
+            // Prepare request payload
+            $payload = [
+                'username'    => $username,
+                'clientName'  => $clientName,
+                'phoneNumber' => $phoneNumber,
+                'incoming'    => $incoming ? "true" : "false",
+                'outgoing'    => $outgoing ? "true" : "false",
+                'lifeTimeSec' => "86400"
+            ];
+
+            // Make API request
+            $url = 'https://webrtc.africastalking.com/capability-token/request';
+            $ch = curl_init($url);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_POST, true);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
+            curl_setopt($ch, CURLOPT_HTTPHEADER, [
+                'apiKey: ' . $apiKey,
+                'Accept: application/json',
+                'Content-Type: application/json'
+            ]);
+
+            // Execute cURL request
+            $response = curl_exec($ch);
+            if (curl_errno($ch)) {
+                throw new Exception('cURL Error: ' . curl_error($ch));
+            }
+            curl_close($ch);
+
+            // Decode the response
+            $responseData = json_decode($response, true);
+
+            if (!isset($responseData['token'])) {
+                throw new Exception($responseData['message'] ?? 'Unknown API error');
+            }
+
+            // Update user token in database
+            $user->updateOrFail(['token' => $responseData['token']]);
+
+            Log::info("Token updated successfully for user {$user->id}", [
+                'token' => $responseData['token']
+            ]);
+
+            // Store success response
+            $updatedTokens[] = [
+                'user_id'     => $user->id,
+                'token'       => $responseData['token'],
+                'clientName'  => $responseData['clientName'] ?? $clientName,
+                'incoming'    => $responseData['incoming'] ?? null,
+                'outgoing'    => $responseData['outgoing'] ?? null,
+                'lifeTimeSec' => $responseData['lifeTimeSec'] ?? null,
+                'message'     => $responseData['message'] ?? null,
+                'success'     => $responseData['success'] ?? false
+            ];
+        } catch (Exception $e) {
+            Log::error("Token generation failed for user {$user->id}: " . $e->getMessage());
+
             $failedUpdates[] = [
-                'user_id' => $user->id,
-                'error' => $responseData['message'] ?? 'Unknown error',
-                'response' => $responseData
+                'user_id'  => $user->id,
+                'error'    => $e->getMessage()
             ];
         }
     }
 
-    // Return a summary of updated tokens
+    // Return summary
     return response()->json([
         'updatedTokens' => $updatedTokens,
         'failedUpdates' => $failedUpdates,
