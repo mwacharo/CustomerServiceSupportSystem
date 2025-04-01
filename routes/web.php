@@ -98,7 +98,38 @@ Route::middleware([
         Route::get('/user', function () {
             return Inertia::render('Users');
         })->name('user');
-     
+
+        Route::get('/settings', function () {
+            return Inertia::render('Settings');
+        })->name('settings');
+
+        Route::get('/ivr-options', function () {
+            return Inertia::render('IvrOptions');
+        })->name('ivr-options');
+
+        Route::get('/sms', function () {
+            return Inertia::render('Sm');
+        })->name('sms');
+
+        Route::get('/whatsapp', function () {
+            return Inertia::render('Whatsap');
+        })->name('whatsapp');
+
+        Route::get('/telegram', function () {
+            return Inertia::render('Telegra');
+        })->name('telegram');
+
+        Route::get('/facebook', function () {
+            return Inertia::render('Faceboo');
+        })->name('facebook');
+
+        Route::get('/twitter', function () {
+            return Inertia::render('Twitte');
+        })->name('twitter');
+
+        Route::get('/email', function () {
+            return Inertia::render('Emai');
+        })->name('email');  
     });
 
  

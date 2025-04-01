@@ -8,6 +8,7 @@ use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Spatie\Permission\Models\Role;
 
@@ -22,7 +23,8 @@ class ApiUserController extends Controller
         // return response()->json( $users);
 
             // Fetch all users with their roles
-    $users = User::with('roles')->get();
+            // with permissions
+    $users = User::with('roles','permissions')->get();
     
     return response()->json($users);
 
@@ -31,61 +33,124 @@ class ApiUserController extends Controller
 
 
     public function store(Request $request)
-{
-    // Validate the request data
-    $validatedData = $request->validate([
-        'name' => 'required|string|max:255',
-        'email' => 'required|email|unique:users,email',
-        'selectedRole' => 'required|exists:roles,name', // Ensure role exists
-    ]);
+    {
+        try {
+            // Log the incoming request
+            Log::info('Store User Request:', $request->all());
 
-    // Generate a random password
-    $password = Str::random(8);
-    $validatedData['password'] = Hash::make($password);
+            // Validate the request data
+            $validatedData = $request->validate([
+                'name' => 'required|string|max:255',
+                'email' => 'required|email|unique:users,email',
+                'selectedRole' => 'required|exists:roles,name', 
+                'phone' => 'nullable|string|max:15',
+                'phone_number' => 'required|string|max:15',
+                'address' => 'nullable|string|max:255',
+                'branch_id' => 'nullable|integer|exists:branches,id',
+                'client_name' => 'nullable|string|max:255',
+                'country_id' => 'nullable|integer|exists:countries,id',
+                'department_id' => 'nullable|integer|exists:departments,id',
+                'status' => 'nullable|string|in:available,busy,offline',
+                'alt_number' => 'nullable|string|max:15',
+            ]);
 
-    // Create the user
-    $user = User::create($validatedData);
+            // Generate a random password
+            $password = Str::random(8);
+            $validatedData['password'] = Hash::make($password);
 
-    // Assign the selected role to the user
-    $role = Role::where('name', $validatedData['selectedRole'])->first();
-    if ($role) {
-        $user->assignRole($role);
-    } else {
-        return response()->json(['message' => 'Role not found'], 404);
+            // Create the user
+            $user = User::create($validatedData);
+
+            // Assign the selected role to the user
+            $role = Role::where('name', $validatedData['selectedRole'])->first();
+            if ($role) {
+                $user->assignRole($role);
+            } else {
+                Log::error('Role not found:', ['role' => $validatedData['selectedRole']]);
+                return response()->json(['message' => 'Role not found'], 404);
+            }
+
+            // Dispatch an event or send a welcome email
+            event(new UserCreated($user, $password));
+
+            // Log success
+            Log::info('User created successfully:', ['user_id' => $user->id]);
+
+            // Return a response
+            return response()->json(['message' => 'User created successfully', 'data' => $user], 201);
+        } catch (\Exception $e) {
+            // Log the error
+            Log::error('Error creating user:', ['error' => $e->getMessage()]);
+
+            // Return an error response
+            return response()->json(['message' => 'An error occurred while creating the user'], 500);
+        }
     }
-
-    // Dispatch an event or send a welcome email
-    event(new UserCreated($user, $password));
-
-    // Return a response
-    return response()->json(['message' => 'User created successfully', 'data' => $user], 201);
-}
-
-    
 
     public function update(Request $request, string $id)
-{
-    $user = User::findOrFail($id);
+    {
+        try {
+            // Log the incoming request
+            Log::info('Update User Request:', ['user_id' => $id, 'data' => $request->all()]);
 
-    $validatedData = $request->validate([
-        'name' => 'sometimes|required|string|max:255',
-        'email' => 'sometimes|required|email|unique:users,email,' . $user->id,
-        'password' => 'sometimes|required|string|min:8',
-    ]);
+            $user = User::findOrFail($id);
 
-    if ($request->has('password')) {
-        $validatedData['password'] = bcrypt($validatedData['password']);
+            // Validate the request data
+            $validatedData = $request->validate([
+                'name' => 'required|string|max:255',
+                // 'email' => 'nullable|email|unique:users,email',
+                'email' => "nullable|email|unique:users,email,{$id}",
+
+                'selectedRole' => 'nullable', 
+                'phone' => 'nullable|string|max:15',
+                'phone_number' => 'required|string',
+                'address' => 'nullable|string|max:255',
+                'branch_id' => 'nullable|integer|exists:branches,id',
+                'client_name' => 'nullable|string|max:255',
+                'country_id' => 'nullable|integer|exists:countries,id',
+                'department_id' => 'nullable|integer|exists:departments,id',
+                'status' => 'nullable|string|in:available,busy,offline',
+                'alt_number' => 'nullable|string|max:15',
+                
+            ]);
+
+            // Hash the password if provided
+            if ($request->has('password')) {
+                $validatedData['password'] = bcrypt($validatedData['password']);
+            }
+
+            // Update the user
+            $user->update($validatedData);
+
+            // Update the role if provided
+            if ($request->has('selectedRole')) {
+                $roleName = $request->input('selectedRole');
+                
+                // Log the role update attempt
+                Log::info('Updating user role:', ['user_id' => $user->id, 'new_role' => $roleName]);
+
+                // Remove all current roles and assign the new role
+                $user->syncRoles([$roleName]);
+
+                // Verify if the role was updated successfully
+                if ($user->hasRole($roleName)) {
+                    Log::info('Role updated successfully:', ['user_id' => $user->id, 'role' => $roleName]);
+                } else {
+                    Log::error('Failed to update role:', ['user_id' => $user->id, 'role' => $roleName]);
+                }
+            }
+
+            // Log success
+            Log::info('User updated successfully:', ['user_id' => $user->id]);
+
+            return response()->json(['message' => 'User updated successfully', 'data' => $user]);
+        } catch (\Exception $e) {
+            // Log the error
+            Log::error('Error updating user:', ['user_id' => $id, 'error' => $e->getMessage()]);
+
+            return response()->json(['message' => 'An error occurred while updating the user'], 500);
+        }
     }
-
-    $user->update($validatedData);
-
-    if ($request->has('role')) {
-        $roleName = $request->input('role');
-        $user->syncRoles([$roleName]);
-    }
-
-    return response()->json(['message' => 'User updated successfully', 'data' => $user]);
-}
 
 
    

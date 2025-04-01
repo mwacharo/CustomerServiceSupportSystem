@@ -9,7 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ApiUserController;
 use App\Http\Controllers\ApiCallCentreController;
-
+use App\Http\Controllers\ApiIvrOptionController;
 
 /*
 |--------------------------------------------------------------------------
@@ -130,6 +130,16 @@ Route::get('v1/call-agent-details/{id}', [ApiCallAgentController::class, 'getCal
 Route::get('v1/call-agent-details-2/{id}', [ApiCallAgentController::class, 'getCallAgentDetails2']);
 Route::get('v1/call-agent-summary/{id}', [ApiCallAgentController::class, 'getCallAgentSummary']);
 
+Route::get('v1/ivr-options', [ApiIvrOptionController::class, 'index']); // List IVR options
+Route::get('v1/ivr-options/search', [ApiIvrOptionController::class, 'search']); // Search IVR options
+Route::post('v1/ivr-options', [ApiIvrOptionController::class, 'store']); // Create new IVR option
+Route::get('v1/ivr-options/{id}', [ApiIvrOptionController::class, 'show']); // Get single IVR option
+Route::put('v1/ivr-options/{id}', [ApiIvrOptionController::class, 'update']); // Update IVR option
+Route::delete('v1/ivr-options/{id}', [ApiIvrOptionController::class, 'destroy']); // Delete IVR option
+
 // Route::get('v1/delete-records', [ApiController::class, 'deleteRecords']);
 // https://support.solssa.com/api/v1/africastalking-handle-callback
 // // https://support.solssa.com/api/v1/handleEventCallback
+
+
+// Route::post('v1/webhook/whatsapp', [WhatsAppController::class, 'handleIncoming']);

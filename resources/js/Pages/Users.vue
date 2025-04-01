@@ -1,6 +1,10 @@
 <template>
   <AppLayout>
+
+
     <v-card class="my-card">
+
+      
       <v-container>
         <v-text-field
           v-model="searchQuery"
@@ -9,9 +13,7 @@
           variant="outlined"
         ></v-text-field>
       </v-container>
-    </v-card>
 
-    <v-card class="my-card" outlined>
       <v-data-table
         :headers="headers"
         :loading="loading"
@@ -23,13 +25,33 @@
 
             <v-divider class="mx-4" inset vertical></v-divider>
             <v-spacer></v-spacer>
-            <v-dialog v-model="dialog" max-width="500px">
-              <template v-slot:activator="{ props }">
-                <v-btn color="primary" dark class="mb-2" v-bind="props">
+            <v-dialog v-model="dialog" max-width="800px">
+                <template v-slot:activator="{ props }">
+                <v-btn
+                  color="black"
+                  dark
+                  class="mb-2"
+                  v-bind="props"
+                  elevation="2"
+                  rounded
+                  @click="dialog = true"
+                >
+                  <v-icon left>mdi-plus</v-icon>
                   New Admin
                 </v-btn>
-              </template>
-
+                <!-- <v-btn
+                  color="black"
+                  dark
+                  class="mb-2"
+                  v-bind="props"
+                  elevation="2"
+                  rounded
+                  @click="importAdmins"
+                >
+                  <v-icon left>mdi-file-import</v-icon>
+                  Import Admin
+                </v-btn> -->
+                </template>
               <v-card>
                 <v-card-title>
                   <span class="text-h5">{{ formTitle }}</span>
@@ -38,32 +60,62 @@
                 <v-card-text>
                   <v-container>
                     <v-row>
-                      <v-col cols="12">
+                      <v-col cols="12" sm="6">
                         <v-text-field
                           v-model="editedItem.name"
                           label="Name"
                         ></v-text-field>
                       </v-col>
-                      <v-col cols="12">
+                      <v-col cols="12" sm="6">
                         <v-text-field
                           v-model="editedItem.email"
                           label="Email"
                         ></v-text-field>
                       </v-col>
-                      <v-col cols="12">
+                      <v-col cols="12" sm="6">
+                        <v-text-field
+                          v-model="editedItem.address"
+                          label="Address"
+                        ></v-text-field>
+                      </v-col>
+                      <v-col cols="12" sm="6">
                         <v-text-field
                           v-model="editedItem.phone"
                           label="Phone"
                         ></v-text-field>
                       </v-col>
-                      <v-col cols="12">
+                      <v-col cols="12" sm="6">
                         <v-select
                           v-model="editedItem.selectedRole"
                           :items="roles"
                           item-title="name"
-                          item-value="id"
+                          item-value="name"
                           label="Role"
-                          return-object
+                        ></v-select>
+                      </v-col>
+
+                      <v-col cols="12" sm="6">
+                        <v-text-field
+                          v-model="editedItem.phone_number"
+                          label="Agent SIP"
+                        ></v-text-field>
+                      </v-col>
+                      <v-col cols="12" sm="6" >
+                        <v-select
+                          v-model="editedItem.branch_id"
+                          :items="branches"
+                          item-title="name"
+                          item-value="id"
+                          label="Branch"
+                        ></v-select>
+                      </v-col>
+                      <v-col cols="12" sm="6">
+                        <v-select
+                          v-model="editedItem.country_id"
+                          :items="countries"
+                          item-title="name"
+                          item-value="id"
+                          label="Country"
                         ></v-select>
                       </v-col>
                     </v-row>
@@ -180,6 +232,7 @@
         </template>
       </v-data-table>
       <Permissions ref="PermissionsComponent" />
+
     </v-card>
   </AppLayout>
 </template>
@@ -204,6 +257,10 @@ export default {
         { title: "Agent Name", align: "start", sortable: false, key: "name" },
         { title: "Email", key: "email" },
         { title: "Phone", key: "phone" },
+        { title: "Phone", key: "phone_number" },
+        { title: "Role", key: "roles.name" },
+        // { title: "Status", key: "status" },
+        // { title: "Created At", key: "created_at" },
         { title: "Actions", key: "actions", sortable: false },
       ],
       users: [],
@@ -215,6 +272,9 @@ export default {
         email: "",
         phone: "",
         selectedRole: null,
+        phone_number: "",
+        branch_id: null,
+        country_id: null,
       },
       defaultItem: {
         id: null,
@@ -222,6 +282,10 @@ export default {
         email: "",
         phone: "",
         selectedRole: null,
+        phone_number: "",
+        branch_id: null,
+        country_id: null,
+        
       },
     };
   },
@@ -308,7 +372,7 @@ export default {
       let request;
       const payload = {
         ...this.editedItem,
-        role: this.editedItem.selectedRole ? this.editedItem.selectedRole.id : null
+        role:this.editedItem.selectedRole.name
       };
 
       if (this.editedIndex > -1) {

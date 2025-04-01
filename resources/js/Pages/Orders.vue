@@ -354,7 +354,7 @@
                     </v-card>
                 </v-dialog>
                 <!-- Phone Popup -->
-                <v-dialog v-model="phonePopup" max-width="600">
+                <v-dialog v-model="phonePopup" max-width="800">
                     <v-card>
                         <v-card-title>
                             Client Details
@@ -385,6 +385,39 @@
                                 <v-icon left>mdi-phone</v-icon>
                                 Call Client
                             </v-btn>
+                            <!-- include normal sms icon -->
+
+                            <v-btn color="primary" @click="sendSms(selectedItem?.phone)">
+                                <v-icon left>mdi-message</v-icon>
+                                Send SMS
+                            </v-btn>
+
+                            <!-- include WhatsApp SMS icon -->
+                            <v-btn color="success" @click="sendWhatsAppMessage(selectedItem?.phone)">
+                                <v-icon left>mdi-whatsapp</v-icon>
+                                Send WhatsApp Message
+                            </v-btn>
+
+
+                            <!-- include email icon to email client  -->
+                            <v-btn color="primary" @click="sendEmail(selectedItem?.email)">
+                                <v-icon left>mdi-email</v-icon>
+                                Send Email  
+                                </v-btn>
+
+                               
+                                
+                                <!-- include telegram message -->
+                                <v-btn color="info" @click="sendTelegramMessage(selectedItem?.phone)">
+                                    <v-icon left>mdi-telegram</v-icon>
+                                    Send Telegram Message
+                                </v-btn>
+
+
+                                
+                             
+
+                            
                         </v-card-actions>
                     </v-card>
                 </v-dialog>
@@ -486,26 +519,10 @@ export default {
         transferDialog: false,
         callAgentDialog: false,
         queuedCalls: [],
-        selectedAgent: null,
-
-
-
-        // eventLog: null,
-
-        agents: [
-            { name: "Mark D", status: "available" },
-            { name: "Pippa M", status: "engaged" },
-            { name: "Russ N", status: "engaged" },
-            { name: "Elif T", status: "engaged" },
-
-        ],
-
-        // availableAgents: [
-        //     { id: 1, name: 'Agent 1', isInCall: false },
-        //     { id: 2, name: 'Agent 2', isInCall: false },
-        //     { id: 3, name: 'Agent 3', isInCall: true },
-        //     { id: 4, name: 'Agent 4', isInCall: false }
-        // ].filter(agent => !agent.isInCall),
+        selectedAgent: null,  
+        availableAgents: [
+           
+        ].filter(agent => status.available),
 
         queuedCalls: [
             { call_id: 1, phone_number: '+254711123456', status: 'queued' },
@@ -539,19 +556,6 @@ export default {
             { title: "Call Status", value: "status" },
             { title: "HangupCause", value: "lastBridgeHangupCause" },
             { title: "Call Session State", value: "callSessionState" },
-             // { title: "Direction", value: "direction" },
-            // { title: "Currency Code", value: "currencyCode" },
-            // { title: "Recording URL", value: "recordingUrl" },
-            // { title: "Hangup Cause", value: "hangupCause" },
-            // { title: "Session ID", value: "sessionId" },
-            // { title: "Admin ID", value: "adminId" },
-            // { title: "Agent ID", value: "agentId" },
-            // { title: "Order No.", value: "orderNo" },
-            // { title: "Notes", value: "notes" },
-            // { title: "Next Call Step", value: "nextCallStep" },
-            // { title: "Conference", value: "conference" },
-              // { title: "Amount", value: "amount" },
-                   // { title: "Phone", value: "phone" },
             { title: "Actions", value: "actions", sortable: false },
         ],
 
@@ -857,15 +861,15 @@ export default {
             this.queueDialog = true;
         },
         // Fetch queued calls from the backend
-        // fetchQueuedCalls() {
-        //     axios.get('/api/v1/queued-calls')
-        //         .then(response => {
-        //             this.queuedCalls = response.data; // Assign fetched queued calls
-        //         })
-        //         .catch(error => {
-        //             console.error('Error fetching queued calls:', error);
-        //         });
-        // },
+        fetchQueuedCalls() {
+            axios.get('/api/v1/queued-calls')
+                .then(response => {
+                    this.queuedCalls = response.data; // Assign fetched queued calls
+                })
+                .catch(error => {
+                    console.error('Error fetching queued calls:', error);
+                });
+        },
         // Dequeue a call
         // dequeueCall(callId) {
         //     axios.post('/api/v1/dequeue-call', { callId })
@@ -958,7 +962,7 @@ export default {
             console.log('Calling agent:', agent);
         },
 
-        fetchCallHistory() {
+       async fetchCallHistory() {
             axios.get('/api/v1/call-history')
                 .then(response => {
                     this.calls = response.data.callHistories;
@@ -975,21 +979,36 @@ export default {
                 .catch(error => {
                     console.error('Error fetching orders:', error);
                 });
-        }
+        },
+
+        fetchUsers()
+        {
+            axios.get('/v1/users')
+                .then(response => {
+                    this.agents = response.data;
+                })
+                .catch(error => {
+                    console.error('Error fetching users:', error);
+                });
+        },
 
 
     },
-    // watch: {
-    //         // Watch for any change in the agents and filter again if needed
-    //         availableAgents(newAgents) {
-    //             this.availableAgents = newAgents.filter(agent => !agent.isInCall);
-    //         }
-    //     },
+    watch: {
+            // Watch for any change in the agents and filter again if needed
+            availableAgents(newAgents) {
+                this.availableAgents = newAgents.filter(agent => !agent.isInCall);
+            }
+        },
     async mounted() {
         await this.initializeAfricastalking();
-        await this.fetchCallHistory();
+        // await this.fetchCallHistory();
         this.fetchOrders();
-    }
+    },
+    created() {
+        this.fetchCallHistory();
+        this.fetchUsers();
+    },
 
 };
 </script>

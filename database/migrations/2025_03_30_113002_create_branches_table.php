@@ -13,7 +13,18 @@ return new class extends Migration
     {
         Schema::create('branches', function (Blueprint $table) {
             $table->id();
+            $table->string('name');
+            $table->string('email')->unique();
+            $table->string('phone');
+            $table->text('address');
+            $table->string('city');
+            $table->string('state');
+            $table->string('zip_code');
+            $table->boolean('status')->default(true);
+            $table->foreignId('user_id');
             $table->timestamps();
+
+            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
         });
     }
 

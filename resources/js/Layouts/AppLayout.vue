@@ -111,7 +111,6 @@
       title: 'Call Center',
       icon: 'mdi-file-document-outline',
       items: [
-        { route: 'sector', icon: 'mdi-domain', title: 'Sector', permission: 'view sectors' },
         { route: 'orders', icon: 'mdi-file-document-multiple-outline', title: 'Orders' },
       ],
     },
@@ -144,6 +143,23 @@
         { route: 'branches', icon: 'mdi-map-marker-radius-outline', title: 'Branches', permission: 'view branches' },
       ],
     },
+
+
+    // inlcude settings 
+    {
+      title: 'Settings',
+      icon: 'mdi-cog-outline',
+      items: [
+        { route: 'ivr-options', icon: 'mdi-cog-outline', title: 'IvrOptions' },
+        // { route: 'sms', icon: 'mdi-message-text-outline', title: 'SmsOptions' },
+        // { route: 'whatsapp', icon: 'mdi-whatsapp', title: 'WhatsappOptions' },
+        // { route: 'telegram', icon: 'mdi-telegram', title: 'TelegramOptions' },
+        // { route: 'facebook', icon: 'mdi-facebook', title: 'FacebookOptions' },
+        // { route: 'twitter', icon: 'mdi-twitter', title: 'TwitterOptions' },
+        // { route: 'email', icon: 'mdi-email-outline', title: 'EmailOptions' },
+        // { route: 'settings', icon: 'mdi-cog-outline', title: 'Settings' }, 
+         ],
+    },
   ]);
 
   // Filter menu items based on user roles and permissions
@@ -161,7 +177,7 @@
 
   <template>
     <v-app>
-      <v-navigation-drawer v-model="drawer" app color="black">
+      <v-navigation-drawer v-model="drawer" app color="black" width="300" >
         <!-- Logo -->
         <v-list-item>
           <v-img src="path/to/logo.png" alt="Logo" height="60" contain></v-img>
