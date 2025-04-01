@@ -11,7 +11,8 @@ class ApiIvrOptionController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function 
+    index()
     {
         try {
             // Assuming you have a model named IvrOption
@@ -41,7 +42,7 @@ class ApiIvrOptionController extends Controller
 
         try {
             // Assuming you have a model named IvrOption
-            $ivrOption = new \App\Models\IvrOption();
+            $ivrOption = new IvrOption();
             $ivrOption->option_number = $validatedData['option_number'];
             $ivrOption->description = $validatedData['description'];
             $ivrOption->forward_number = $validatedData['forward_number'];
@@ -64,9 +65,27 @@ class ApiIvrOptionController extends Controller
      */
     public function update(Request $request, string $id)
     {
+        $validatedData = $request->validate([
+            'option_number' => 'required|integer',
+            'description' => 'required|string|max:255',
+            'forward_number' => 'nullable|string|max:15',
+            'status' => 'required|boolean',
+        ]);
+
         try {
-            // Your logic here
+            // Find the resource by ID
+            $ivrOption = IvrOption::findOrFail($id);
+
+            // Update the resource with validated data
+            $ivrOption->option_number = $validatedData['option_number'];
+            $ivrOption->description = $validatedData['description'];
+            $ivrOption->forward_number = $validatedData['forward_number'];
+            $ivrOption->status = $validatedData['status'];
+            $ivrOption->save();
+
             Log::info("ApiIvrOptionController@update: Successfully updated the resource with ID {$id}.");
+
+            return response()->json(['message' => 'Resource updated successfully.', 'data' => $ivrOption], 200);
         } catch (\Exception $e) {
             Log::error("ApiIvrOptionController@update: Error occurred while updating resource with ID {$id} - " . $e->getMessage());
             return response()->json(['error' => 'Failed to update resource.'], 500);
@@ -79,8 +98,15 @@ class ApiIvrOptionController extends Controller
     public function destroy(string $id)
     {
         try {
-            // Your logic here
+            // Find the resource by ID
+            $ivrOption = IvrOption::findOrFail($id);
+
+            // Delete the resource
+            $ivrOption->delete();
+
             Log::info("ApiIvrOptionController@destroy: Successfully deleted the resource with ID {$id}.");
+
+            return response()->json(['message' => 'Resource deleted successfully.'], 200);
         } catch (\Exception $e) {
             Log::error("ApiIvrOptionController@destroy: Error occurred while deleting resource with ID {$id} - " . $e->getMessage());
             return response()->json(['error' => 'Failed to delete resource.'], 500);

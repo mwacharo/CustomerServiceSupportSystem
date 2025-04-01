@@ -19,6 +19,7 @@ class Branch extends Model
         'zip_code',
         'status',   
         'user_id',
+        'country_id'
     ];
     
     protected $casts = [

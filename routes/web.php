@@ -107,29 +107,29 @@ Route::middleware([
             return Inertia::render('IvrOptions');
         })->name('ivr-options');
 
-        Route::get('/sms', function () {
-            return Inertia::render('Sm');
-        })->name('sms');
+        // Route::get('/sms', function () {
+        //     return Inertia::render('Sm');
+        // })->name('sms');
 
-        Route::get('/whatsapp', function () {
-            return Inertia::render('Whatsap');
-        })->name('whatsapp');
+        // Route::get('/whatsapp', function () {
+        //     return Inertia::render('Whatsap');
+        // })->name('whatsapp');
 
-        Route::get('/telegram', function () {
-            return Inertia::render('Telegra');
-        })->name('telegram');
+        // Route::get('/telegram', function () {
+        //     return Inertia::render('Telegra');
+        // })->name('telegram');
 
-        Route::get('/facebook', function () {
-            return Inertia::render('Faceboo');
-        })->name('facebook');
+        // Route::get('/facebook', function () {
+        //     return Inertia::render('Faceboo');
+        // })->name('facebook');
 
-        Route::get('/twitter', function () {
-            return Inertia::render('Twitte');
-        })->name('twitter');
+        // Route::get('/twitter', function () {
+        //     return Inertia::render('Twitte');
+        // })->name('twitter');
 
-        Route::get('/email', function () {
-            return Inertia::render('Emai');
-        })->name('email');  
+        // Route::get('/email', function () {
+        //     return Inertia::render('Emai');
+        // })->name('email');  
     });
 
  

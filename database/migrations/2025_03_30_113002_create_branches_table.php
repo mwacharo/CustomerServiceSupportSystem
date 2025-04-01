@@ -19,6 +19,7 @@ return new class extends Migration
             $table->text('address');
             $table->string('city');
             $table->string('state');
+            $table->foreignId('country_id')->constrained()->onDelete('cascade');
             $table->string('zip_code');
             $table->boolean('status')->default(true);
             $table->foreignId('user_id');
