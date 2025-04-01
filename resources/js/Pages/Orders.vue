@@ -12,7 +12,7 @@
                                     <v-icon color="green">mdi-phone</v-icon>
                                     <span class="ml-3">Make a new Call</span>
                                 </div>
-                            
+
                                 <!-- Call Agent Trigger -->
                                 <div class="d-flex align-center mt-2" @click="openCallAgent">
                                     <v-icon color="blue">mdi-account</v-icon>
@@ -23,7 +23,7 @@
                                     <span class="ml-3">Missed Calls</span>
                                     <span class="ml-auto">60,400</span>
                                 </div>
-            
+
                                 <div class="d-flex align-center mt-2" @click="openQueueDialog">
                                     <v-icon color="orange">mdi-check-decagram</v-icon>
                                     <span class="ml-3">Check Queue</span>
@@ -61,20 +61,14 @@
                 <v-card>
 
                     <!-- Include search area with mdi magnify icon -->
-                   
-                    <v-text-field
-                                v-model="searchQuery"
-                                label="Search"
-                                prepend-inner-icon="mdi-magnify"
-                                outlined
-                                dense
-                                clearable
-                            ></v-text-field>
+
+                    <v-text-field v-model="searchQuery" label="Search" prepend-inner-icon="mdi-magnify" outlined dense
+                        clearable></v-text-field>
                     <!-- Tabs at the top -->
                     <v-tabs v-model="tab" color="primary">
 
-                         
-                   
+
+
                         <v-tab value="calls">Calls</v-tab>
                         <v-tab value="orders">Orders</v-tab>
                     </v-tabs>
@@ -88,14 +82,14 @@
                                 class="elevation-1 mt-4" :items-per-page="15">
                                 <!-- Example of a custom slot for an actions column -->
                                 <template #item.actions="{ item }">
-                                 
+
                                     <v-btn color="blue" @click="playRecording(item)" rounded="lg" block>
                                         <v-icon>mdi-play</v-icon> Play
                                     </v-btn>
                                     <!-- <v-btn color="green" @click="downloadRecording(item)" rounded="lg" block>
                                         <v-icon>mdi-download</v-icon> Download
                                     </v-btn> -->
-                                   
+
                                 </template>
 
                             </v-data-table>
@@ -402,22 +396,22 @@
                             <!-- include email icon to email client  -->
                             <v-btn color="primary" @click="sendEmail(selectedItem?.email)">
                                 <v-icon left>mdi-email</v-icon>
-                                Send Email  
-                                </v-btn>
-
-                               
-                                
-                                <!-- include telegram message -->
-                                <v-btn color="info" @click="sendTelegramMessage(selectedItem?.phone)">
-                                    <v-icon left>mdi-telegram</v-icon>
-                                    Send Telegram Message
-                                </v-btn>
+                                Send Email
+                            </v-btn>
 
 
-                                
-                             
 
-                            
+                            <!-- include telegram message -->
+                            <v-btn color="info" @click="sendTelegramMessage(selectedItem?.phone)">
+                                <v-icon left>mdi-telegram</v-icon>
+                                Send Telegram Message
+                            </v-btn>
+
+
+
+
+
+
                         </v-card-actions>
                     </v-card>
                 </v-dialog>
@@ -519,9 +513,9 @@ export default {
         transferDialog: false,
         callAgentDialog: false,
         queuedCalls: [],
-        selectedAgent: null,  
+        selectedAgent: null,
         availableAgents: [
-           
+
         ].filter(agent => status.available),
 
         queuedCalls: [
@@ -667,20 +661,22 @@ export default {
 
                     // Set incoming call details
                     this.incomingCall = {
-                        from: event.from,  
+                        from: event.from,
                         duration: 'Connecting...'
                     };
 
 
-                     // Listen for the hangup event on the client
-    client.on('hangup', (hangupEvent) => {
-        console.log("Incoming call hung up:", hangupEvent.reason);
-        this.$toastr.error("Incoming call hung up: " + hangupEvent.reason);
-        this.incomingCallDialog = false;
-    });
-
-                  
+                 
                 });
+
+                   // Listen for the hangup event on the client
+                   client.on('hangup', (event) => {
+                        console.log("Incoming call hung up:", hangup.reason);
+                        this.$toastr.error("Incoming call hung up: " + hangup.reason);
+                        this.incomingCallDialog = false;
+                    });
+
+
 
                 // Retrieve the call object correctly
                 let incomingCall = event.call;  // ✅ Correct property
@@ -972,7 +968,7 @@ export default {
             console.log('Calling agent:', agent);
         },
 
-       async fetchCallHistory() {
+        async fetchCallHistory() {
             axios.get('/api/v1/call-history')
                 .then(response => {
                     this.calls = response.data.callHistories;
@@ -991,8 +987,7 @@ export default {
                 });
         },
 
-        fetchUsers()
-        {
+        fetchUsers() {
             axios.get('/v1/users')
                 .then(response => {
                     this.agents = response.data;
@@ -1005,11 +1000,11 @@ export default {
 
     },
     watch: {
-            // Watch for any change in the agents and filter again if needed
-            availableAgents(newAgents) {
-                this.availableAgents = newAgents.filter(agent => !agent.isInCall);
-            }
-        },
+        // Watch for any change in the agents and filter again if needed
+        availableAgents(newAgents) {
+            this.availableAgents = newAgents.filter(agent => !agent.isInCall);
+        }
+    },
     async mounted() {
         await this.initializeAfricastalking();
         // await this.fetchCallHistory();
