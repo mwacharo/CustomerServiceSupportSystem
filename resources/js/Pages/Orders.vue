@@ -371,7 +371,7 @@
                                 <strong>Alternative Phone:</strong> {{ selectedItem?.altPhone || 'N/A' }}
                             </div>
                             <div>
-                                <strong>Location:</strong> {{ selectedItem?.location || 'N/A' }}
+                                <strong>Address:</strong> {{ selectedItem?.location || 'N/A' }}
                             </div>
                         </v-card-text>
                         <v-card-actions>
@@ -406,10 +406,6 @@
                                 <v-icon left>mdi-telegram</v-icon>
                                 Send Telegram Message
                             </v-btn>
-
-
-
-
 
 
                         </v-card-actions>
@@ -469,20 +465,20 @@ const searchQuery = ref("");
 
 export default {
 
-    setup() {
-        const isMuted = ref(false);
-        const isOnHold = ref(false);
+    // setup() {
+    //     const isMuted = ref(false);
+    //     const isOnHold = ref(false);
 
-        const handleMute = () => {
-            isMuted.value = !isMuted.value;
-        };
+    //     const handleMute = () => {
+    //         isMuted.value = !isMuted.value;
+    //     };
 
-        const handleHoldToggle = () => {
-            isOnHold.value = !isOnHold.value;
-        };
+    //     const handleHoldToggle = () => {
+    //         isOnHold.value = !isOnHold.value;
+    //     };
 
-        return { isMuted, isOnHold, handleMute, handleHoldToggle };
-    },
+    //     return { isMuted, isOnHold, handleMute, handleHoldToggle };
+    // },
 
 
     components: { AppLayout },
@@ -645,56 +641,16 @@ export default {
                     this.incomingCall = {
                         from: event.from,
                         duration: 'Connecting...'
-                    };          
+                    };
                 });
-                  // Listen for the hangup event on the client
+                // Listen for the hangup event on the client
                 client.on('hangup', (event) => {
-                        console.log("Incoming call hung up:", event.reason);
-                        this.$toastr.error("Incoming call hung up: ", event.reason);
-                        this.incomingCallDialog = false;
-                    });
+                    console.log("Incoming call hung up:", event.reason);
+                    this.$toastr.error("Incoming call hung up: ", event.reason);
+                    this.incomingCallDialog = false;
+                });
                 // Retrieve the call object correctly
                 let incomingCall = event.call;  // ✅ Correct property
-
-
-
-                // Answer the incoming call
-                // if (incomingCall.answer) {
-                //     console.log("Answering call...");
-                //     incomingCall.answer();  // This is the correct way to answer the call
-                // } else {
-                //     console.error("No answer function found in event.");
-                // }
-
-                // // Handle events for the active call
-                // incomingCall.on('established', () => {
-                //     console.log("Call established successfully.");
-                //     this.isCalling = true;
-                // });
-
-                // incomingCall.on('terminated', (reason) => {
-                //     console.log("Call terminated:", reason);
-                //     this.isCalling = false;
-                // });
-
-                // incomingCall.on('error', (error) => {
-                //     console.error("Call Error:", error);
-                // });
-
-                // Handle events for the ongoing call
-                // incomingCall.on('established', () => {
-                //     console.log("Call established successfully.");
-                //     this.isCalling = true;
-                // });
-
-                // incomingCall.on('terminated', (reason) => {
-                //     console.log("Call terminated:", reason);
-                //     this.isCalling = false;
-                // });
-
-                // incomingCall.on('error', (error) => {
-                //     console.error("Call Error:", error);
-                // });
 
                 // Save the client instance for later use
                 this.$webrtcClient = client;
@@ -707,8 +663,6 @@ export default {
         transferCall() {
             this.openTransferDialog();
         },
-
-
 
         async callClient(phone) {
             try {
@@ -769,6 +723,14 @@ export default {
                 this.afClient.answer();
             }
         },
+
+        handleCall(agent) {
+            this.selectedAgent = agent;
+            agent.phone_number=phone_number;
+            this.afClient.call(phone_number);
+            // this.callAgentDialog = false;
+            console.log('Calling agent:', agent);
+        },
         //  hangup the call
         hangupCall() {
             if (this.incomingCall) {
@@ -783,16 +745,43 @@ export default {
             }
         },
 
-        // mute the call and unmute the call
-        handleMute() {
-            if (this.isCalling) {
-                this.afClient.mute();
-                this.isMuted = !this.isMuted;
-                console.log('call is muted');
 
-                // this.logEvent(this.isMuted ? "Call muted." : "Call unmuted.");
-            }
-        },
+        handleMute() {
+    if (this.isCalling) {
+        this.isMuted = !this.isMuted;
+        
+        if (this.isMuted) {
+            this.afClient.muteAudio();
+        } else {
+            this.afClient.unmuteAudio();
+        }
+        
+        // Try accessing as a property instead of a method
+        console.log('Client mute property:', this.afClient.isAudioMuted);
+        console.log('Our internal state:', this.isMuted);
+    }
+},
+
+        // mute the call and unmute the call
+    //     handleMute() {
+    //         // if (this.isCalling) {
+    //         // if (this.isCalling) {
+    //         //     console.log(Object.getOwnPropertyNames(Object.getPrototypeOf(this.afClient)));
+    //         //     console.log(typeof this.afClient.muteAudio);
+    //         //     this.isMuted = !this.isMuted;
+    //         //     console.log('call is muted');
+           
+    //         // }
+
+    //     //     this.isMuted = !this.isMuted;
+        
+    //     // if (this.isMuted) {
+    //     //     this.afClient.muteAudio(); 
+    //     // } else {
+    //     //     this.afClient.unmuteAudio(); 
+    //     // }
+    // // }
+    //     },
         // hold the call and unhold the call
         handleHoldToggle() {
             if (this.isCalling) {
@@ -937,11 +926,7 @@ export default {
             this.selectedItem = item;
             this.phonePopup = true;
         },
-        handleCall(agent) {
-            this.selectedAgent = agent;
-            this.callAgentDialog = false;
-            console.log('Calling agent:', agent);
-        },
+      
 
         async fetchCallHistory() {
             axios.get('/api/v1/call-history')
