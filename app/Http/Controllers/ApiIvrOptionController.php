@@ -19,7 +19,7 @@ class ApiIvrOptionController extends Controller
 
             Log::info('ApiIvrOptionController@index: Successfully fetched the resource listing.');
 
-            return response()->json(['data' => $ivrOptions], 200);
+            return response()->json(['ivrOptions' => $ivrOptions], 200);
         } catch (\Exception $e) {
             Log::error('ApiIvrOptionController@index: Error occurred - ' . $e->getMessage());
             return response()->json(['error' => 'Failed to fetch resource listing.'], 500);
