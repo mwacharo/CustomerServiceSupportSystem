@@ -727,7 +727,7 @@ export default {
 
         handleCall(agent) {
             this.selectedAgent = agent;
-            agent.phone_number=phone_number;
+           this.phone_number =agent.phone_number
             this.afClient.call(phone_number);
             // this.callAgentDialog = false;
             console.log('Calling agent:', agent);
