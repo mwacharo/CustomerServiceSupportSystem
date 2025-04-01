@@ -670,6 +670,16 @@ export default {
                         from: event.from,  
                         duration: 'Connecting...'
                     };
+
+
+                     // Listen for the hangup event on the client
+    client.on('hangup', (hangupEvent) => {
+        console.log("Incoming call hung up:", hangupEvent.reason);
+        this.$toastr.error("Incoming call hung up: " + hangupEvent.reason);
+        this.incomingCallDialog = false;
+    });
+
+                  
                 });
 
                 // Retrieve the call object correctly
