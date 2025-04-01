@@ -157,6 +157,7 @@ export default {
                         this.ivrOptions.push(response.data);
                     }
                     this.close();
+                    this.fetchIvrOptions();
                 })
                 .catch(error => console.error("Saving error:", error));
         },
