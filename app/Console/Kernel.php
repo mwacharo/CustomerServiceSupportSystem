@@ -15,9 +15,12 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule): void
     {
-        // $schedule->command('inspire')->hourly();
+        // Log the start of the token generation scheduling
+        Log::info('🔑 Scheduling daily token generation command at midnight.');
 
-        // DownloadCallRecordingsJob::dispatch();
+        // Schedule the token generation command at midnight daily
+        $schedule->command('token:generate-daily')->dailyAt('00:00');
+    
 
         Log::info('📥 Starting Call Recordings Download Job');
 

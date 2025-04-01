@@ -668,7 +668,7 @@ export default {
         async callClient(phone) {
             try {
 
-                console.log(`Calling ${phone} from +254711082159...`);
+                console.log(`Calling ${phone} from System...`);
                 this.afClient.call(phone)
                 console.log("Call initiated successfully.");
                 this.$toastr.success("Call started.");
@@ -727,13 +727,26 @@ export default {
 
         handleCall(agent) {
             this.selectedAgent = agent;
-            console.log('Calling agent:', agent);
+            console.log('Selected agent:', agent);
 
-           this.phone_number =agent.phone_number;
-           
-           console.log('agentsip:',this.phone_number)
+            this.phone_number = agent.phone_number;
+            console.log('Agent phone number:', this.phone_number);
+
+            if (!this.afClient) {
+            console.error('Africastalking client is not initialized.');
+            this.$toastr.error('Africastalking client is not initialized.');
+            return;
+            }
+
+            try {
+            console.log('Attempting to call agent...');
             this.afClient.call(this.phone_number);
-            // this.callAgentDialog = false;
+            console.log('Call initiated successfully.');
+            this.$toastr.success('Call initiated successfully.');
+            } catch (error) {
+            console.error('Error while calling agent:', error);
+            this.$toastr.error('Failed to call agent: ' + error.message);
+            }
         },
         //  hangup the call
         hangupCall() {
