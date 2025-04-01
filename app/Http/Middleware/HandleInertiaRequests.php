@@ -54,6 +54,13 @@ class HandleInertiaRequests extends Middleware
     return array_merge(parent::share($request), [
         'user.roles' => $request->user() ? $request->user()->roles->pluck('name') : [],
         'user.permissions' => $request->user() ? $request->user()->getPermissionsViaRoles()->pluck('name') : [],
+
+                
+        // Access the token directly from the user model
+        'user.token' => $request->user() ? $request->user()->token : null,
     ]);
+
+
+   
 }
 }

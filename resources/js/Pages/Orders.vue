@@ -418,9 +418,17 @@
 
 <script>
 import AppLayout from "@/Layouts/AppLayout.vue";
-import { onMounted } from 'vue';
 import Africastalking from 'africastalking-client';
-import { ref } from "vue";
+
+import { computed } from 'vue';
+import { usePage } from '@inertiajs/inertia-vue3';
+import { ref } from 'vue';
+
+const userToken = computed(() => usePage().props.value.user?.token);
+
+
+
+
 
 const orders = [
     {
@@ -465,6 +473,13 @@ const searchQuery = ref("");
 
 export default {
 
+     
+
+    // props: {
+    //     userToken: String,
+    //     required: true,
+    // },
+
     // setup() {
     //     const isMuted = ref(false);
     //     const isOnHold = ref(false);
@@ -487,7 +502,6 @@ export default {
         isOnHold: false, // Initially not on hold
         itemsPerPage: 5,
         tab: "calls",
-
         isCalling: false,
         connection_active: false,
         queueDialog: false,
@@ -581,6 +595,17 @@ export default {
 
     methods: {
 
+        waitForToken() {
+        return new Promise((resolve) => {
+            const checkToken = setInterval(() => {
+                if (this.userToken) {
+                    clearInterval(checkToken);
+                    resolve();
+                }
+            }, 500);
+        });
+    },
+
         async initializeAfricastalking() {
 
             const params = {
@@ -590,27 +615,31 @@ export default {
                 },
             };
             try {
-                const response = await axios.get('/api/v1/voice-token');
-                console.log("API Response:", response.data);
+                // const response = await axios.get('/api/v1/voice-token');
+                // console.log("API Response:", response.data);
 
-                const updatedTokens = response.data.updatedTokens;
-                if (!updatedTokens || updatedTokens.length === 0) {
-                    console.error("No tokens found in response.");
-                    this.$toastr.error("No tokens available.");
-                    return;
-                }
+                // const updatedTokens = response.data.updatedTokens;
+                // if (!updatedTokens || updatedTokens.length === 0) {
+                //     console.error("No tokens found in response.");
+                //     this.$toastr.error("No tokens available.");
+                //     return;
+                // }
 
-                const token = updatedTokens[0].token;
-                console.log("Using token:");
+                // const token = this.userToken;
+                // console.log("Using token:", token);
 
-                if (!token) {
-                    console.error("Token is missing from response.");
-                    this.$toastr.error("Invalid token received.");
-                    return;
-                }
-
+                // if (!token) {
+                //     console.error("Token is missing from response.");
+                //     this.$toastr.error("Invalid token received.");
+                //     return;
+                // }
+                
+    //   given 
                 // Initialize Africastalking client with the valid token
-                const client = new Africastalking.Client(token, params);
+                // const client = new Africastalking.Client(token, params);
+
+
+                const client = new Africastalking.Client(userToken.value, params);
                 console.log("Africastalking client initialized.");
                 this.afClient = client
 
@@ -651,7 +680,7 @@ export default {
                     this.incomingCallDialog = false;
                 });
                 // Retrieve the call object correctly
-                let incomingCall = event.call;  // ✅ Correct property
+                // let incomingCall = event.call;  // ✅ Correct property
 
                 // Save the client instance for later use
                 this.$webrtcClient = client;
@@ -974,6 +1003,8 @@ export default {
                 });
         },
 
+        
+
 
     },
     watch: {
@@ -982,14 +1013,30 @@ export default {
             this.availableAgents = newAgents.filter(agent => !agent.isInCall);
         }
     },
+
+    
     async mounted() {
+        console.log("User Token:", userToken.value); // Logs the token
+
+    if (!userToken.value) {
+        console.warn("userToken is missing. Waiting for it...");
+        await this.waitForToken();
+    }
+
+    if (userToken.value) {
         await this.initializeAfricastalking();
-        // await this.fetchCallHistory();
-        this.fetchOrders();
-    },
+    } else {
+        console.error("Failed to retrieve userToken after waiting.");
+    }
+
+    this.fetchOrders();
+},
+
+
     created() {
         this.fetchCallHistory();
         this.fetchUsers();
+
     },
 
 };

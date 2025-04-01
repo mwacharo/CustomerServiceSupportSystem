@@ -10,80 +10,29 @@
   const isLoading = ref(false);
   const callStatus = ref('');
   const error = ref(null);
-  const token = ref(null); //  token state
+  // const token = ref(null); //  token state
 
   // WebRTC Client Reference
-  const client = ref(null);
+  // const client = ref(null);
 
-  // Computed properties for user roles and permissions
+  // Computed properties for user roles ,permissions and token
   const userRoles = computed(() => usePage().props.value.user.roles);
   const userPermissions = computed(() => usePage().props.value.user.permissions);
 
-  // Clean up WebRTC client on component unmount
-  onBeforeUnmount(() => {
-    if (client.value) {
-      client.value.disconnect();
-      client.value = null;
-    }
-  });
 
-  
+  const userToken = computed(() => usePage().props.value.user.token);
 
-  // Function to fetch token with enhanced logging
-  const fetchToken = async () => {
-    console.group('Token Generation Process');
-    console.time('Token Generation Duration');
 
-    try {
-      console.log('🟦 Initiating token fetch request...');
 
-      const response = await fetch('/api/v1/voice-token', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-        }
-      });
 
-      console.log('📨 Response received:', {
-        status: response.status,
-        statusText: response.statusText,
-        ok: response.ok
-      });
+  // Log user roles, permissions, and token
+onMounted(() => {
+  console.log("User Roles:", userRoles.value); // Logs the roles
+  console.log("User Permissions:", userPermissions.value); // Logs the permissions
+  console.log("User Token:", userToken.value); // Logs the token
+});
 
-      if (!response.ok) {
-        throw new Error(`Failed to fetch token: ${response.statusText}`);
-      }
 
-      const data = await response.json();
-
-      console.log('📝 Response data:', {
-        hasToken: !!data.token,
-        tokenLength: data.token ? data.token.length : 0
-      });
-
-      if (!data.token) {
-        throw new Error('No valid token received');
-      }
-
-      token.value = data.token;
-      console.log('✅ Token successfully generated and stored');
-
-      return data.token;
-
-    } catch (err) {
-      console.error('❌ Token generation failed:', {
-        error: err.message,
-        stack: err.stack
-      });
-      error.value = `Token error: ${err.message}`;
-      throw err;
-
-    } finally {
-      console.timeEnd('Token Generation Duration');
-      console.groupEnd();
-    }
-  };
 
   
   // Navigation drawer functions
@@ -235,7 +184,11 @@
           <v-progress-circular indeterminate></v-progress-circular>
         </v-overlay>
         <slot />
+
+        <!-- Pass userRoles, userPermissions, and userToken to Order.vue -->
+      <!-- <Order :="userRoles" :userPermissions="userPermissions" :userToken="userToken" /> -->
       </v-main>
+      
     </v-app>
   </template>
 
