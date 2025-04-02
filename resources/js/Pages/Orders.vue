@@ -427,9 +427,6 @@ import { ref } from 'vue';
 const userToken = computed(() => usePage().props.value.user?.token);
 
 
-
-
-
 const orders = [
     {
         product: "Phone",
@@ -474,28 +471,6 @@ const searchQuery = ref("");
 export default {
 
      
-
-    // props: {
-    //     userToken: String,
-    //     required: true,
-    // },
-
-    // setup() {
-    //     const isMuted = ref(false);
-    //     const isOnHold = ref(false);
-
-    //     const handleMute = () => {
-    //         isMuted.value = !isMuted.value;
-    //     };
-
-    //     const handleHoldToggle = () => {
-    //         isOnHold.value = !isOnHold.value;
-    //     };
-
-    //     return { isMuted, isOnHold, handleMute, handleHoldToggle };
-    // },
-
-
     components: { AppLayout },
     data: () => ({
         isMuted: false, // Initially not muted
@@ -575,12 +550,7 @@ export default {
 
         },
         callId: null,
-        // callSessionState: null,
-        // callStatus: null,
-        // callAgentDialog: false,
-        // callAgent: null,
-        // callAgentDialog: false,
-        // selectedItem: null,
+      
         afClient: null,
 
         session: null,
@@ -615,30 +585,7 @@ export default {
                 },
             };
             try {
-                // const response = await axios.get('/api/v1/voice-token');
-                // console.log("API Response:", response.data);
-
-                // const updatedTokens = response.data.updatedTokens;
-                // if (!updatedTokens || updatedTokens.length === 0) {
-                //     console.error("No tokens found in response.");
-                //     this.$toastr.error("No tokens available.");
-                //     return;
-                // }
-
-                // const token = this.userToken;
-                // console.log("Using token:", token);
-
-                // if (!token) {
-                //     console.error("Token is missing from response.");
-                //     this.$toastr.error("Invalid token received.");
-                //     return;
-                // }
-                
-    //   given 
-                // Initialize Africastalking client with the valid token
-                // const client = new Africastalking.Client(token, params);
-
-
+               
                 const client = new Africastalking.Client(userToken.value, params);
                 console.log("Africastalking client initialized.");
                 this.afClient = client
@@ -755,6 +702,7 @@ export default {
         },
 
         handleCall(agent) {
+            this.isCalling = true;
             this.selectedAgent = agent;
             console.log('Selected agent:', agent);
 
@@ -898,22 +846,7 @@ export default {
         //         });
         // },
 
-        // handleHangup() {
-        //     // Check if the callId exists
-        //     if (this.callId) {
-        //         axios.post('/api/v1/hangup-call', { callId: this.callId })
-        //             .then(response => {
-        //                 this.isCalling = false;  // Set calling state to false
-        //                 console.log('Call ended', response.data);
-        //             })
-        //             .catch(error => {
-        //                 console.error('Error ending the call', error);
-        //             });
-        //     } else {
-        //         console.log('Call ID not available');
-        //     }
-        // }
-        // ,
+        
         // handleHold() {
         //     // Check if the callId exists
         //     if (this.callId) {
@@ -930,23 +863,23 @@ export default {
         //     }
         // }
         // ,
-        // handleTransfer() {
-        //     const transferToPhone = '254700000000'; // Replace with the destination phone number
+        handleTransfer() {
+            const transferToPhone = '254700000000'; // Replace with the destination phone number
 
-        //     // Check if the callId exists
-        //     if (this.callId) {
-        //         axios.post('/api/v1/transfer-call', { callId: this.callId, destination: transferToPhone })
-        //             .then(response => {
-        //                 console.log('Call transferred', response.data);
-        //             })
-        //             .catch(error => {
-        //                 console.error('Error transferring the call', error);
-        //             });
-        //     } else {
-        //         console.log('Call ID not available');
-        //     }
-        // }
-        // ,
+            // Check if the callId exists
+            if (this.callId) {
+                axios.post('/api/v1/call-centre-transfer-call', { callId: this.callId, destination: transferToPhone })
+                    .then(response => {
+                        console.log('Call transferred', response.data);
+                    })
+                    .catch(error => {
+                        console.error('Error transferring the call', error);
+                    });
+            } else {
+                console.log('Call ID not available');
+            }
+        }
+        ,
         loadItems({ page, itemsPerPage, sortBy }) {
             this.loading = true;
             FakeAPI.fetch({
@@ -1003,9 +936,6 @@ export default {
                 });
         },
 
-        
-
-
     },
     watch: {
         // Watch for any change in the agents and filter again if needed
@@ -1031,7 +961,6 @@ export default {
 
     this.fetchOrders();
 },
-
 
     created() {
         this.fetchCallHistory();
