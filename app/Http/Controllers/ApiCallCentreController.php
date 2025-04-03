@@ -749,6 +749,9 @@ class ApiCallCentreController extends Controller
                 ? $this->createVoiceResponse("Connecting you to an agent.", $agentNumber)
                 : $this->createVoiceResponse("All agents are currently busy. Please try again later.");
             // if agents are busy leave a message after the beep
+
+
+
             // if agets are busy  please wait in the queue
             // play did you know boxleo courier & Fullfillment blah blah 
         }
@@ -798,9 +801,11 @@ class ApiCallCentreController extends Controller
     {
         try {
 
-            $callHistories = CallHistory::where('created_at', '>=', Carbon::now()->subDays(1))
-                ->orderBy('created_at', 'asc')
-                ->get();
+            // $callHistories = CallHistory::where('created_at', '>=', Carbon::now()->subDays(1))
+            $callHistories = CallHistory::all();
+
+                // ->orderBy('created_at', 'asc')
+                // ->get();
 
             return response()->json([
                 'callHistories' => $callHistories,
