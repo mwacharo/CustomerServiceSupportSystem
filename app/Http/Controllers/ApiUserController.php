@@ -17,13 +17,7 @@ class ApiUserController extends Controller
   
     public function index()
     {
-        //
-        // $users=User::all();
-    
-        // return response()->json( $users);
-
-            // Fetch all users with their roles
-            // with permissions
+        
     $users = User::with('roles','permissions')->get();
     
     return response()->json($users);

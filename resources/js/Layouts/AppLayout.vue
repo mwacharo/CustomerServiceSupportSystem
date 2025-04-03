@@ -3,6 +3,7 @@
   import { Link } from '@inertiajs/inertia-vue3';
   import { usePage } from '@inertiajs/inertia-vue3';
   import Logout from '@/Components/Logout.vue';
+  import ChatBox  from '@/Components/ChatBox.vue';
 
   // State management
   const drawer = ref(true);
@@ -169,6 +170,7 @@ onMounted(() => {
         </v-chip>
 
         <Logout />
+      
 
         <!-- Notifications -->
         <v-btn icon="mdi-bell">
@@ -183,7 +185,9 @@ onMounted(() => {
         <v-overlay v-model="isLoading" class="align-center justify-center">
           <v-progress-circular indeterminate></v-progress-circular>
         </v-overlay>
+        
         <slot />
+        <ChatBox />
 
         <!-- Pass userRoles, userPermissions, and userToken to Order.vue -->
       <!-- <Order :="userRoles" :userPermissions="userPermissions" :userToken="userToken" /> -->

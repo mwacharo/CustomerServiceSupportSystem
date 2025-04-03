@@ -1,10 +1,6 @@
 <template>
   <AppLayout>
-
-
     <v-card class="my-card">
-
-      
       <v-container>
         <v-text-field
           v-model="searchQuery"
@@ -22,11 +18,10 @@
         <template v-slot:top>
           <v-toolbar flat>
             <v-toolbar-title>Admin</v-toolbar-title>
-
             <v-divider class="mx-4" inset vertical></v-divider>
             <v-spacer></v-spacer>
             <v-dialog v-model="dialog" max-width="800px">
-                <template v-slot:activator="{ props }">
+              <template v-slot:activator="{ props }">
                 <v-btn
                   color="black"
                   dark
@@ -39,24 +34,11 @@
                   <v-icon left>mdi-plus</v-icon>
                   New Admin
                 </v-btn>
-                <!-- <v-btn
-                  color="black"
-                  dark
-                  class="mb-2"
-                  v-bind="props"
-                  elevation="2"
-                  rounded
-                  @click="importAdmins"
-                >
-                  <v-icon left>mdi-file-import</v-icon>
-                  Import Admin
-                </v-btn> -->
-                </template>
+              </template>
               <v-card>
                 <v-card-title>
                   <span class="text-h5">{{ formTitle }}</span>
                 </v-card-title>
-
                 <v-card-text>
                   <v-container>
                     <v-row>
@@ -93,14 +75,13 @@
                           label="Role"
                         ></v-select>
                       </v-col>
-
                       <v-col cols="12" sm="6">
                         <v-text-field
                           v-model="editedItem.phone_number"
                           label="Agent SIP"
                         ></v-text-field>
                       </v-col>
-                      <v-col cols="12" sm="6" >
+                      <v-col cols="12" sm="6">
                         <v-select
                           v-model="editedItem.branch_id"
                           :items="branches"
@@ -121,7 +102,6 @@
                     </v-row>
                   </v-container>
                 </v-card-text>
-
                 <v-card-actions>
                   <v-spacer></v-spacer>
                   <v-btn color="blue-darken-1" variant="text" @click="close">
@@ -151,6 +131,21 @@
               </v-card>
             </v-dialog>
           </v-toolbar>
+        </template>
+        
+        <!-- Display role information -->
+        <template v-slot:item.roles="{ item }">
+          <v-chip v-if="item.roles && item.roles.length" color="primary">
+            {{ item.roles[0].name }}
+          </v-chip>
+          <span v-else>No role assigned</span>
+        </template>
+        
+        <!-- Display status information -->
+        <template v-slot:item.status="{ item }">
+          <v-chip :color="getStatusColor(item.status)">
+            {{ item.status || 'N/A' }}
+          </v-chip>
         </template>
         
         <template v-slot:item.actions="{ item }">
@@ -232,7 +227,6 @@
         </template>
       </v-data-table>
       <Permissions ref="PermissionsComponent" />
-
     </v-card>
   </AppLayout>
 </template>
@@ -257,10 +251,9 @@ export default {
         { title: "Agent Name", align: "start", sortable: false, key: "name" },
         { title: "Email", key: "email" },
         { title: "Phone", key: "phone" },
-        { title: "Phone", key: "phone_number" },
-        { title: "Role", key: "roles.name" },
-        // { title: "Status", key: "status" },
-        // { title: "Created At", key: "created_at" },
+        { title: "Agent SIP", key: "phone_number" },
+        { title: "Role", key: "roles" },
+        { title: "Status", key: "status" },
         { title: "Actions", key: "actions", sortable: false },
       ],
       users: [],
@@ -285,7 +278,6 @@ export default {
         phone_number: "",
         branch_id: null,
         country_id: null,
-        
       },
     };
   },
@@ -297,7 +289,7 @@ export default {
   watch: {
     dialog(val) {
       if (val) {
-        this.fetchRoles(); // Fetch roles when dialog is opened
+        this.fetchRoles();
       } else {
         this.close();
       }
@@ -310,6 +302,14 @@ export default {
     this.initialize();
   },
   methods: {
+    getStatusColor(status) {
+      if (!status) return 'grey';
+      switch (status.toLowerCase()) {
+        case 'available': return 'green';
+        case 'engaged': return 'orange';
+        default: return 'grey';
+      }
+    },
     fetchRoles() {
       const API_URL = "api/v1/roles";
       axios
@@ -326,7 +326,11 @@ export default {
       axios
         .get(API_URL)
         .then((response) => {
-          this.users = response.data;
+          this.users = response.data.map(user => ({
+            ...user,
+            // Ensure roles array exists and has at least one role
+            roles: user.roles && user.roles.length ? user.roles : []
+          }));
         })
         .catch((error) => console.error("API Error:", error));
     },
@@ -334,7 +338,7 @@ export default {
       this.editedIndex = this.users.indexOf(item);
       this.editedItem = {
         ...item,
-        selectedRole: item.roles.length ? item.roles[0] : null // Handle role assignment
+        selectedRole: item.roles.length ? item.roles[0] : null
       };
       this.dialog = true;
     },
@@ -372,7 +376,7 @@ export default {
       let request;
       const payload = {
         ...this.editedItem,
-        role:this.editedItem.selectedRole.name
+        role: this.editedItem.selectedRole?.name || ''
       };
 
       if (this.editedIndex > -1) {

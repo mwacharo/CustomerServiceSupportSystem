@@ -71,6 +71,8 @@
 
                         <v-tab value="calls">Calls</v-tab>
                         <v-tab value="orders">Orders</v-tab>
+                        <v-tab value="tickets">tickets</v-tab>
+
                     </v-tabs>
 
                     <!-- Tab content -->
@@ -214,7 +216,7 @@
 
 
                 <!-- Dialog for newcall phone number -->
-                <v-dialog v-model="newCall" max-width="600">
+                <v-dialog v-model="newCall" max-width="800">
                     <v-card>
                         <v-card-title>
                             Client Details
@@ -348,7 +350,7 @@
                     </v-card>
                 </v-dialog>
                 <!-- Phone Popup -->
-                <v-dialog v-model="phonePopup" max-width="800">
+                <v-dialog v-model="phonePopup" width="800">
 
                     <v-card>
 
@@ -637,9 +639,9 @@ export default {
 
 
         },
-        sendTelegram(phone){
+        sendTelegram(phone) {
 
-                window.open(`https://t.me/${phone}`, "_blank");
+            window.open(`https://t.me/${phone}`, "_blank");
 
 
         },
