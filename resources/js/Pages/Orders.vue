@@ -124,7 +124,7 @@
 
                 </v-card>
                 <!-- Dialog for Calling an Agent -->
-                <v-dialog v-model="callAgentDialog" max-width="400">
+                <v-dialog v-model="callAgentDialog" max-width="600">
                     <v-card>
                         <v-card-title class="headline">Call an Agent</v-card-title>
                         <v-card-text>
@@ -349,67 +349,103 @@
                 </v-dialog>
                 <!-- Phone Popup -->
                 <v-dialog v-model="phonePopup" max-width="800">
+
                     <v-card>
-                        <v-card-title>
-                            Client Details
-                            <v-spacer />
-                            <v-btn icon @click="phonePopup = false">
-                                <v-icon>mdi-close</v-icon>
-                            </v-btn>
-                        </v-card-title>
-                        <v-card-text>
-                            <div>
-                                <strong>Name:</strong> {{ selectedItem?.client }}
-                            </div>
-                            <div>
-                                <strong>Email:</strong> {{ selectedItem?.email }}
-                            </div>
-                            <div>
-                                <strong>Phone:</strong> {{ selectedItem?.phone }}
-                            </div>
-                            <div>
-                                <strong>Alternative Phone:</strong> {{ selectedItem?.altPhone || 'N/A' }}
-                            </div>
-                            <div>
-                                <strong>Address:</strong> {{ selectedItem?.location || 'N/A' }}
-                            </div>
-                        </v-card-text>
-                        <v-card-actions>
-                            <v-btn color="primary" @click="callClient(selectedItem?.phone)">
-                                <v-icon left>mdi-phone</v-icon>
-                                Call Client
-                            </v-btn>
-                            <!-- include normal sms icon -->
 
-                            <v-btn color="primary" @click="sendSms(selectedItem?.phone)">
-                                <v-icon left>mdi-message</v-icon>
-                                Send SMS
-                            </v-btn>
+                        <v-row>
+                            <v-col cols="12" md="6">
+                                <v-card>
+                                    <v-card-title>
+                                        Client Details
+                                        <v-spacer />
+                                        <v-btn icon @click="phonePopup = false">
+                                            <v-icon>mdi-close</v-icon>
+                                        </v-btn>
+                                    </v-card-title>
+                                    <v-card-text>
+                                        <div class="d-flex align-center mb-2">
+                                            <v-icon color="primary" class="mr-2">mdi-account</v-icon>
+                                            <strong>Name:</strong> {{ selectedItem?.client }}
+                                        </div>
+                                        <div class="d-flex align-center mb-2">
+                                            <v-icon color="primary" class="mr-2">mdi-email</v-icon>
+                                            <strong>Email:</strong> {{ selectedItem?.email }}
+                                        </div>
+                                        <div class="d-flex align-center mb-2">
+                                            <v-icon color="primary" class="mr-2">mdi-phone</v-icon>
+                                            <strong>Phone:</strong> {{ selectedItem?.phone }}
+                                        </div>
+                                        <div class="d-flex align-center mb-2">
+                                            <v-icon color="primary" class="mr-2">mdi-phone-classic</v-icon>
+                                            <strong>Alternative Phone:</strong> {{ selectedItem?.altPhone || 'N/A' }}
+                                        </div>
+                                        <div class="d-flex align-center">
+                                            <v-icon color="primary" class="mr-2">mdi-map-marker</v-icon>
+                                            <strong>Address:</strong> {{ selectedItem?.location || 'N/A' }}
+                                        </div>
+                                    </v-card-text>
 
-                            <!-- include WhatsApp SMS icon -->
-                            <v-btn color="success" @click="sendWhatsAppMessage(selectedItem?.phone)">
-                                <v-icon left>mdi-whatsapp</v-icon>
-                                Send WhatsApp Message
-                            </v-btn>
+                                </v-card>
+
+                            </v-col>
+
+                            <v-col cols="12" md="6">
+                                <v-card>
+                                    <v-list dense>
+                                        <v-list-item @click="callClient(selectedItem?.phone)">
+                                            <v-list-item-icon>
+                                                <v-icon color="primary">mdi-phone</v-icon>
+                                            </v-list-item-icon>
+                                            <v-list-item-content>
+                                                <v-list-item-title>Call Client</v-list-item-title>
+                                            </v-list-item-content>
+                                        </v-list-item>
+
+                                        <v-list-item @click="sendSms(selectedItem?.phone)">
+                                            <v-list-item-icon>
+                                                <v-icon color="primary">mdi-message</v-icon>
+                                            </v-list-item-icon>
+                                            <v-list-item-content>
+                                                <v-list-item-title>Send SMS</v-list-item-title>
+                                            </v-list-item-content>
+                                        </v-list-item>
+
+                                        <v-list-item @click="sendWhatsApp(selectedItem?.phone)">
+                                            <v-list-item-icon>
+                                                <v-icon color="success">mdi-whatsapp</v-icon>
+                                            </v-list-item-icon>
+                                            <v-list-item-content>
+                                                <v-list-item-title>Send WhatsApp Message</v-list-item-title>
+                                            </v-list-item-content>
+                                        </v-list-item>
+
+                                        <v-list-item @click="sendEmail(selectedItem?.email)">
+                                            <v-list-item-icon>
+                                                <v-icon color="primary">mdi-email</v-icon>
+                                            </v-list-item-icon>
+                                            <v-list-item-content>
+                                                <v-list-item-title>Send Email</v-list-item-title>
+                                            </v-list-item-content>
+                                        </v-list-item>
+
+                                        <v-list-item @click="sendTelegram(selectedItem?.phone)">
+                                            <v-list-item-icon>
+                                                <v-icon color="info">mdi-telegram</v-icon>
+                                            </v-list-item-icon>
+                                            <v-list-item-content>
+                                                <v-list-item-title>Send Telegram Message</v-list-item-title>
+                                            </v-list-item-content>
+                                        </v-list-item>
+                                    </v-list>
+
+                                </v-card>
+                            </v-col>
+                        </v-row>
 
 
-                            <!-- include email icon to email client  -->
-                            <v-btn color="primary" @click="sendEmail(selectedItem?.email)">
-                                <v-icon left>mdi-email</v-icon>
-                                Send Email
-                            </v-btn>
-
-
-
-                            <!-- include telegram message -->
-                            <v-btn color="info" @click="sendTelegramMessage(selectedItem?.phone)">
-                                <v-icon left>mdi-telegram</v-icon>
-                                Send Telegram Message
-                            </v-btn>
-
-
-                        </v-card-actions>
                     </v-card>
+
+
                 </v-dialog>
             </v-container>
         </div>
@@ -425,6 +461,33 @@ import { usePage } from '@inertiajs/inertia-vue3';
 import { ref } from 'vue';
 
 const userToken = computed(() => usePage().props.value.user?.token);
+
+
+
+// eventdata	{…}
+// call_id	"d885d2b7-8a16-123e-caac-3ca82a0b7938"
+// result	{…}
+// displayname	'"John"'
+// event	"incomingcall"
+// username	"sip:BoxleoKenya.John@ke.sip.africastalking.com"
+// sip	"event:incomingcall"
+
+
+// const sendSMS = (phone) => {
+//     console.log("Sending SMS to", phone);
+// };
+
+// const sendWhatsApp = (phone) => {
+//   window.open(`https://wa.me/${phone}`, "_blank");
+// };
+
+// const sendEmail = (email) => {
+//     window.location.href = `mailto:${email}`;
+// };
+
+// const sendTelegram = (phone) => {
+//     window.open(`https://t.me/${phone}`, "_blank");
+// };
 
 
 const orders = [
@@ -470,7 +533,7 @@ const searchQuery = ref("");
 
 export default {
 
-     
+
     components: { AppLayout },
     data: () => ({
         isMuted: false, // Initially not muted
@@ -550,7 +613,7 @@ export default {
 
         },
         callId: null,
-      
+
         afClient: null,
 
         session: null,
@@ -558,23 +621,39 @@ export default {
 
         selectedItem: {
             phone: '',
-            phone_number:'',
+            phone_number: '',
         },
         eventLog: [],
     }),
 
     methods: {
 
+        sendWhatsApp(phone) {
+
+            //   window.open(`https://wa.me/${phone}`, "_blank");
+
+            const text = encodeURIComponent("Hello! I’d like to follow up.");
+            window.open(`https://wa.me/${phone}?text=${text}`, "_blank");
+
+
+        },
+        sendTelegram(phone){
+
+                window.open(`https://t.me/${phone}`, "_blank");
+
+
+        },
+
         waitForToken() {
-        return new Promise((resolve) => {
-            const checkToken = setInterval(() => {
-                if (this.userToken) {
-                    clearInterval(checkToken);
-                    resolve();
-                }
-            }, 500);
-        });
-    },
+            return new Promise((resolve) => {
+                const checkToken = setInterval(() => {
+                    if (this.userToken) {
+                        clearInterval(checkToken);
+                        resolve();
+                    }
+                }, 500);
+            });
+        },
 
         async initializeAfricastalking() {
 
@@ -585,7 +664,7 @@ export default {
                 },
             };
             try {
-               
+
                 const client = new Africastalking.Client(userToken.value, params);
                 console.log("Africastalking client initialized.");
                 this.afClient = client
@@ -710,19 +789,19 @@ export default {
             console.log('Agent phone number:', this.phone_number);
 
             if (!this.afClient) {
-            console.error('Africastalking client is not initialized.');
-            this.$toastr.error('Africastalking client is not initialized.');
-            return;
+                console.error('Africastalking client is not initialized.');
+                this.$toastr.error('Africastalking client is not initialized.');
+                return;
             }
 
             try {
-            console.log('Attempting to call agent...');
-            this.afClient.call(this.phone_number);
-            console.log('Call initiated successfully.');
-            this.$toastr.success('Call initiated successfully.');
+                console.log('Attempting to call agent...');
+                this.afClient.call(this.phone_number);
+                console.log('Call initiated successfully.');
+                this.$toastr.success('Call initiated successfully.');
             } catch (error) {
-            console.error('Error while calling agent:', error);
-            this.$toastr.error('Failed to call agent: ' + error.message);
+                console.error('Error while calling agent:', error);
+                this.$toastr.error('Failed to call agent: ' + error.message);
             }
         },
         //  hangup the call
@@ -741,41 +820,41 @@ export default {
 
 
         handleMute() {
-    if (this.isCalling) {
-        this.isMuted = !this.isMuted;
-        
-        if (this.isMuted) {
-            this.afClient.muteAudio();
-        } else {
-            this.afClient.unmuteAudio();
-        }
-        
-        // Try accessing as a property instead of a method
-        console.log('Client mute property:', this.afClient.isAudioMuted);
-        console.log('Our internal state:', this.isMuted);
-    }
-},
+            if (this.isCalling) {
+                this.isMuted = !this.isMuted;
+
+                if (this.isMuted) {
+                    this.afClient.muteAudio();
+                } else {
+                    this.afClient.unmuteAudio();
+                }
+
+                // Try accessing as a property instead of a method
+                console.log('Client mute property:', this.afClient.isAudioMuted);
+                console.log('Our internal state:', this.isMuted);
+            }
+        },
 
         // mute the call and unmute the call
-    //     handleMute() {
-    //         // if (this.isCalling) {
-    //         // if (this.isCalling) {
-    //         //     console.log(Object.getOwnPropertyNames(Object.getPrototypeOf(this.afClient)));
-    //         //     console.log(typeof this.afClient.muteAudio);
-    //         //     this.isMuted = !this.isMuted;
-    //         //     console.log('call is muted');
-           
-    //         // }
+        //     handleMute() {
+        //         // if (this.isCalling) {
+        //         // if (this.isCalling) {
+        //         //     console.log(Object.getOwnPropertyNames(Object.getPrototypeOf(this.afClient)));
+        //         //     console.log(typeof this.afClient.muteAudio);
+        //         //     this.isMuted = !this.isMuted;
+        //         //     console.log('call is muted');
 
-    //     //     this.isMuted = !this.isMuted;
-        
-    //     // if (this.isMuted) {
-    //     //     this.afClient.muteAudio(); 
-    //     // } else {
-    //     //     this.afClient.unmuteAudio(); 
-    //     // }
-    // // }
-    //     },
+        //         // }
+
+        //     //     this.isMuted = !this.isMuted;
+
+        //     // if (this.isMuted) {
+        //     //     this.afClient.muteAudio(); 
+        //     // } else {
+        //     //     this.afClient.unmuteAudio(); 
+        //     // }
+        // // }
+        //     },
         // hold the call and unhold the call
         handleHoldToggle() {
             if (this.isCalling) {
@@ -846,7 +925,7 @@ export default {
         //         });
         // },
 
-        
+
         // handleHold() {
         //     // Check if the callId exists
         //     if (this.callId) {
@@ -905,7 +984,7 @@ export default {
             this.selectedItem = item;
             this.phonePopup = true;
         },
-      
+
 
         async fetchCallHistory() {
             axios.get('/api/v1/call-history')
@@ -944,23 +1023,23 @@ export default {
         }
     },
 
-    
+
     async mounted() {
         console.log("User Token:", userToken.value); // Logs the token
 
-    if (!userToken.value) {
-        console.warn("userToken is missing. Waiting for it...");
-        await this.waitForToken();
-    }
+        if (!userToken.value) {
+            console.warn("userToken is missing. Waiting for it...");
+            await this.waitForToken();
+        }
 
-    if (userToken.value) {
-        await this.initializeAfricastalking();
-    } else {
-        console.error("Failed to retrieve userToken after waiting.");
-    }
+        if (userToken.value) {
+            await this.initializeAfricastalking();
+        } else {
+            console.error("Failed to retrieve userToken after waiting.");
+        }
 
-    this.fetchOrders();
-},
+        this.fetchOrders();
+    },
 
     created() {
         this.fetchCallHistory();
