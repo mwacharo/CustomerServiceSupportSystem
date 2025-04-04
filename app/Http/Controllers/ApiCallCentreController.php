@@ -747,7 +747,9 @@ class ApiCallCentreController extends Controller
             $agentNumber = $this->getAvailableAgent();
             return $agentNumber
                 ? $this->createVoiceResponse("Connecting you to an agent.", $agentNumber)
-                : $this->createVoiceResponse("All agents are currently busy. Please try again later.");
+                // : $this->createVoiceResponse("All agents are currently busy. Please try again later.");
+
+                : $this->recordVoicemail(); // Record voicemail if no agents are available
             // if agents are busy leave a message after the beep
 
 
@@ -779,23 +781,42 @@ class ApiCallCentreController extends Controller
     }
 
 
+
+    private function recordVoicemail()
+{
+
+     Log::info("Recording voicemail...");
+    // Compose the XML response
+    $response  = '<?xml version="1.0" encoding="UTF-8"?>';
+    $response .= '<Response>';
+    $response .= '<Say playBeep="true">Please leave a message after the tone.</Say>';
+    $response .= '<Record finishOnKey="#" maxLength="30" playBeep="true" callbackUrl="https://support.solssa.com/api/v1/africastalking-handle-event"/>';
+    $response .= '<Say>Thank you for your message. We will get back to you soon.</Say>';
+    $response .= '</Response>';
+
+    // Return XML response
+    return response($response, 200)->header('Content-Type', 'text/xml');
+}
+
+
+
     /**
      * Handle voicemail recording if agents are busy
      */
-    private function recordVoicemail()
-    {
-        return response()->json([
-            "actions" => [
-                ["say" => "All agents are busy. Please leave a message after the beep."],
-                ["record" => [
-                    "maxDuration" => 30,
-                    "beep" => true,
-                    "finishOnKey" => "#"
-                ]],
-                ["say" => "Thank you for your message. We will get back to you soon."]
-            ]
-        ]);
-    }
+    // private function recordVoicemail()
+    // {
+    //     return response()->json([
+    //         "actions" => [
+    //             ["say" => "All agents are busy. Please leave a message after the beep."],
+    //             ["record" => [
+    //                 "maxDuration" => 30,
+    //                 "beep" => true,
+    //                 "finishOnKey" => "#"
+    //             ]],
+    //             ["say" => "Thank you for your message. We will get back to you soon."]
+    //         ]
+    //     ]);
+    // }
 
     public function fetchCallhistory()
     {

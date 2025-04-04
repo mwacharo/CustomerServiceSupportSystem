@@ -100,6 +100,9 @@
                         <!-- Orders Tab -->
                         <v-window-item value="orders">
                             <v-data-table :headers="headers" :items="serverItems" :loading="loading"
+                            show-select
+                                v-model="selected"
+
                                 class="elevation-1 mt-4">
                                 <!-- Example of customizing the table body -->
                                 <template #body="{ items }">
@@ -669,6 +672,7 @@ export default {
 
                 const client = new Africastalking.Client(userToken.value, params);
                 console.log("Africastalking client initialized.");
+                console.log('AF object', client);
                 this.afClient = client
 
                 // Basic event listeners
