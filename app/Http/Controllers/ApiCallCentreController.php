@@ -787,7 +787,7 @@ class ApiCallCentreController extends Controller
 
      Log::info("Recording voicemail...");
     // Compose the XML response
-    $response  = '<?xml version="1.0" encoding="UTF-8"?>';
+    $response  = '<?xml version="1.0" encoding="UTF-8"?>\n<Response>\n';
     $response .= '<Response>';
     $response .= '<Say playBeep="true">Please leave a message after the tone.</Say>';
     $response .= '<Record finishOnKey="#" maxLength="30" playBeep="true" callbackUrl="https://support.solssa.com/api/v1/africastalking-handle-event"/>';
