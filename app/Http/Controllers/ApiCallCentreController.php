@@ -747,7 +747,7 @@ class ApiCallCentreController extends Controller
             $agentNumber = $this->getAvailableAgent();
             return $agentNumber
                 ? $this->createVoiceResponse("Connecting you to an agent.", $agentNumber)
-                // : $this->createVoiceResponse("All agents are currently busy. Please try again later.");
+                // : $this->createVoiceResponse("All agents are currently busy. Please leave a message.");
 
                 : $this->recordVoicemail(); // Record voicemail if no agents are available
             // if agents are busy leave a message after the beep
@@ -789,38 +789,21 @@ class ApiCallCentreController extends Controller
         // Compose the XML response
         $xmlResponse = '<?xml version="1.0" encoding="UTF-8"?>';
         $xmlResponse .= '<Response>';
+        $xmlResponse .= '<Record finishOnKey="#" maxLength="30" trimSilence="true" playBeep="true" callbackUrl="https://support.solssa.com/api/v1/africastalking-handle-event">';
         $xmlResponse .= '<Say>Please leave a message after the tone.</Say>';
-        $xmlResponse .= '<Record finishOnKey="#" maxLength="30" callbackUrl="https://support.solssa.com/api/v1/africastalking-handle-event" />';
-        $xmlResponse .= '<Say>Thank you for your message. We will get back to you soon.</Say>';
+        $xmlResponse .= '</Record>';
         $xmlResponse .= '</Response>';
     
         Log::debug("Generated XML Response", ['response' => $xmlResponse]);
     
         // Return XML response
         return response($xmlResponse, 200)
-            ->header('Content-Type', 'application/xml'); // Ensure correct XML header
+            ->header('Content-Type', 'application/xml'); 
     }
     
 
 
 
-    /**
-     * Handle voicemail recording if agents are busy
-     */
-    // private function recordVoicemail()
-    // {
-    //     return response()->json([
-    //         "actions" => [
-    //             ["say" => "All agents are busy. Please leave a message after the beep."],
-    //             ["record" => [
-    //                 "maxDuration" => 30,
-    //                 "beep" => true,
-    //                 "finishOnKey" => "#"
-    //             ]],
-    //             ["say" => "Thank you for your message. We will get back to you soon."]
-    //         ]
-    //     ]);
-    // }
 
     public function fetchCallhistory()
     {
