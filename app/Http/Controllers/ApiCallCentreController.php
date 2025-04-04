@@ -786,6 +786,9 @@ class ApiCallCentreController extends Controller
     {
         Log::info("Recording voicemail...");
         
+        // Clear any previous output buffers to prevent header issues
+        if (ob_get_level()) ob_end_clean();
+        
         // Compose the XML response
         $xmlResponse = '<?xml version="1.0" encoding="UTF-8"?>';
         $xmlResponse .= '<Response>';
@@ -795,12 +798,11 @@ class ApiCallCentreController extends Controller
         $xmlResponse .= '</Response>';
     
         Log::debug("Generated XML Response", ['response' => $xmlResponse]);
-    
-        // Return XML response
-        return response($xmlResponse, 200)
-            ->header('Content-Type', 'application/xml'); 
+        
+        // Ensure we're only returning the XML content
+        return response($xmlResponse)
+            ->header('Content-Type', 'text/plain'); 
     }
-    
 
 
 
