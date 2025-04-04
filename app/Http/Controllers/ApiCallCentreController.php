@@ -782,28 +782,26 @@ class ApiCallCentreController extends Controller
 
 
 
+   
     private function recordVoicemail()
     {
         Log::info("Recording voicemail...");
         
-        // Clear any previous output buffers to prevent header issues
-        if (ob_get_level()) ob_end_clean();
+        // Instead of using a response object, output plain XML directly
+        ob_clean();
+        header('Content-Type: text/plain');
         
         // Compose the XML response
-        $xmlResponse = '<?xml version="1.0" encoding="UTF-8"?>';
-        $xmlResponse .= '<Response>';
-        $xmlResponse .= '<Record finishOnKey="#" maxLength="30" trimSilence="true" playBeep="true" callbackUrl="https://support.solssa.com/api/v1/africastalking-handle-event">';
-        $xmlResponse .= '<Say>Please leave a message after the tone.</Say>';
-        $xmlResponse .= '</Record>';
-        $xmlResponse .= '</Response>';
-    
-        Log::debug("Generated XML Response", ['response' => $xmlResponse]);
+        $xml = '<?xml version="1.0" encoding="UTF-8"?>';
+        $xml .= '<Response>';
+        $xml .= '<Record finishOnKey="#" maxLength="30" trimSilence="true" playBeep="true" callbackUrl="https://support.solssa.com/api/v1/africastalking-handle-event">';
+        $xml .= '<Say>Please leave a message after the tone.</Say>';
+        $xml .= '</Record>';
+        $xml .= '</Response>';
         
-        // Ensure we're only returning the XML content
-        return response($xmlResponse)
-            ->header('Content-Type', 'text/plain'); 
+        echo $xml;
+        exit;
     }
-
 
 
 
