@@ -49,7 +49,6 @@ class CallStatsService
         $result = [
             'id' => $user->id,
             'phone_number' => $user->phone_number,
-            'client_name' => $clientName,
             'status' => $user->status,
             'sessionId' => $user->sessionId,
             // 'token' => $user->token,
