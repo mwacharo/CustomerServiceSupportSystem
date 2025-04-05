@@ -22,6 +22,7 @@
 
 
   const userToken = computed(() => usePage().props.value.user.token);
+  const userId = computed(() => usePage().props.value.user.id); // Get user ID from page props
 
 
 
@@ -31,6 +32,7 @@ onMounted(() => {
   console.log("User Roles:", userRoles.value); // Logs the roles
   console.log("User Permissions:", userPermissions.value); // Logs the permissions
   console.log("User Token:", userToken.value); // Logs the token
+  console.log("User Id:", userId.value); // Logs the token
 });
 
 

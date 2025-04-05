@@ -20,6 +20,7 @@ use App\Models\IvrOption;
 use App\Models\Officer;
 use App\Models\Order;
 use App\Models\User;
+use App\Services\CallStatsService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -28,6 +29,17 @@ use Illuminate\Support\Facades\Http;
 
 class ApiCallCentreController extends Controller
 {
+
+
+
+    protected CallStatsService $callStatsService;
+
+
+
+    public function __construct(CallStatsService $callStatsService)
+    {
+        $this->callStatsService = $callStatsService;
+    }
 
 
     public function makeCall(Request $request)
@@ -844,8 +856,8 @@ class ApiCallCentreController extends Controller
                 ->whereDate('created_at', $today);
 
             $totalCalls = (clone $callHistories)->count();
-            $inboundCalls = (clone $callHistories)->where('direction', 'inbound')->count();
-            $outboundCalls = (clone $callHistories)->where('direction', 'outbound')->count();
+            $incomingcalls = (clone $callHistories)->where('agentId', 'inbound')->count();
+            $outgoing = (clone $callHistories)->where('callerNumber', 'clientName')->count();
             $missedCalls = (clone $callHistories)
                 ->whereIn('hangupCause', ['NO_ANSWER', 'SERVICE_UNAVAILABLE'])
                 ->count();
@@ -864,8 +876,8 @@ class ApiCallCentreController extends Controller
                 'token' => $agent->token,
 
                 'summary_call_completed' => $totalCalls,
-                'summary_inbound_call_completed' => $inboundCalls,
-                'summary_outbound_call_completed' => $outboundCalls,
+                'summary_inbound_call_completed' => $incomingcalls,
+                'summary_outbound_call_completed' => $outgoing,
                 'summary_call_duration' => $callDuration,
                 'summary_call_missed' => $missedCalls,
 
@@ -877,9 +889,79 @@ class ApiCallCentreController extends Controller
     }
 
 
-    /**
-     * Get the summary of call agents with filters.
-     */
+    // public function AgentCallStats()
+    // {
+    //     // $today = Carbon::today();
+
+    //     $user = auth()->user();
+    //     $clientName = $user->client_name;
+
+    //     $callHistories = CallHistory::where('agentId', $clientName)
+    //         ->where('isActive', 0)
+    //         ->whereNull('deleted_at');
+    //         // ->whereDate('created_at', $today);
+
+    //     $totalCalls = (clone $callHistories)->count();
+    //     $incomingCalls = (clone $callHistories)->where('agentId', $user->id)->count();
+    //     $outgoingCalls = (clone $callHistories)->where('clientName',$clientName)->count();
+
+    //             $missedCalls = (clone $callHistories)
+    //         ->whereIn('hangupCause', ['NO_ANSWER', 'SERVICE_UNAVAILABLE'])
+    //         ->where('agentId', $user->id) 
+    //         ->count();
+
+    //     $callDuration = (clone $callHistories)->sum('durationInSeconds') ?? 0;
+
+    //     $result = [
+    //         'id' => $user->id,
+    //         'phone_number' => $user->phone_number,
+    //         'client_name' => $clientName,
+    //         'status' => $user->status,
+    //         'sessionId' => $user->sessionId,
+    //         'token' => $user->token,
+
+    //         'summary_call_completed' => $totalCalls,
+    //         'summary_inbound_call_completed' => $incomingCalls,
+    //         'summary_outbound_call_completed' => $outgoingCalls,
+    //         'summary_call_duration' => $callDuration,
+    //         'summary_call_missed' => $missedCalls,
+
+    //         'updated_at' => $user->updated_at,
+    //     ];
+
+    //     return response()->json($result);
+    // }
+
+
+    public function AgentCallStats(Request $request ,$id)
+    {
+         
+        $user = User::find($id);
+
+        // return response()->json([
+        //     $user
+        // ]);
+        $dateRange = null;
+        if ($request->has('date_range')) {
+            $dateRange = $request->input('date_range');
+            // Parse the date range input
+            $dateRange = explode(',', $dateRange);
+            if (count($dateRange) !== 2) {
+                return response()->json(['error' => 'Invalid date range format.'], 400);
+            }
+            $dateRange[0] = Carbon::parse(trim($dateRange[0]))->startOfDay();
+            $dateRange[1] = Carbon::parse(trim($dateRange[1]))->endOfDay();
+        } else {
+            // Default to today if no date range is provided
+            $dateRange = [Carbon::today()->startOfDay(), Carbon::today()->endOfDay()];
+        }
+        $stats = $this->callStatsService->getAgentStats($user, $dateRange);
+
+        return response()->json($stats);
+    }
+
+
+
     public function getAgentListSummaryFilter(Request $request)
     {
         $call_date = $request->call_date;
@@ -887,52 +969,75 @@ class ApiCallCentreController extends Controller
         $custom_start_date = $request->custom_start_date;
         $custom_end_date = $request->custom_end_date;
 
-
-        $json_results = [];
-        // $call_agents = User::role('callCentre') 
-        //     ->whereNull('deleted_at')
-        //     ->orderBy('client_name')
-        //     ->get();
+        $dateRange = $this->getDateFilter($call_date, $custom_date, $custom_start_date, $custom_end_date);
 
         $call_agents = User::all();
+        $results = [];
 
         foreach ($call_agents as $agent) {
-            $admin_name = $agent->admin ? $agent->admin->first_name . ' ' . $agent->admin->last_name : '';
-
-            $baseCallQuery = CallHistory::where('agentId', $agent->client_name)
-                ->where('isActive', 0)
-                ->whereNull('deleted_at');
-
-    
-            $dateFilter = $this->getDateFilter($call_date, $custom_date, $custom_start_date, $custom_end_date);
-
-            $summary_call_completed = (clone $baseCallQuery)->when($dateFilter, fn($q) => $q->whereBetween('created_at', $dateFilter))->count();
-            $summary_inbound_call_completed = (clone $baseCallQuery)->where('direction', 'inbound')->when($dateFilter, fn($q) => $q->whereBetween('created_at', $dateFilter))->count();
-            $summary_outbound_call_completed = (clone $baseCallQuery)->where('direction', 'outbound')->when($dateFilter, fn($q) => $q->whereBetween('created_at', $dateFilter))->count();
-            $summary_call_duration = (clone $baseCallQuery)->when($dateFilter, fn($q) => $q->whereBetween('created_at', $dateFilter))->sum('durationInSeconds');
-            $summary_call_missed = (clone $baseCallQuery)->whereIn('hangupCause', ['NO_ANSWER', 'SERVICE_UNAVAILABLE'])->when($dateFilter, fn($q) => $q->whereBetween('created_at', $dateFilter))->count();
-
-        
-            $json_results[] = [
-                'id' => $agent->id,
-                'phone_number' => $agent->phone_number,
-                'client_name' => $agent->client_name,
-                'admin_id' => $agent->admin_id,
-                'admin_name' => $admin_name,
-                'status' => $agent->status,
-                'sessionId' => $agent->sessionId,
-                'token' => $agent->token,
-                'summary_call_completed' => $summary_call_completed,
-                'summary_inbound_call_completed' => $summary_inbound_call_completed,
-                'summary_outbound_call_completed' => $summary_outbound_call_completed,
-                'summary_call_duration' => $summary_call_duration,
-                'summary_call_missed' => $summary_call_missed,
-              
-            ];
+            $results[] = $this->callStatsService->getAgentStats($agent, $dateRange);
         }
 
-        return response()->json($json_results);
+        return response()->json($results);
     }
+
+
+    /**
+     * Get the summary of call agents with filters.
+     */
+    // public function getAgentListSummaryFilter(Request $request)
+    // {
+    //     $call_date = $request->call_date;
+    //     $custom_date = $request->custom_date;
+    //     $custom_start_date = $request->custom_start_date;
+    //     $custom_end_date = $request->custom_end_date;
+
+
+    //     $json_results = [];
+    //     // $call_agents = User::role('callCentre') 
+    //     //     ->whereNull('deleted_at')
+    //     //     ->orderBy('client_name')
+    //     //     ->get();
+
+    //     $call_agents = User::all();
+
+    //     foreach ($call_agents as $agent) {
+    //         $admin_name = $agent->admin ? $agent->admin->first_name . ' ' . $agent->admin->last_name : '';
+
+    //         $baseCallQuery = CallHistory::where('agentId', $agent->client_name)
+    //             ->where('isActive', 0)
+    //             ->whereNull('deleted_at');
+
+
+    //         $dateFilter = $this->getDateFilter($call_date, $custom_date, $custom_start_date, $custom_end_date);
+
+    //         $summary_call_completed = (clone $baseCallQuery)->when($dateFilter, fn($q) => $q->whereBetween('created_at', $dateFilter))->count();
+    //         $summary_inbound_call_completed = (clone $baseCallQuery)->where('direction', 'inbound')->when($dateFilter, fn($q) => $q->whereBetween('created_at', $dateFilter))->count();
+    //         $summary_outbound_call_completed = (clone $baseCallQuery)->where('direction', 'outbound')->when($dateFilter, fn($q) => $q->whereBetween('created_at', $dateFilter))->count();
+    //         $summary_call_duration = (clone $baseCallQuery)->when($dateFilter, fn($q) => $q->whereBetween('created_at', $dateFilter))->sum('durationInSeconds');
+    //         $summary_call_missed = (clone $baseCallQuery)->whereIn('hangupCause', ['NO_ANSWER', 'SERVICE_UNAVAILABLE'])->when($dateFilter, fn($q) => $q->whereBetween('created_at', $dateFilter))->count();
+
+
+    //         $json_results[] = [
+    //             'id' => $agent->id,
+    //             'phone_number' => $agent->phone_number,
+    //             'client_name' => $agent->client_name,
+    //             'admin_id' => $agent->admin_id,
+    //             'admin_name' => $admin_name,
+    //             'status' => $agent->status,
+    //             'sessionId' => $agent->sessionId,
+    //             'token' => $agent->token,
+    //             'summary_call_completed' => $summary_call_completed,
+    //             'summary_inbound_call_completed' => $summary_inbound_call_completed,
+    //             'summary_outbound_call_completed' => $summary_outbound_call_completed,
+    //             'summary_call_duration' => $summary_call_duration,
+    //             'summary_call_missed' => $summary_call_missed,
+
+    //         ];
+    //     }
+
+    //     return response()->json($json_results);
+    // }
 
     private function getDateFilter($call_date, $custom_date, $custom_start_date, $custom_end_date)
     {
@@ -958,5 +1063,40 @@ class ApiCallCentreController extends Controller
     }
 
 
-    
+
+
 }
+
+
+
+// Code
+// Meaning
+// NO_ANSWER
+// The recipient's phone rang but wasn't answered.
+
+// USER_BUSY
+// The recipient's line was busy.
+
+// CALL_REJECTED
+// The call was explicitly rejected by the recipient.
+
+// SUBSCRIBER_ABSENT
+// The phone was off, unreachable, or out of coverage.
+
+// NORMAL_TEMPORARY_FAILURE
+// A temporary network issue prevented the call from going through.
+
+// UNSPECIFIED
+// The system could not determine the exact reason — general failure.
+
+// RECOVERY_ON_TIMER_EXPIRE
+// The call wasn't answered in time — likely a timeout.
+
+// NORMAL_CLEARING
+// The call ended normally (could be user hang-up).
+
+// NO_USER_RESPONSE
+// The network tried to alert the user, but got no response (e.g. phone not ringing).
+
+// UNALLOCATED_NUMBER
+// The number dialed does not exist or isn’t assigned to any subscriber.

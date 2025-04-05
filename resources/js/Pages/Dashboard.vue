@@ -104,6 +104,11 @@
 
 <script>
 import AppLayout from "@/Layouts/AppLayout.vue";
+import { computed } from 'vue'; 
+
+
+const userId = computed(() => usePage().props.value.user?.id);
+
 
 export default {
   components: {
@@ -136,13 +141,15 @@ export default {
       },
 
       agents: [
-
       ],
 
     };
 
   },
-
+  props: {
+    
+        userId: String,
+  },
   methods: {
     getIcon(index) {
       const icons = ["mdi-phone", "mdi-chart-line", "mdi-timer"];
@@ -157,12 +164,28 @@ export default {
                     console.error('Error fetching users:', error);
                 });
         },
+
+    fetchAgentstats() {
+            axios.get('api/v1/agent-stats'/ + this.userId) // Use the userId prop to fetch agent stats
+                .then(response => {
+                    // Assuming response.data contains the agent stats
+                    this.agents = response.data.map(agent => ({
+                        ...agent,
+                        status: agent.status || 'offline' // Default to 'offline' if status is not set
+                    }));
+                })
+               
+                .catch(error => {
+                    console.error('Error fetching agent stats:', error);
+                });
+        }
         
 
   },
   created() {
         // this.fetchCallHistory();
         this.fetchUsers();
+        this.fetchAgentstats();
 
     },
 };

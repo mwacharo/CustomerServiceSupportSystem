@@ -58,6 +58,11 @@ class HandleInertiaRequests extends Middleware
                 
         // Access the token directly from the user model
         'user.token' => $request->user() ? $request->user()->token : null,
+        'user.id' => $request->user() ? $request->user()->id : null,
+        // 'user' => $request->user() ? $request->user()->only('id', 'name', 'email', 'phone_number', 'status', 'sessionId', 'client_name', 'token') : null,
+
+
+
     ]);
 
 

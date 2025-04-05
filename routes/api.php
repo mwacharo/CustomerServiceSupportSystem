@@ -112,6 +112,10 @@ Route::get('v1/call-waiting-history', [ApiCallCentreController::class, 'getCallW
 Route::get('v1/call-agent-history/{id}', [ApiCallCentreController::class, 'getAgentCallHistory']);
 
 // statistics and reports
+// /v1/agent-stats
+
+Route::get('v1/agent-stats/{id}', [ApiCallCentreController::class, 'AgentCallStats']);
+
 Route::post('v1/report-call-agent-list-summary-filter', [ApiCallCentreController::class, 'getAgentListSummaryFilter']);
 Route::get('v1/report-call-waiting-history', [ApiCallCentreController::class, 'getCallWaitingHistory']);
 Route::get('v1/report-call-ongoing-history', [ApiCallCentreController::class, 'getCallOngoingHistory']);

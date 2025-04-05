@@ -466,6 +466,8 @@ import { usePage } from '@inertiajs/inertia-vue3';
 import { ref } from 'vue';
 
 const userToken = computed(() => usePage().props.value.user?.token);
+const userId = computed(() => usePage().props.value.user?.id);
+
 
 
 
