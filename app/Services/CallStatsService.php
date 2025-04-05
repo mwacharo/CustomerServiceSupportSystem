@@ -31,7 +31,8 @@ class CallStatsService
         $totalCalls = (clone $callHistories)->count();
         Log::debug('Total calls calculated', ['total_calls' => $totalCalls]);
 
-        Log::debug('User ID', ['user_id' => $user->id]);
+
+        //   "user_id": 1
         $incomingCalls = (clone $callHistories)->where('adminId', $user->id)->count();
         Log::debug('Incoming calls calculated', ['incoming_calls' => $incomingCalls]);
 
