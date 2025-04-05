@@ -14,12 +14,13 @@ class CallStatsService
     {
         Log::info('Fetching agent stats', ['user_id' => $user->id, 'date_range' => $dateRange]);
 
-        $clientName = $user->client_name;
-        Log::debug('Client name retrieved', ['client_name' => $clientName]);
+        $phone_number = $user->phone_number;
+
+        Log::debug('Client name retrieved', ['client_name' => $phone_number]);
 
         $callHistories = CallHistory::query()
-            ->where('agentId', $clientName)
-            ->where('isActive', 0)
+            ->where('callerNumber', $phone_number)
+            // ->where('isActive', 0)
             ->whereNull('deleted_at');
 
         if ($dateRange) {
