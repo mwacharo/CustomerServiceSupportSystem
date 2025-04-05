@@ -111,10 +111,11 @@ Route::post('v1/call-centre-generate-token', [ApiCallCentreController::class, 'g
 Route::get('v1/call-waiting-history', [ApiCallCentreController::class, 'getCallWaitingHistory']);
 Route::get('v1/call-agent-history/{id}', [ApiCallCentreController::class, 'getAgentCallHistory']);
 
+// statistics and reports
+Route::post('v1/report-call-agent-list-summary-filter', [ApiCallCentreController::class, 'getAgentListSummaryFilter']);
 Route::get('v1/report-call-waiting-history', [ApiCallCentreController::class, 'getCallWaitingHistory']);
 Route::get('v1/report-call-ongoing-history', [ApiCallCentreController::class, 'getCallOngoingHistory']);
 Route::get('v1/report-call-agent-list-summary', [ApiCallCentreController::class, 'getAgentListSummary']);
-Route::post('v1/report-call-agent-list-summary-filter', [ApiCallCentreController::class, 'getAgentListSummaryFilter']);
 Route::get('v1/report-call-history-list', [ApiCallCentreController::class, 'getCallHistory']);
 Route::post('v1/report-call-history-list-filter', [ApiCallCentreController::class, 'getCallHistoryFilter']);
 Route::get('v1/report-call-centre-summary', [ApiCallCentreController::class, 'getSummaryReport']);

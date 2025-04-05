@@ -18,6 +18,7 @@ use App\Models\CallHistory;
 use App\Models\CallQueue;
 use App\Models\IvrOption;
 use App\Models\Officer;
+use App\Models\Order;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -582,121 +583,118 @@ class ApiCallCentreController extends Controller
 
 
     public function generateToken(Request $request)
-{
-    // Fetch Africa's Talking API credentials from config.
-    $apiKey    = config('services.africastalking.api_key');
-    $username  = config('services.africastalking.username');
-    $phoneNumber = config('services.africastalking.phone'); 
+    {
+        // Fetch Africa's Talking API credentials from config.
+        $apiKey    = config('services.africastalking.api_key');
+        $username  = config('services.africastalking.username');
+        $phoneNumber = config('services.africastalking.phone');
 
-    // Validate credentials
-    if (!$username || !$apiKey) {
-        Log::error('Africa’s Talking credentials are missing.', [
-            'username' => $username,
-            'apiKey'   => $apiKey
-        ]);
-        return response()->json(['error' => 'Africa’s Talking credentials are missing.'], 500);
-    }
-
-    // Retrieve all users
-    $users = User::all();
-    $updatedTokens = [];
-    $failedUpdates = [];
-
-    foreach ($users as $user) {
-        try {
-            // Ensure a unique clientName per user
-            if (empty($user->client_name)) {
-                $user->client_name = 'client_' . $user->id . '_' . substr(md5(uniqid()), 0, 6);
-                $user->save();
-            }
-
-            $clientName = str_replace(' ', '', $user->client_name); // Remove spaces
-
-            // Determine permissions
-            $incoming = $user->can_receive_calls ?? true;
-            $outgoing = $user->can_call ?? true;
-
-            Log::info('Generating token for user', [
-                'user_id'     => $user->id,
-                'clientName'  => $clientName,
-                'phoneNumber' => $phoneNumber
+        // Validate credentials
+        if (!$username || !$apiKey) {
+            Log::error('Africa’s Talking credentials are missing.', [
+                'username' => $username,
+                'apiKey'   => $apiKey
             ]);
-
-            // Prepare request payload
-            $payload = [
-                'username'    => $username,
-                'clientName'  => $clientName,
-                'phoneNumber' => $phoneNumber,
-                'incoming'    => $incoming ? "true" : "false",
-                'outgoing'    => $outgoing ? "true" : "false",
-                'lifeTimeSec' => "86400"
-            ];
-
-            // Make API request
-            $url = 'https://webrtc.africastalking.com/capability-token/request';
-            $ch = curl_init($url);
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($ch, CURLOPT_POST, true);
-            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
-            curl_setopt($ch, CURLOPT_HTTPHEADER, [
-                'apiKey: ' . $apiKey,
-                'Accept: application/json',
-                'Content-Type: application/json'
-            ]);
-
-            // Execute cURL request
-            $response = curl_exec($ch);
-            if (curl_errno($ch)) {
-                throw new Exception('cURL Error: ' . curl_error($ch));
-            }
-            curl_close($ch);
-
-            // Decode the response
-            $responseData = json_decode($response, true);
-
-            if (!isset($responseData['token'])) {
-                throw new Exception($responseData['message'] ?? 'Unknown API error');
-            }
-
-            // Update user token in database
-            $user->updateOrFail(['token' => $responseData['token']]);
-
-            Log::info("Token updated successfully for user {$user->id}", [
-                'token' => $responseData['token']
-            ]);
-
-            // Store success response
-            $updatedTokens[] = [
-                'user_id'     => $user->id,
-                'token'       => $responseData['token'],
-                'clientName'  => $responseData['clientName'] ?? $clientName,
-                'incoming'    => $responseData['incoming'] ?? null,
-                'outgoing'    => $responseData['outgoing'] ?? null,
-                'lifeTimeSec' => $responseData['lifeTimeSec'] ?? null,
-                'message'     => $responseData['message'] ?? null,
-                'success'     => $responseData['success'] ?? false
-            ];
-        } catch (Exception $e) {
-            Log::error("Token generation failed for user {$user->id}: " . $e->getMessage());
-
-            $failedUpdates[] = [
-                'user_id'  => $user->id,
-                'error'    => $e->getMessage()
-            ];
+            return response()->json(['error' => 'Africa’s Talking credentials are missing.'], 500);
         }
+
+        // Retrieve all users
+        $users = User::all();
+        $updatedTokens = [];
+        $failedUpdates = [];
+
+        foreach ($users as $user) {
+            try {
+                // Ensure a unique clientName per user
+                if (empty($user->client_name)) {
+                    $user->client_name = 'client_' . $user->id . '_' . substr(md5(uniqid()), 0, 6);
+                    $user->save();
+                }
+
+                $clientName = str_replace(' ', '', $user->client_name); // Remove spaces
+
+                // Determine permissions
+                $incoming = $user->can_receive_calls ?? true;
+                $outgoing = $user->can_call ?? true;
+
+                Log::info('Generating token for user', [
+                    'user_id'     => $user->id,
+                    'clientName'  => $clientName,
+                    'phoneNumber' => $phoneNumber
+                ]);
+
+                // Prepare request payload
+                $payload = [
+                    'username'    => $username,
+                    'clientName'  => $clientName,
+                    'phoneNumber' => $phoneNumber,
+                    'incoming'    => $incoming ? "true" : "false",
+                    'outgoing'    => $outgoing ? "true" : "false",
+                    'lifeTimeSec' => "86400"
+                ];
+
+                // Make API request
+                $url = 'https://webrtc.africastalking.com/capability-token/request';
+                $ch = curl_init($url);
+                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                curl_setopt($ch, CURLOPT_POST, true);
+                curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
+                curl_setopt($ch, CURLOPT_HTTPHEADER, [
+                    'apiKey: ' . $apiKey,
+                    'Accept: application/json',
+                    'Content-Type: application/json'
+                ]);
+
+                // Execute cURL request
+                $response = curl_exec($ch);
+                if (curl_errno($ch)) {
+                    throw new Exception('cURL Error: ' . curl_error($ch));
+                }
+                curl_close($ch);
+
+                // Decode the response
+                $responseData = json_decode($response, true);
+
+                if (!isset($responseData['token'])) {
+                    throw new Exception($responseData['message'] ?? 'Unknown API error');
+                }
+
+                // Update user token in database
+                $user->updateOrFail(['token' => $responseData['token']]);
+
+                Log::info("Token updated successfully for user {$user->id}", [
+                    'token' => $responseData['token']
+                ]);
+
+                // Store success response
+                $updatedTokens[] = [
+                    'user_id'     => $user->id,
+                    'token'       => $responseData['token'],
+                    'clientName'  => $responseData['clientName'] ?? $clientName,
+                    'incoming'    => $responseData['incoming'] ?? null,
+                    'outgoing'    => $responseData['outgoing'] ?? null,
+                    'lifeTimeSec' => $responseData['lifeTimeSec'] ?? null,
+                    'message'     => $responseData['message'] ?? null,
+                    'success'     => $responseData['success'] ?? false
+                ];
+            } catch (Exception $e) {
+                Log::error("Token generation failed for user {$user->id}: " . $e->getMessage());
+
+                $failedUpdates[] = [
+                    'user_id'  => $user->id,
+                    'error'    => $e->getMessage()
+                ];
+            }
+        }
+
+        // Return summary
+        return response()->json([
+            'updatedTokens' => $updatedTokens,
+            'failedUpdates' => $failedUpdates,
+            'totalUpdated'  => count($updatedTokens),
+            'totalFailed'   => count($failedUpdates),
+        ]);
     }
-
-    // Return summary
-    return response()->json([
-        'updatedTokens' => $updatedTokens,
-        'failedUpdates' => $failedUpdates,
-        'totalUpdated'  => count($updatedTokens),
-        'totalFailed'   => count($failedUpdates),
-    ]);
-}
-
-
-
 
 
 
@@ -782,15 +780,15 @@ class ApiCallCentreController extends Controller
 
 
 
-   
+
     private function recordVoicemail()
     {
         Log::info("Recording voicemail...");
-        
+
         // Instead of using a response object, output plain XML directly
         ob_clean();
         header('Content-Type: text/plain');
-        
+
         // Compose the XML response
         $xml = '<?xml version="1.0" encoding="UTF-8"?>';
         $xml .= '<Response>';
@@ -798,7 +796,7 @@ class ApiCallCentreController extends Controller
         $xml .= '<Say>Please leave a message after the tone.</Say>';
         $xml .= '</Record>';
         $xml .= '</Response>';
-        
+
         echo $xml;
         exit;
     }
@@ -812,8 +810,8 @@ class ApiCallCentreController extends Controller
             // $callHistories = CallHistory::where('created_at', '>=', Carbon::now()->subDays(1))
             $callHistories = CallHistory::all();
 
-                // ->orderBy('created_at', 'asc')
-                // ->get();
+            // ->orderBy('created_at', 'asc')
+            // ->get();
 
             return response()->json([
                 'callHistories' => $callHistories,
@@ -821,6 +819,141 @@ class ApiCallCentreController extends Controller
         } catch (Exception $e) {
             Log::error("Error fetching call history: " . $e->getMessage());
             return response()->json(['error' => 'Failed to fetch call history'], 500);
+        }
+    }
+
+
+
+
+
+    public function getDailyAgentCallStats()
+    {
+        $today = Carbon::today();
+
+        $callAgents = User::role('callCentre') // use User:: instead of User()
+            ->whereNull('deleted_at')
+            ->orderBy('client_name')
+            ->get();
+
+        $results = $callAgents->map(function ($agent) use ($today) {
+            $clientName = $agent->client_name;
+
+            $callHistories = CallHistory::where('agentId', $clientName)
+                ->where('isActive', 0)
+                ->whereNull('deleted_at')
+                ->whereDate('created_at', $today);
+
+            $totalCalls = (clone $callHistories)->count();
+            $inboundCalls = (clone $callHistories)->where('direction', 'inbound')->count();
+            $outboundCalls = (clone $callHistories)->where('direction', 'outbound')->count();
+            $missedCalls = (clone $callHistories)
+                ->whereIn('hangupCause', ['NO_ANSWER', 'SERVICE_UNAVAILABLE'])
+                ->count();
+            $callDuration = (clone $callHistories)->sum('durationInSeconds') ?? 0;
+
+
+
+            return [
+                'id' => $agent->id,
+                'phone_number' => $agent->phone_number,
+                'client_name' => $clientName,
+                'admin_id' => $agent->admin_id,
+                'admin_name' => $agent->admin ? $agent->admin->first_name . ' ' . $agent->admin->last_name : '',
+                'status' => $agent->status,
+                'sessionId' => $agent->sessionId,
+                'token' => $agent->token,
+
+                'summary_call_completed' => $totalCalls,
+                'summary_inbound_call_completed' => $inboundCalls,
+                'summary_outbound_call_completed' => $outboundCalls,
+                'summary_call_duration' => $callDuration,
+                'summary_call_missed' => $missedCalls,
+
+                'updated_at' => $agent->updated_at,
+            ];
+        });
+
+        return response()->json($results);
+    }
+
+
+    /**
+     * Get the summary of call agents with filters.
+     */
+    public function getAgentListSummaryFilter(Request $request)
+    {
+        $call_date = $request->call_date;
+        $custom_date = $request->custom_date;
+        $custom_start_date = $request->custom_start_date;
+        $custom_end_date = $request->custom_end_date;
+
+
+        $json_results = [];
+        // $call_agents = User::role('callCentre') 
+        //     ->whereNull('deleted_at')
+        //     ->orderBy('client_name')
+        //     ->get();
+
+        $call_agents = User::all();
+
+        foreach ($call_agents as $agent) {
+            $admin_name = $agent->admin ? $agent->admin->first_name . ' ' . $agent->admin->last_name : '';
+
+            $baseCallQuery = CallHistory::where('agentId', $agent->client_name)
+                ->where('isActive', 0)
+                ->whereNull('deleted_at');
+
+    
+            $dateFilter = $this->getDateFilter($call_date, $custom_date, $custom_start_date, $custom_end_date);
+
+            $summary_call_completed = (clone $baseCallQuery)->when($dateFilter, fn($q) => $q->whereBetween('created_at', $dateFilter))->count();
+            $summary_inbound_call_completed = (clone $baseCallQuery)->where('direction', 'inbound')->when($dateFilter, fn($q) => $q->whereBetween('created_at', $dateFilter))->count();
+            $summary_outbound_call_completed = (clone $baseCallQuery)->where('direction', 'outbound')->when($dateFilter, fn($q) => $q->whereBetween('created_at', $dateFilter))->count();
+            $summary_call_duration = (clone $baseCallQuery)->when($dateFilter, fn($q) => $q->whereBetween('created_at', $dateFilter))->sum('durationInSeconds');
+            $summary_call_missed = (clone $baseCallQuery)->whereIn('hangupCause', ['NO_ANSWER', 'SERVICE_UNAVAILABLE'])->when($dateFilter, fn($q) => $q->whereBetween('created_at', $dateFilter))->count();
+
+        
+            $json_results[] = [
+                'id' => $agent->id,
+                'phone_number' => $agent->phone_number,
+                'client_name' => $agent->client_name,
+                'admin_id' => $agent->admin_id,
+                'admin_name' => $admin_name,
+                'status' => $agent->status,
+                'sessionId' => $agent->sessionId,
+                'token' => $agent->token,
+                'summary_call_completed' => $summary_call_completed,
+                'summary_inbound_call_completed' => $summary_inbound_call_completed,
+                'summary_outbound_call_completed' => $summary_outbound_call_completed,
+                'summary_call_duration' => $summary_call_duration,
+                'summary_call_missed' => $summary_call_missed,
+              
+            ];
+        }
+
+        return response()->json($json_results);
+    }
+
+    private function getDateFilter($call_date, $custom_date, $custom_start_date, $custom_end_date)
+    {
+        switch ($call_date) {
+            case 'today':
+                return [Carbon::today(), Carbon::today()->endOfDay()];
+            case 'current_week':
+                return [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()];
+            case 'last_week':
+                return [Carbon::now()->subWeek()->startOfWeek(), Carbon::now()->subWeek()->endOfWeek()];
+            case 'current_month':
+                return [Carbon::now()->startOfMonth(), Carbon::now()->endOfMonth()];
+            case 'current_year':
+                return [Carbon::now()->startOfYear(), Carbon::now()->endOfYear()];
+            case 'custom_date':
+                $date = Carbon::parse($custom_date);
+                return [$date->startOfDay(), $date->endOfDay()];
+            case 'custom_range':
+                return [Carbon::parse($custom_start_date)->startOfDay(), Carbon::parse($custom_end_date)->endOfDay()];
+            default:
+                return null;
         }
     }
 }
