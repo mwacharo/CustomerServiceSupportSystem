@@ -103,7 +103,7 @@ class ApiUserController extends Controller
                 'client_name' => 'nullable|string|max:255',
                 'country_id' => 'nullable|integer|exists:countries,id',
                 'department_id' => 'nullable|integer|exists:departments,id',
-                'status' => 'nullable|string|in:available,busy,offline',
+                'status' => 'nullable|string|in:available,engaged,offline','inactive',
                 'alt_number' => 'nullable|string|max:15',
                 
             ]);
@@ -124,14 +124,20 @@ class ApiUserController extends Controller
                 Log::info('Updating user role:', ['user_id' => $user->id, 'new_role' => $roleName]);
 
                 // Remove all current roles and assign the new role
-                $user->syncRoles([$roleName]);
+                $role = Role::where('name', $roleName)->where('guard_name', 'web')->first();
 
-                // Verify if the role was updated successfully
-                if ($user->hasRole($roleName)) {
-                    Log::info('Role updated successfully:', ['user_id' => $user->id, 'role' => $roleName]);
-                } else {
-                    Log::error('Failed to update role:', ['user_id' => $user->id, 'role' => $roleName]);
+                if ($role) {
+                    $user->syncRoles([$roleName]);
+
+                    // Verify if the role was updated successfully
+                    if ($user->hasRole($roleName)) {
+                        Log::info('Role updated successfully:', ['user_id' => $user->id, 'role' => $roleName]);
+                    } else {
+                        Log::error('Failed to update role:', ['user_id' => $user->id, 'role' => $roleName]);
+                    }
                 }
+                
+            
             }
 
             // Log success
