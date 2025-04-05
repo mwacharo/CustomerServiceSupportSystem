@@ -157,13 +157,14 @@ export default {
                     console.error('Error fetching users:', error);
                 });
         },
-        created() {
+        
+
+  },
+  created() {
         // this.fetchCallHistory();
         this.fetchUsers();
 
     },
-
-  },
 };
 </script>
 
