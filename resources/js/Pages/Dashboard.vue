@@ -136,16 +136,7 @@ export default {
       },
 
       agents: [
-        { name: "Mark D", status: "available" },
-        { name: "Pippa M", status: "engaged" },
-        { name: "Russ N", status: "engaged" },
-        { name: "Elif T", status: "engaged" },
-        // { name: "Jason B", status: "available" },
-        // { name: "Ella P", status: "offline" },
-        // { name: "Tom B", status: "offline" },
-        // { name: "Christine S", status: "engaged" },
-        // { name: "Trey B", status: "engaged" },
-        // { name: "Gabby T", status: "engaged" }
+
       ],
 
     };
@@ -157,6 +148,21 @@ export default {
       const icons = ["mdi-phone", "mdi-chart-line", "mdi-timer"];
       return icons[index] || "mdi-information-outline";
     },
+    fetchUsers() {
+            axios.get('/v1/users')
+                .then(response => {
+                    this.agents = response.data;
+                })
+                .catch(error => {
+                    console.error('Error fetching users:', error);
+                });
+        },
+        created() {
+        // this.fetchCallHistory();
+        this.fetchUsers();
+
+    },
+
   },
 };
 </script>

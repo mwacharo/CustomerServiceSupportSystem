@@ -830,7 +830,7 @@ class ApiCallCentreController extends Controller
     {
         $today = Carbon::today();
 
-        $callAgents = User::role('callCentre') // use User:: instead of User()
+        $callAgents = User::role('callCentre')
             ->whereNull('deleted_at')
             ->orderBy('client_name')
             ->get();
@@ -956,4 +956,7 @@ class ApiCallCentreController extends Controller
                 return null;
         }
     }
+
+
+    
 }
