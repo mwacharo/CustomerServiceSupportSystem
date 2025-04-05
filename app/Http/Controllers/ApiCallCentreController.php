@@ -733,7 +733,7 @@ class ApiCallCentreController extends Controller
 
 
 
-            // if agets are busy  please wait in the queue
+            // if agnets are busy  please wait in the queue
             // play did you know boxleo courier & Fullfillment blah blah 
         }
 
@@ -774,8 +774,8 @@ class ApiCallCentreController extends Controller
         // Compose the XML response
         $xml = '<?xml version="1.0" encoding="UTF-8"?>';
         $xml .= '<Response>';
-        $xml .= '<Record finishOnKey="#" maxLength="" trimSilence="true" playBeep="true" callbackUrl="https://support.solssa.com/api/v1/africastalking-handle-event">';
         $xml .= '<Say>Please leave a message after the tone.</Say>';
+        $xml .= '<Record finishOnKey="#" maxLength="" trimSilence="true" playBeep="true" callbackUrl="https://support.solssa.com/api/v1/africastalking-handle-event">';
         $xml .= '</Record>';
         $xml .= '</Response>';
 
