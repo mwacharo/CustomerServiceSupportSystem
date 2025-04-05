@@ -34,7 +34,7 @@ class CallStatsService
         $incomingCalls = (clone $callHistories)->where('agentId', $user->id)->count();
         Log::debug('Incoming calls calculated', ['incoming_calls' => $incomingCalls]);
 
-        $outgoingCalls = (clone $callHistories)->where('callerNumber', $clientName)->count();
+        $outgoingCalls = (clone $callHistories)->where('callerNumber', $phone_number)->count();
         Log::debug('Outgoing calls calculated', ['outgoing_calls' => $outgoingCalls]);
 
         $missedCalls = (clone $callHistories)
