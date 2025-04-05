@@ -228,6 +228,8 @@ class ApiCallCentreController extends Controller
 
             Log::info("📞 Caller Number received: $callerNumber");
 
+
+
             $isOutgoing = str_contains($callerNumber, ' BoxleoKenya') ||
                 str_contains($callerNumber, 'BoxleoKenya');
             // Log call session state for debugging
@@ -319,9 +321,30 @@ class ApiCallCentreController extends Controller
 
                 // ✅ PRIORITY: Process user input FIRST
                 if ($request->has('dtmfDigits')) {
+                    // return response($this->handleSelection($request->dtmfDigits))
+
+                    Log::info('Request details:', ['request' => $request->all()]);
+                    Log::info('Caller Number:', ['callerNumber' => $request->input('callerNumber')]);
                     return response($this->handleSelection($request->dtmfDigits))
+
                         ->header('Content-Type', 'application/xml');
+
+
+            
                 }
+
+
+
+                  // ✅ Try assigning an available agent based on caller number
+            // $assignedAgentNumber = $this->getAvailableAgent($callerNumber);
+
+            // if ($assignedAgentNumber) {
+            //     Log::info("📞 Routing call to assigned agent: $assignedAgentNumber");
+
+            //     return response($this->dialNumber($assignedAgentNumber))
+            //         ->header('Content-Type', 'application/xml');
+            // }
+            // Log::info("📞 No available agent found for caller: $callerNumber, continuing IVR flow.");
 
 
 
@@ -374,7 +397,7 @@ class ApiCallCentreController extends Controller
     // }
 
 
-    private function getAvailableAgent($incomingPhoneNumber)
+    private function getAvailableAgent($callerNumber)
     {
         Log::info('Checking for available agents...');
 
@@ -685,7 +708,7 @@ class ApiCallCentreController extends Controller
         Log::info("✅ User selected: {$option->option_number} - {$option->description}");
 
         if ($option->option_number == 6) {
-            $agentNumber = $this->getAvailableAgent();
+            $agentNumber = $this->getAvailableAgent($callerNumber);
             return $agentNumber
                 ? $this->createVoiceResponse("Connecting you to an agent.", $agentNumber)
                 // : $this->createVoiceResponse("All agents are currently busy. Please leave a message.");
