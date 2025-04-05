@@ -26,6 +26,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Http;
+use App\Models\Ticket;
+use App\Models\Contact;
 
 class ApiCallCentreController extends Controller
 {
@@ -356,19 +358,73 @@ class ApiCallCentreController extends Controller
     }
 
 
-    private function getAvailableAgent()
+    // private function getAvailableAgent()
+    // {
+    //     Log::info('Checking for available agents...');
+
+    //     // priority: check if  the incoming call is from a known contact (agent has the phone number in their contact list) or an order 
+    //     // 
+
+
+    //     // check if phone number has 
+
+
+    //     $agent = User::where('status', 'available')
+    //         // ->where('is_active', true)
+    //         // ->where('can_receive_calls', true)
+    //         ->first();
+
+    //     Log::info($agent ? "Found available agent: {$agent->phone_number}" : 'No available agents found.');
+
+    //     return $agent ? $agent->phone_number : null;
+    // }
+
+
+    private function getAvailableAgent($incomingPhoneNumber)
     {
         Log::info('Checking for available agents...');
 
-        $agent = User::where('status', 'available')
-            // ->where('is_active', true)
-            // ->where('can_receive_calls', true)
-            ->first();
+        // 1. Check if the number is linked to an existing ticket
+        // $ticket = Ticket::where('phone_number', $incomingPhoneNumber)
+        //     ->where('status', 'open')
+        //     ->first();
+        // if ($ticket) {
+        //     $agent = User::where('id', $ticket->assigned_to)
+        //         ->where('status', 'available')
+        //         ->first();
+        //     if ($agent) return $agent->phone_number;
+        // }
 
-        Log::info($agent ? "Found available agent: {$agent->phone_number}" : 'No available agents found.');
+        // 2. Check if the number is in agent contacts
+        // $contact = Contact::where('phone_number', $incomingPhoneNumber)->first();
+        // if ($contact) {
+        //     $agent = User::where('id', $contact->user_id)
+        //         ->where('status', 'available')
+        //         ->first();
+        //     if ($agent) return $agent->phone_number;
+        // }
+
+        // 3. Check for ongoing or recent orders
+        // $order = Order::where('customer_phone', $incomingPhoneNumber)
+        //     ->latest()
+        //     ->first();
+        // if ($order && $order->agent_id) {
+        //     $agent = User::where('id', $order->agent_id)
+        //         ->where('status', 'available')
+        //         ->first();
+        //     if ($agent) return $agent->phone_number;
+        // }
+
+        // 4. Default fallback: assign to any available agent
+        $agent = User::where('status', 'available')->first();
+
+        Log::info($agent ? "Assigned agent: {$agent->phone_number}" : 'No available agents.');
+
+        // update call history agentId with the assigned agent
 
         return $agent ? $agent->phone_number : null;
     }
+
 
     /**
      * Update call history.
@@ -804,7 +860,7 @@ class ApiCallCentreController extends Controller
         // Compose the XML response
         $xml = '<?xml version="1.0" encoding="UTF-8"?>';
         $xml .= '<Response>';
-        $xml .= '<Record finishOnKey="#" maxLength="30" trimSilence="true" playBeep="true" callbackUrl="https://support.solssa.com/api/v1/africastalking-handle-event">';
+        $xml .= '<Record finishOnKey="#" maxLength="" trimSilence="true" playBeep="true" callbackUrl="https://support.solssa.com/api/v1/africastalking-handle-event">';
         $xml .= '<Say>Please leave a message after the tone.</Say>';
         $xml .= '</Record>';
         $xml .= '</Response>';
@@ -933,9 +989,9 @@ class ApiCallCentreController extends Controller
     // }
 
 
-    public function AgentCallStats(Request $request ,$id)
+    public function AgentCallStats(Request $request, $id)
     {
-         
+
         $user = User::find($id);
 
         // return response()->json([
@@ -953,7 +1009,12 @@ class ApiCallCentreController extends Controller
             $dateRange[1] = Carbon::parse(trim($dateRange[1]))->endOfDay();
         } else {
             // Default to today if no date range is provided
-            $dateRange = [Carbon::today()->startOfDay(), Carbon::today()->endOfDay()];
+            // $dateRange = [Carbon::today()->startOfDay(), Carbon::today()->endOfDay()];
+            $dateRange = [
+                Carbon::now()->startOfYear(),  // Start of the current year
+                Carbon::now()->endOfYear(),    // End of the current year
+            ];
+            
         }
         $stats = $this->callStatsService->getAgentStats($user, $dateRange);
 
@@ -1061,10 +1122,6 @@ class ApiCallCentreController extends Controller
                 return null;
         }
     }
-
-
-
-
 }
 
 
