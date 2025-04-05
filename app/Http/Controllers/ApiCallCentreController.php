@@ -325,7 +325,7 @@ class ApiCallCentreController extends Controller
 
                     Log::info('Request details:', ['request' => $request->all()]);
                     Log::info('Caller Number:', ['callerNumber' => $request->input('callerNumber')]);
-                    return response($this->handleSelection($request->dtmfDigits))
+                    return response($this->handleSelection($request->dtmfDigits, $request->input('callerNumber', $callerNumber), $sessionId))
 
                         ->header('Content-Type', 'application/xml');
 
@@ -690,7 +690,22 @@ class ApiCallCentreController extends Controller
 
 
 
-    public function handleSelection($dtmfDigits)
+    public function handleSelection($dtmfDigits, $callerNumber , $sessionId )
+    {
+        if (!$dtmfDigits) {
+            Log::warning("⚠️ No DTMF input received.");
+            return $this->createVoiceResponse("No input received. Please try again.", '+254757528414');
+        }
+
+        // Ensure caller number is valid
+        if (!$callerNumber) {
+            Log::error("❌ Caller number is missing in handleSelection.");
+            return $this->createVoiceResponse("Invalid caller number. Please try again.", '+254757528414');
+        }
+
+        Log::info("📲 Handling IVR selection: {$dtmfDigits} from {$callerNumber}");
+
+        // Fetch IVR options from the database
     {
         $options = IVROption::orderBy('option_number')->get();
         Log::info("📲 IVR Input: {$dtmfDigits} | Available Options: " . json_encode($options));
@@ -727,8 +742,9 @@ class ApiCallCentreController extends Controller
             $option->forward_number ?? '+254741821113'
         );
     }
+}
 
-    private function createVoiceResponse($message, $phoneNumber = null)
+    private function createVoiceResponse($message, $phoneNumber)
     {
         Log::info("Generating voice response", ['message' => $message, 'phoneNumber' => $phoneNumber]);
 
