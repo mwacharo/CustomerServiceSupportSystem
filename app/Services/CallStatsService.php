@@ -6,12 +6,16 @@ use App\Models\CallHistory;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use App\Models\User;
+use Illuminate\Support\Facades\Log;
 
 class CallStatsService
 {
     public function getAgentStats(User $user, ?array $dateRange = null): array
     {
+        Log::info('Fetching agent stats', ['user_id' => $user->id, 'date_range' => $dateRange]);
+
         $clientName = $user->client_name;
+        Log::debug('Client name retrieved', ['client_name' => $clientName]);
 
         $callHistories = CallHistory::query()
             ->where('agentId', $clientName)
@@ -19,19 +23,29 @@ class CallStatsService
             ->whereNull('deleted_at');
 
         if ($dateRange) {
+            Log::debug('Applying date range filter', ['date_range' => $dateRange]);
             $callHistories->whereBetween('created_at', $dateRange);
         }
 
         $totalCalls = (clone $callHistories)->count();
+        Log::debug('Total calls calculated', ['total_calls' => $totalCalls]);
+
         $incomingCalls = (clone $callHistories)->where('agentId', $user->id)->count();
+        Log::debug('Incoming calls calculated', ['incoming_calls' => $incomingCalls]);
+
         $outgoingCalls = (clone $callHistories)->where('callerNumber', $clientName)->count();
+        Log::debug('Outgoing calls calculated', ['outgoing_calls' => $outgoingCalls]);
+
         $missedCalls = (clone $callHistories)
             ->whereIn('hangupCause', ['NO_ANSWER', 'SERVICE_UNAVAILABLE'])
             ->where('agentId', $user->id)
             ->count();
-        $callDuration = (clone $callHistories)->sum('durationInSeconds') ?? 0;
+        Log::debug('Missed calls calculated', ['missed_calls' => $missedCalls]);
 
-        return [
+        $callDuration = (clone $callHistories)->sum('durationInSeconds') ?? 0;
+        Log::debug('Call duration calculated', ['call_duration' => $callDuration]);
+
+        $result = [
             'id' => $user->id,
             'phone_number' => $user->phone_number,
             'client_name' => $clientName,
@@ -45,5 +59,9 @@ class CallStatsService
             'summary_call_missed' => $missedCalls,
             'updated_at' => $user->updated_at,
         ];
+
+        Log::info('Agent stats fetched successfully', ['result' => $result]);
+
+        return $result;
     }
 }
