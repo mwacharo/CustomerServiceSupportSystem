@@ -99,6 +99,14 @@
                           label="Country"
                         ></v-select>
                       </v-col>
+                      <v-col cols="12" sm="6">
+                        <v-select
+                          v-model="editedItem.status"
+                          :items="['available', 'engaged', 'offline']"
+                          label="Status"
+                          clearable
+                        ></v-select>
+                      </v-col>
                     </v-row>
                   </v-container>
                 </v-card-text>
@@ -268,6 +276,8 @@ export default {
         phone_number: "",
         branch_id: null,
         country_id: null,
+        status: ["available", "engaged"],
+       
       },
       defaultItem: {
         id: null,
@@ -278,6 +288,7 @@ export default {
         phone_number: "",
         branch_id: null,
         country_id: null,
+        status: ["available", "engaged"],
       },
     };
   },
