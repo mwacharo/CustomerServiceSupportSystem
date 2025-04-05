@@ -14,6 +14,7 @@ namespace App\Http\Controllers;
 
 use AfricasTalking\SDK\AfricasTalking;
 use App\Events\CallStatusUpdated;
+use App\Models\Call;
 use App\Models\CallHistory;
 use App\Models\CallQueue;
 use App\Models\IvrOption;
@@ -328,23 +329,20 @@ class ApiCallCentreController extends Controller
                     return response($this->handleSelection($request->dtmfDigits, $request->input('callerNumber', $callerNumber), $sessionId))
 
                         ->header('Content-Type', 'application/xml');
-
-
-            
                 }
 
 
 
-                  // ✅ Try assigning an available agent based on caller number
-            // $assignedAgentNumber = $this->getAvailableAgent($callerNumber);
+                // ✅ Try assigning an available agent based on caller number
+                // $assignedAgentNumber = $this->getAvailableAgent($callerNumber);
 
-            // if ($assignedAgentNumber) {
-            //     Log::info("📞 Routing call to assigned agent: $assignedAgentNumber");
+                // if ($assignedAgentNumber) {
+                //     Log::info("📞 Routing call to assigned agent: $assignedAgentNumber");
 
-            //     return response($this->dialNumber($assignedAgentNumber))
-            //         ->header('Content-Type', 'application/xml');
-            // }
-            // Log::info("📞 No available agent found for caller: $callerNumber, continuing IVR flow.");
+                //     return response($this->dialNumber($assignedAgentNumber))
+                //         ->header('Content-Type', 'application/xml');
+                // }
+                // Log::info("📞 No available agent found for caller: $callerNumber, continuing IVR flow.");
 
 
 
@@ -397,7 +395,7 @@ class ApiCallCentreController extends Controller
     // }
 
 
-    private function getAvailableAgent($callerNumber)
+    private function getAvailableAgent($callerNumber, $sessionId)
     {
         Log::info('Checking for available agents...');
 
@@ -435,9 +433,47 @@ class ApiCallCentreController extends Controller
         // 4. Default fallback: assign to any available agent
         $agent = User::where('status', 'available')->first();
 
+
         Log::info($agent ? "Assigned agent: {$agent->phone_number}" : 'No available agents.');
 
-        // update call history agentId with the assigned agent
+        // Update call history agentId with the assigned agent
+        if ($agent) {
+            try {
+            // Log the agent details before updating
+            Log::info("Updating agent status to busy", [
+                'agent_id' => $agent->id,
+                'phone_number' => $agent->phone_number,
+                'sessionId' => $sessionId ?: uniqid()
+            ]);
+
+            // Update the agent's status to busy
+            $agent->update(['status' => 'busy', 'sessionId' => $sessionId ?: uniqid()]);
+
+            // Log the session ID after updating
+            Log::info("Agent status updated successfully", [
+                'agent_id' => $agent->id,
+                'sessionId' => $sessionId
+            ]);
+
+            // Update the call history with the assigned agent
+            $updatedRows = CallHistory::where('sessionId', $sessionId)
+                ->update(['adminId' => $agent->id]);
+
+            // Log the number of rows updated in call history
+            Log::info("Call history updated with assigned agent", [
+                'updated_rows' => $updatedRows,
+                'agent_id' => $agent->id
+            ]);
+
+            Log::info("Updated agent status to busy: {$agent->phone_number}");
+            } catch (\Exception $e) {
+            // Log any errors that occur during the update process
+            Log::error("Error updating agent status or call history", [
+                'error_message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            }
+        }
 
         return $agent ? $agent->phone_number : null;
     }
@@ -449,7 +485,8 @@ class ApiCallCentreController extends Controller
     private function updateCallHistory(string $sessionId, array $data): void
     {
         $call = CallHistory::updateOrCreate(['sessionId' => $sessionId], $data);
-        broadcast(new CallStatusUpdated($call));
+
+        // broadcast(new CallStatusUpdated($call));
     }
 
 
@@ -547,7 +584,7 @@ class ApiCallCentreController extends Controller
 
 
 
-  
+
     public function generateToken(Request $request)
     {
         // Fetch Africa's Talking API credentials from config.
@@ -690,7 +727,7 @@ class ApiCallCentreController extends Controller
 
 
 
-    public function handleSelection($dtmfDigits, $callerNumber , $sessionId )
+    public function handleSelection($dtmfDigits, $callerNumber, $sessionId)
     {
         if (!$dtmfDigits) {
             Log::warning("⚠️ No DTMF input received.");
@@ -706,43 +743,43 @@ class ApiCallCentreController extends Controller
         Log::info("📲 Handling IVR selection: {$dtmfDigits} from {$callerNumber}");
 
         // Fetch IVR options from the database
-    {
-        $options = IVROption::orderBy('option_number')->get();
-        Log::info("📲 IVR Input: {$dtmfDigits} | Available Options: " . json_encode($options));
+        {
+            $options = IVROption::orderBy('option_number')->get();
+            Log::info("📲 IVR Input: {$dtmfDigits} | Available Options: " . json_encode($options));
 
-        $option = $options->where('option_number', $dtmfDigits)->first();
+            $option = $options->where('option_number', $dtmfDigits)->first();
 
-        if (!$option) {
-            Log::warning("❌ Invalid IVR selection: {$dtmfDigits} | Redirecting to fallback");
+            if (!$option) {
+                Log::warning("❌ Invalid IVR selection: {$dtmfDigits} | Redirecting to fallback");
+                return $this->createVoiceResponse(
+                    "Invalid option selected. Please try again.",
+                    '+254757528414'
+                );
+            }
+
+            Log::info("✅ User selected: {$option->option_number} - {$option->description}");
+
+            if ($option->option_number == 6) {
+                $agentNumber = $this->getAvailableAgent($callerNumber, $sessionId);
+                return $agentNumber
+                    ? $this->createVoiceResponse("Connecting you to an agent.", $agentNumber)
+                    // : $this->createVoiceResponse("All agents are currently busy. Please leave a message.");
+
+                    : $this->recordVoicemail(); // Record voicemail if no agents are available
+                // if agents are busy leave a message after the beep
+
+
+
+                // if agents are busy  please wait in the queue
+                // play did you know boxleo courier & Fullfillment blah blah 
+            }
+
             return $this->createVoiceResponse(
-                "Invalid option selected. Please try again.",
-                '+254757528414'
+                "You selected {$option->description}. Connecting your call.",
+                $option->forward_number ?? '+254741821113'
             );
         }
-
-        Log::info("✅ User selected: {$option->option_number} - {$option->description}");
-
-        if ($option->option_number == 6) {
-            $agentNumber = $this->getAvailableAgent($callerNumber);
-            return $agentNumber
-                ? $this->createVoiceResponse("Connecting you to an agent.", $agentNumber)
-                // : $this->createVoiceResponse("All agents are currently busy. Please leave a message.");
-
-                : $this->recordVoicemail(); // Record voicemail if no agents are available
-            // if agents are busy leave a message after the beep
-
-
-
-            // if agnets are busy  please wait in the queue
-            // play did you know boxleo courier & Fullfillment blah blah 
-        }
-
-        return $this->createVoiceResponse(
-            "You selected {$option->description}. Connecting your call.",
-            $option->forward_number ?? '+254741821113'
-        );
     }
-}
 
     private function createVoiceResponse($message, $phoneNumber)
     {
@@ -804,7 +841,7 @@ class ApiCallCentreController extends Controller
         }
     }
 
-   
+
 
     public function AgentCallStats(Request $request, $id)
     {
@@ -831,7 +868,6 @@ class ApiCallCentreController extends Controller
                 Carbon::now()->startOfYear(),  // Start of the current year
                 Carbon::now()->endOfYear(),    // End of the current year
             ];
-            
         }
         $stats = $this->callStatsService->getAgentStats($user, $dateRange);
 
@@ -860,7 +896,7 @@ class ApiCallCentreController extends Controller
     }
 
 
-        private function getDateFilter($call_date, $custom_date, $custom_start_date, $custom_end_date)
+    private function getDateFilter($call_date, $custom_date, $custom_start_date, $custom_end_date)
     {
         switch ($call_date) {
             case 'today':
