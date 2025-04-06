@@ -67,10 +67,19 @@
               </v-col>
 
               <v-col cols="12" md="4">
-                <v-select
+                <v-autocomplete
                   v-model="selectedStatus"
                   :items="statusTypes"
                   label="Call Status"
+                />
+              </v-col>
+
+
+              <v-col cols="12" md="4">
+                <v-autocomplete
+                  v-model="selectedStatus"
+                  :items="ivrOptions"
+                  label="ivrp options"
                 />
               </v-col>
 
@@ -108,6 +117,7 @@ export default {
   },
   data() {
     return {
+      ivrOptions: [],
       search: '',
       selectedReportType: null,
       selectedStatus: null,
@@ -123,16 +133,45 @@ export default {
         'Missed Calls',
         'Customer Feedback',
         'Ticket Resolution',
-        'Average Call Duration'
+        'Average Call Duration',
+        'IVR Report', 
       ],
 
-      statusTypes: ['All', 'Answered', 'Missed', 'In Progress', 'Escalated'],
+      statusTypes: [
+        'All',
+        'Answered',
+        'Missed',
+        'In Progress',
+        'Escalated',
+        'NO_ANSWER', // The recipient's phone rang but wasn't answered.
+        'USER_BUSY', // The recipient's line was busy.
+        'CALL_REJECTED', // The call was explicitly rejected by the recipient.
+        'SUBSCRIBER_ABSENT', // The phone was off, unreachable, or out of coverage.
+        'NORMAL_TEMPORARY_FAILURE', // A temporary network issue prevented the call from going through.
+        'UNSPECIFIED', // The system could not determine the exact reason — general failure.
+        'RECOVERY_ON_TIMER_EXPIRE', // The call wasn't answered in time — likely a timeout.
+        'NORMAL_CLEARING', // The call ended normally (could be user hang-up).
+        'NO_USER_RESPONSE', // The network tried to alert the user, but got no response (e.g. phone not ringing).
+        'UNALLOCATED_NUMBER' // The number dialed does not exist or isn’t assigned to any subscriber.
+      ],
 
       reportData: [],
       headers: [],
     };
   },
+
+  created() {
+        this.fetchIvrOptions();
+    },
   methods: {
+
+    fetchIvrOptions() {
+            axios.get("api/v1/ivr-options")
+                .then(response => {
+                    this.ivrOptions = response.data.ivrOptions;
+                })
+                .catch(error => console.error("API Error:", error));
+        },
     generateReport() {
       switch (this.selectedReportType) {
         case 'Call Summary Report':
@@ -212,6 +251,16 @@ export default {
             { title: 'Shortest Call', value: 'shortest_call' }
           ];
           this.fetchReportData('/api/reports/call-duration');
+
+         case 'IVR Report':
+          this.headers = [
+            { title: 'IVR Path', value: 'ivr_path' },
+            { title: 'Total Calls', value: 'total_calls' },
+            { title: 'Completed', value: 'completed' },
+            { title: 'Abandoned', value: 'abandoned' },
+            { title: 'Avg Duration (min)', value: 'avg_duration' }
+          ];
+          this.fetchReportData('/api/reports/ivr'); 
           break;
       }
     },
