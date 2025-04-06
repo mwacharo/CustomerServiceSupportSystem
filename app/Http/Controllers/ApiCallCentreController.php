@@ -588,11 +588,7 @@ class ApiCallCentreController extends Controller
                     'updated_rows' => $updatedRows
                 ]);
             } 
-            // else {
-            //     Log::warning("No user found with the provided sessionId to reset.", [
-            //         'sessionId' => $payload['sessionId'] ?? null
-            //     ]);
-            // }
+         
           }
            
 
