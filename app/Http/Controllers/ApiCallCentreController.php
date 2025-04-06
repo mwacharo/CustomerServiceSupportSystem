@@ -567,10 +567,11 @@ class ApiCallCentreController extends Controller
 
 
 
-            $Completed =$request->input('callSessionState', 'Completed');
+            // $Completed =$request->input('callSessionState', 'Completed');
+            $completed = strtolower($payload['callSessionState'] ?? '') === 'completed' || strtolower($payload['status'] ?? '') === 'completed';
 
 
-          if ($Completed)
+          if ($completed)
           {
 
 
@@ -586,11 +587,12 @@ class ApiCallCentreController extends Controller
                     'sessionId' => $payload['sessionId'] ?? null,
                     'updated_rows' => $updatedRows
                 ]);
-            } else {
-                Log::warning("No user found with the provided sessionId to reset.", [
-                    'sessionId' => $payload['sessionId'] ?? null
-                ]);
-            }
+            } 
+            // else {
+            //     Log::warning("No user found with the provided sessionId to reset.", [
+            //         'sessionId' => $payload['sessionId'] ?? null
+            //     ]);
+            // }
           }
            
 
