@@ -41,7 +41,7 @@ class CallStatsService
 
         $missedCalls = (clone $callHistories)
             ->whereIn('hangupCause', ['NO_ANSWER', 'SERVICE_UNAVAILABLE'])
-            ->where('agentId', $user->id)
+            ->where('adminId', $user->id)
             ->count();
         Log::debug('Missed calls calculated', ['missed_calls' => $missedCalls]);
 

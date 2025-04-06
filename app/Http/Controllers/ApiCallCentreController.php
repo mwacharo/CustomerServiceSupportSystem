@@ -244,6 +244,39 @@ class ApiCallCentreController extends Controller
                     'isOutgoing' => $isOutgoing
                 ]);
 
+
+                // Update the Agent sessionId of the user making the outgoing call
+                try {
+                    Log::info("Updating agent status to busy for outgoing call", [
+                        'callerNumber' => $callerNumber,
+                        'sessionId' => $sessionId
+                    ]);
+
+                    $updatedRows = User::where('callerNumber', $callerNumber)
+                        ->update([
+                            'status' => 'busy',
+                            'sessionId' => $sessionId, // Ensure the session ID is updated
+                            'updated_at' => now()
+                        ]);
+
+                    if ($updatedRows > 0) {
+                        Log::info("Agent status updated successfully", [
+                            'callerNumber' => $callerNumber,
+                            'sessionId' => $sessionId,
+                            'updated_rows' => $updatedRows
+                        ]);
+                    } else {
+                        Log::warning("No agent found with the provided callerNumber", [
+                            'callerNumber' => $callerNumber
+                        ]);
+                    }
+                } catch (\Exception $e) {
+                    Log::error("Error updating agent status for outgoing call", [
+                        'error_message' => $e->getMessage(),
+                        'trace' => $e->getTraceAsString()
+                    ]);
+                }
+
                 switch ($callSessionState) {
                     case 'Ringing':
                         // Ensure no whitespace before output
@@ -531,6 +564,15 @@ class ApiCallCentreController extends Controller
 
                 ]
             );
+
+
+            User::where('sessionId', $payload['sessionId'] ?? null)
+            ->update([
+                'status' => 'available',
+                'sessionId' => null,
+                'updated_at' => now()
+            ]);
+    
 
             return response()->json(['status' => 'success'], 200);
         } catch (\Exception $e) {
