@@ -803,6 +803,30 @@ class ApiCallCentreController extends Controller
         }
 
         Log::info("📲 Handling IVR selection: {$dtmfDigits} from {$callerNumber}");
+        // store caller selection in the dababase 
+
+        Log::info("Updating call history with IVR selection", [
+            'sessionId' => $sessionId,
+            'callerNumber' => $callerNumber,
+            'selectedOption' => $dtmfDigits
+        ]);
+
+        CallHistory::updateOrCreate(
+            ['sessionId' => $sessionId],
+            [
+            'callerNumber' => $callerNumber,
+            // note agentId is used to store the selected option in the database
+            'agentId' => $dtmfDigits,
+            'isActive' => 1, // Mark as active while handling selection
+            ]
+        );
+
+        Log::info("Call history updated successfully", [
+            'sessionId' => $sessionId,
+            'callerNumber' => $callerNumber,
+            'selectedOption' => $dtmfDigits
+        ]);
+
 
         // Fetch IVR options from the database
         {
