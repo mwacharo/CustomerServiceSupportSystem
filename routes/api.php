@@ -115,7 +115,7 @@ Route::get('v1/call-agent-history/{id}', [ApiCallCentreController::class, 'getAg
 // /v1/agent-stats
 
 Route::get('v1/agent-stats/{id}', [ApiCallCentreController::class, 'AgentCallStats']);
-Route::get('/reports/call-summary', [ApiCallCentreController::class, 'callSummaryReport']);
+Route::post('/reports/call-summary', [ApiCallCentreController::class, 'callSummaryReport']);
 
 
 Route::post('v1/report-call-agent-list-summary-filter', [ApiCallCentreController::class, 'getAgentListSummaryFilter']);
