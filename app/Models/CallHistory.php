@@ -40,6 +40,17 @@ class CallHistory extends Model
         'lastBridgeHangupCause'
     ];
 
+
+    public function agent()
+    {
+        return $this->belongsTo(User::class, 'adminId');
+    }
+
+    public function  ivrOption()
+    {
+        return $this->belongsTo(IvrOption::class, 'agentId');
+    }
+
     // public function getAttributeCreatedAt()
     // {
     //     return $this->attributes['created_at'] ?? null;

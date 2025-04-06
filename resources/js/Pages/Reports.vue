@@ -128,6 +128,7 @@ export default {
       search: '',
       selectedReportType: null,
       selectedStatus: null,
+      selectedAgent: null,
       startDate: null,
       endDate: null,
       menu1: false,
@@ -206,7 +207,7 @@ export default {
             { title: 'Escalated', value: 'escalated' },
             { title: 'Date', value: 'date' }
           ];
-          this.fetchReportData('/api/reports/call-summary');
+          this.fetchReportData('/api/v1/reports/call-summary');
           break;
 
         case 'Agent Performance':

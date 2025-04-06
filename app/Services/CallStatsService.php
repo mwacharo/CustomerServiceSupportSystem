@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\CallHistory;
+use App\Models\IvrOption;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use App\Models\User;
@@ -50,6 +51,21 @@ class CallStatsService
     $incomingDuration = (clone $incomingQuery)->sum('durationInSeconds') ?? 0;
     $outgoingDuration = (clone $outgoingQuery)->sum('durationInSeconds') ?? 0;
     $totalDuration = $incomingDuration + $outgoingDuration;
+
+
+    // ivroption statitiscs 
+
+     $ivrStats = CallHistory::query()
+        // ->where('adminId', $user->id)
+        ->whereNotNull('agentId') 
+        // ->whereNotNull('ivrOptionId')
+        ->whereNull('deleted_at');
+
+
+        // how many times  ivr option was selected
+
+        $ivrOptios=IvrOption::all();
+
 
     $result = [
         'id' => $user->id,
