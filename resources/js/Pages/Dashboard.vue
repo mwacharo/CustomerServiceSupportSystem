@@ -169,6 +169,10 @@ export default {
             axios.get('api/v1/agent-stats'/ + this.userId) // Use the userId prop to fetch agent stats
                 .then(response => {
                     // Assuming response.data contains the agent stats
+
+                    // 
+
+// {"id":1,"phone_number":"BoxleoKenya.Developer","status":"available","sessionId":null,"summary_call_completed":256,"summary_inbound_call_completed":9,"summary_outbound_call_completed":247,"summary_call_duration":1052,"summary_call_missed":1,"updated_at":"2025-04-06T16:44:37.000000Z"}
                     this.stats = response.data;
                 })
                

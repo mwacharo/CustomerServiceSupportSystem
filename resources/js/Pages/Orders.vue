@@ -634,6 +634,15 @@ export default {
         eventLog: [],
     }),
 
+
+    created() {
+
+this.fetchOrders();
+this.fetchCallHistory();
+this.fetchAgentstats();
+
+},
+
     methods: {
 
         sendWhatsApp(phone) {
@@ -1064,16 +1073,9 @@ export default {
             console.error("Failed to retrieve userToken after waiting.");
         }
 
-        this.fetchOrders();
-        this.fetchCallHistory();
-        this.fetchAgentstats();
-    },
-
-    created() {
-        // this.fetchCallHistory();
-        // this.fetchUsers();
 
     },
+
 
 };
 </script>
