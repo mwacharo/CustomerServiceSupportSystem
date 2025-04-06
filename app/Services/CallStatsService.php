@@ -73,61 +73,40 @@ class CallStatsService
 
 
     /**
-     * Get the summary of call agents with filters.
+     * Generate a call summary report using Eloquent collections.
+     *
+     * @param  array  $filters
+     * @return \Illuminate\Support\Collection
      */
-    // public function getAgentListSummaryFilter(Request $request)
-    // {
-    //     $call_date = $request->call_date;
-    //     $custom_date = $request->custom_date;
-    //     $custom_start_date = $request->custom_start_date;
-    //     $custom_end_date = $request->custom_end_date;
+    public function generateCallSummaryReport(array $filters)
+    {
 
 
-    //     $json_results = [];
-    //     // $call_agents = User::role('callCentre') 
-    //     //     ->whereNull('deleted_at')
-    //     //     ->orderBy('client_name')
-    //     //     ->get();
 
-    //     $call_agents = User::all();
+        
+        $query = CallHistory::with('agent:id,name');
 
-    //     foreach ($call_agents as $agent) {
-    //         $admin_name = $agent->admin ? $agent->admin->first_name . ' ' . $agent->admin->last_name : '';
+        // Apply filters
+        if (!empty($filters['startDate']) && !empty($filters['endDate'])) {
+            $query->whereBetween('created_at', [$filters['startDate'], $filters['endDate']]);
+        }
 
-    //         $baseCallQuery = CallHistory::where('agentId', $agent->client_name)
-    //             ->where('isActive', 0)
-    //             ->whereNull('deleted_at');
+        if (!empty($filters['status'])) {
+            $query->whereIn('status', $filters['status']);
+        }
 
+        // Get all filtered data
+        $callHistories = $query->get();
 
-    //         $dateFilter = $this->getDateFilter($call_date, $custom_date, $custom_start_date, $custom_end_date);
-
-    //         $summary_call_completed = (clone $baseCallQuery)->when($dateFilter, fn($q) => $q->whereBetween('created_at', $dateFilter))->count();
-    //         $summary_inbound_call_completed = (clone $baseCallQuery)->where('direction', 'inbound')->when($dateFilter, fn($q) => $q->whereBetween('created_at', $dateFilter))->count();
-    //         $summary_outbound_call_completed = (clone $baseCallQuery)->where('direction', 'outbound')->when($dateFilter, fn($q) => $q->whereBetween('created_at', $dateFilter))->count();
-    //         $summary_call_duration = (clone $baseCallQuery)->when($dateFilter, fn($q) => $q->whereBetween('created_at', $dateFilter))->sum('durationInSeconds');
-    //         $summary_call_missed = (clone $baseCallQuery)->whereIn('hangupCause', ['NO_ANSWER', 'SERVICE_UNAVAILABLE'])->when($dateFilter, fn($q) => $q->whereBetween('created_at', $dateFilter))->count();
-
-
-    //         $json_results[] = [
-    //             'id' => $agent->id,
-    //             'phone_number' => $agent->phone_number,
-    //             'client_name' => $agent->client_name,
-    //             'admin_id' => $agent->admin_id,
-    //             'admin_name' => $admin_name,
-    //             'status' => $agent->status,
-    //             'sessionId' => $agent->sessionId,
-    //             'token' => $agent->token,
-    //             'summary_call_completed' => $summary_call_completed,
-    //             'summary_inbound_call_completed' => $summary_inbound_call_completed,
-    //             'summary_outbound_call_completed' => $summary_outbound_call_completed,
-    //             'summary_call_duration' => $summary_call_duration,
-    //             'summary_call_missed' => $summary_call_missed,
-
-    //         ];
-    //     }
-
-    //     return response()->json($json_results);
-    // }
-
-
+        // Group by agentId and aggregate with collection methods
+        return $callHistories->groupBy('agentId')->map(function ($calls, $agentId) {
+            return [
+                'agent' => optional($calls->first()->agent)->name ?? 'N/A',
+                'total_calls' => $calls->count(),
+                'answered' => $calls->where('status', 'Answered')->count(),
+                'missed' => $calls->where('status', 'Missed')->count(),
+                'escalated' => $calls->where('status', 'Escalated')->count(),
+            ];
+        })->values(); // Reset keys
+    }
 }

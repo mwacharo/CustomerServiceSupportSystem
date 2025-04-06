@@ -32,39 +32,25 @@
                 />
               </v-col>
 
-              <v-col cols="12" md="4">
-                <v-menu v-model="menu1" :close-on-content-click="false" transition="scale-transition" offset-y min-width="290px">
-                  <template v-slot:activator="{ on, attrs }">
-                    <v-text-field
-                      v-model="startDate"
-                      label="Start Date"
-                      prepend-icon="mdi-calendar"
-                      readonly
-                      v-bind="attrs"
-                      type="date"
-                      v-on="on"
-                    />
-                  </template>
-                  <v-date-picker v-model="startDate" @input="menu1 = false" />
-                </v-menu>
-              </v-col>
+                <v-col cols="12" md="4">
+                <v-text-field
+                  v-model="startDate"
+                  label="Start Date"
+                  prepend-icon="mdi-calendar"
+                  type="date"
+                  outlined
+                />
+                </v-col>
 
-              <v-col cols="12" md="4">
-                <v-menu v-model="menu2" :close-on-content-click="false" transition="scale-transition" offset-y min-width="290px">
-                  <template v-slot:activator="{ on, attrs }">
-                    <v-text-field
-                      v-model="endDate"
-                      label="End Date"
-                      prepend-icon="mdi-calendar"
-                      readonly
-                      v-bind="attrs"
-                      type="date"
-                      v-on="on"
-                    />
-                  </template>
-                  <v-date-picker v-model="endDate" @input="menu2 = false" />
-                </v-menu>
-              </v-col>
+                <v-col cols="12" md="4">
+                <v-text-field
+                  v-model="endDate"
+                  label="End Date"
+                  prepend-icon="mdi-calendar"
+                  type="date"
+                  outlined
+                />
+                </v-col>
 
               <v-col cols="12" md="4">
                 <v-autocomplete
@@ -231,7 +217,7 @@ export default {
             { title: 'CSAT (%)', value: 'csat' },
             { title: 'Tickets Resolved', value: 'tickets_resolved' }
           ];
-          this.fetchReportData('/api/reports/agent-performance');
+          this.fetchReportData('/api/v1/reports/call-summary');
           break;
 
         case 'Call Logs':
@@ -244,7 +230,7 @@ export default {
             { title: 'End Time', value: 'end_time' },
             { title: 'Duration (min)', value: 'duration' }
           ];
-          this.fetchReportData('/api/reports/call-logs');
+          this.fetchReportData('/api/v1/reports/call-summary');
           break;
 
         case 'Missed Calls':
@@ -254,7 +240,7 @@ export default {
             { title: 'Callback Status', value: 'callback_status' },
             { title: 'Agent Assigned', value: 'agent' }
           ];
-          this.fetchReportData('/api/v1/report-call-agent-list-summary-filter');
+          this.fetchReportData('/api/v1/reports/call-summary');
           break;
 
         case 'Customer Feedback':
@@ -265,7 +251,7 @@ export default {
             { title: 'Comment', value: 'comment' },
             { title: 'Date', value: 'date' }
           ];
-          this.fetchReportData('/api/reports/feedback');
+          this.fetchReportData('/api/v1/reports/call-summary');
           break;
 
         case 'Ticket Resolution':
@@ -276,7 +262,7 @@ export default {
             { title: 'Status', value: 'status' },
             { title: 'Resolved On', value: 'resolved_on' }
           ];
-          this.fetchReportData('/api/reports/ticket-resolution');
+          this.fetchReportData('/api/v1/reports/call-summary');
           break;
 
         case 'Average Call Duration':
@@ -287,7 +273,7 @@ export default {
             { title: 'Longest Call', value: 'longest_call' },
             { title: 'Shortest Call', value: 'shortest_call' }
           ];
-          this.fetchReportData('/api/reports/call-duration');
+          this.fetchReportData('/api/v1/reports/call-summary');
 
          case 'IVR Report':
           this.headers = [
@@ -297,7 +283,7 @@ export default {
             { title: 'Abandoned', value: 'abandoned' },
             { title: 'Avg Duration (min)', value: 'avg_duration' }
           ];
-          this.fetchReportData('/api/reports/ivr'); 
+          this.fetchReportData('/api/v1/reports/call-summary'); 
           break;
       }
     },

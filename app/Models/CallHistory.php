@@ -44,4 +44,5 @@ class CallHistory extends Model
     // {
     //     return $this->attributes['created_at'] ?? null;
     // }
-}
+    
+    

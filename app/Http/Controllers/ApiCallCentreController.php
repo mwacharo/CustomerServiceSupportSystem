@@ -1004,6 +1004,22 @@ class ApiCallCentreController extends Controller
                 return null;
         }
     }
+
+
+
+    // callSummaryReport
+
+
+
+
+    public function callSummaryReport(Request $request)
+    {
+        $filters = $request->only(['startDate', 'endDate', 'status']);
+        $reportData = $this->callStatsService->generateCallSummaryReport($filters);
+
+        return response()->json($reportData);
+    }
+
 }
 
 
