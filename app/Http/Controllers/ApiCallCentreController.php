@@ -252,7 +252,7 @@ class ApiCallCentreController extends Controller
                         'sessionId' => $sessionId
                     ]);
 
-                    $updatedRows = User::where('callerNumber', $callerNumber)
+                    $updatedRows = User::where('phone_number', $callerNumber)
                         ->update([
                             'status' => 'busy',
                             'sessionId' => $sessionId, // Ensure the session ID is updated
