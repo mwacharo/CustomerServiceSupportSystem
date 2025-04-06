@@ -712,6 +712,10 @@ export default {
                     console.log("Incoming call hung up:", event.reason);
                     this.$toastr.error("Incoming call hung up: ", event.reason);
                     this.incomingCallDialog = false;
+                //    reset status of agent handling the call to available
+                // update
+
+
                 });
                 // Retrieve the call object correctly
                 // let incomingCall = event.call;  // ✅ Correct property

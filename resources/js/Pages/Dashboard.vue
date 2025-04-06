@@ -263,3 +263,8 @@ export default {
   font-weight: 500;
 }
 </style>
+
+
+
+
+<!-- {"id":1,"phone_number":"BoxleoKenya.Developer","status":null,"sessionId":null,"summary_call_completed":1,"summary_inbound_call_completed":0,"summary_outbound_call_completed":1,"summary_call_duration":5,"summary_call_missed":0,"updated_at":"2025-04-06T02:30:13.000000Z"} -->
