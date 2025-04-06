@@ -80,7 +80,7 @@
 
                         <!-- Calls Tab -->
                         <v-window-item value="calls">
-                            <v-data-table :headers="callsheaders" :items="callHistories" item-value="id"
+                            <v-data-table :headers="callsheaders" :items="callHistories" item-value="id" 
                                 class="elevation-1 mt-4" :items-per-page="15">
                                 <!-- Example of a custom slot for an actions column -->
                                 <template #item.actions="{ item }">
@@ -99,7 +99,7 @@
 
                         <!-- Orders Tab -->
                         <v-window-item value="orders">
-                            <v-data-table :headers="headers" :items="serverItems" :loading="loading"
+                            <v-data-table :headers="headers" :items="serverItems" 
                             show-select
                                 v-model="selected"
 
@@ -543,6 +543,7 @@ export default {
 
     components: { AppLayout },
     data: () => ({
+        loading: false, // this is used by :loading binding
         isMuted: false, // Initially not muted
         isOnHold: false, // Initially not on hold
         itemsPerPage: 5,
@@ -610,7 +611,6 @@ export default {
                 phone: "751458911",
             },
         ],
-        loading: false,
         totalItems: 2,
         statuses: ["Pending", "Shipped", "Delivered", "Cancelled"],
         statusModal: false,
@@ -640,6 +640,7 @@ export default {
 this.fetchOrders();
 this.fetchCallHistory();
 this.fetchAgentstats();
+this.fetchUsers();
 
 },
 
@@ -982,7 +983,6 @@ this.fetchAgentstats();
         }
         ,
         loadItems({ page, itemsPerPage, sortBy }) {
-            this.loading = true;
             FakeAPI.fetch({
                 page,
                 itemsPerPage,
@@ -991,7 +991,6 @@ this.fetchAgentstats();
             }).then(({ items, total }) => {
                 this.serverItems = items;
                 this.totalItems = total;
-                this.loading = false;
             });
         },
         openStatusModal(item) {
@@ -1015,7 +1014,8 @@ this.fetchAgentstats();
                 })
                 .catch(error => {
                     console.error('Error fetching call history:', error);
-                });
+                })
+            ;
         },
         async fetchOrders() {
             axios.get('/api/v1/orders')
@@ -1038,17 +1038,18 @@ this.fetchAgentstats();
                 .catch(error => {
                     console.error('Error fetching agent stats:', error);
                 });
-        }
+        },
 
-        // fetchUsers() {
-        //     axios.get('/v1/users')
-        //         .then(response => {
-        //             this.agents = response.data;
-        //         })
-        //         .catch(error => {
-        //             console.error('Error fetching users:', error);
-        //         });
-        // },
+        fetchUsers() {
+            axios.get('/v1/users')
+            .then(response => {
+                this.agents = response.data;
+            })
+            .catch(error => {
+                console.error('Error fetching users:', error);
+            })
+          ;
+        },
 
     },
     watch: {
