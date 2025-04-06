@@ -169,10 +169,7 @@ export default {
             axios.get('api/v1/agent-stats'/ + this.userId) // Use the userId prop to fetch agent stats
                 .then(response => {
                     // Assuming response.data contains the agent stats
-                    this.agents = response.data.map(agent => ({
-                        ...agent,
-                        status: agent.status || 'offline' // Default to 'offline' if status is not set
-                    }));
+                    this.stats = response.data;
                 })
                
                 .catch(error => {

@@ -80,7 +80,7 @@
 
                         <!-- Calls Tab -->
                         <v-window-item value="calls">
-                            <v-data-table :headers="callsheaders" :items="calls" item-value="id"
+                            <v-data-table :headers="callsheaders" :items="callHistories" item-value="id"
                                 class="elevation-1 mt-4" :items-per-page="15">
                                 <!-- Example of a custom slot for an actions column -->
                                 <template #item.actions="{ item }">
@@ -557,6 +557,7 @@ export default {
         availableAgents: [
 
         ].filter(agent => status.available),
+        callHistories: [],
 
         queuedCalls: [
             { call_id: 1, phone_number: '+254711123456', status: 'queued' },
@@ -1001,7 +1002,7 @@ export default {
         async fetchCallHistory() {
             axios.get('/api/v1/call-history')
                 .then(response => {
-                    this.calls = response.data.callHistories;
+                    this.callHistories = response.data.callHistories;
                 })
                 .catch(error => {
                     console.error('Error fetching call history:', error);
@@ -1017,15 +1018,28 @@ export default {
                 });
         },
 
-        fetchUsers() {
-            axios.get('/v1/users')
+
+
+        fetchAgentstats() {
+            axios.get('api/v1/agent-stats'/ + this.userId) // Use the userId prop to fetch agent stats
                 .then(response => {
-                    this.agents = response.data;
+                    this.stats = response.data;
                 })
+               
                 .catch(error => {
-                    console.error('Error fetching users:', error);
+                    console.error('Error fetching agent stats:', error);
                 });
-        },
+        }
+
+        // fetchUsers() {
+        //     axios.get('/v1/users')
+        //         .then(response => {
+        //             this.agents = response.data;
+        //         })
+        //         .catch(error => {
+        //             console.error('Error fetching users:', error);
+        //         });
+        // },
 
     },
     watch: {
@@ -1051,11 +1065,13 @@ export default {
         }
 
         this.fetchOrders();
+        this.fetchCallHistory();
+        this.fetchAgentstats();
     },
 
     created() {
-        this.fetchCallHistory();
-        this.fetchUsers();
+        // this.fetchCallHistory();
+        // this.fetchUsers();
 
     },
 
