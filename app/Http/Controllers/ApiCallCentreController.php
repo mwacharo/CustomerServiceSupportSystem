@@ -843,7 +843,9 @@ class ApiCallCentreController extends Controller
 
             Log::info("✅ User selected: {$option->option_number} - {$option->description}");
 
-            if ($option->option_number == 6) {
+            // if ($option->option_number == 6) {
+                if ($option->description == 'Speak to an Agent') {
+
                 $agentNumber = $this->getAvailableAgent($callerNumber, $sessionId);
                 return $agentNumber
                     ? $this->createVoiceResponse("Connecting you to an agent.", $agentNumber)
