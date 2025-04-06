@@ -25,7 +25,7 @@
           <v-container>
             <v-row>
               <v-col cols="12" md="4">
-                <v-select
+                <v-autocomplete
                   v-model="selectedReportType"
                   :items="reportTypes"
                   label="Report Type"
@@ -71,7 +71,7 @@
                   v-model="selectedStatus"
                   :items="statusTypes"
                   label="Call Status"
-                  item-title="description"
+                  multiple
                 />
               </v-col>
 
@@ -82,7 +82,25 @@
                   v-model="selectedIvrOption"
                   :items="ivrOptions"
                   label="IVR Options"
+                  item-title="description"
+                  item-value="id"
+                  clearable
+                  multiple
+
                 />
+                </v-col>
+
+                <!-- Agents -->
+                 <v-col cols="12" md="4" v-if="selectedReportType == 'Agent Performance'">
+                  <v-autocomplete
+                    v-model="selectedAgent"
+                    :items="users"
+                    label="Select Agent"
+                    item-title="name"
+                    item-value="id"
+                    clearable
+                    multiple
+                  />
                 </v-col>
 
               <v-col cols="12" class="text-right">
@@ -119,6 +137,7 @@ export default {
   },
   data() {
     return {
+      users: [],
       ivrOptions: [],
       search: '',
       selectedReportType: null,
@@ -164,8 +183,24 @@ export default {
 
   created() {
         this.fetchIvrOptions();
+        this.fetchUsers();
+        
     },
   methods: {
+
+    fetchUsers() {
+      const API_URL = "v1/users";
+      axios
+        .get(API_URL)
+        .then((response) => {
+          this.users = response.data.map(user => ({
+            ...user,
+            // Ensure roles array exists and has at least one role
+            roles: user.roles && user.roles.length ? user.roles : []
+          }));
+        })
+        .catch((error) => console.error("API Error:", error));
+    },
 
     fetchIvrOptions() {
             axios.get("api/v1/ivr-options")
