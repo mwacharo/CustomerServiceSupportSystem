@@ -40,7 +40,7 @@ class CallStatsService
         Log::debug('Outgoing calls calculated', ['outgoing_calls' => $outgoingCalls]);
 
         $missedCalls = (clone $callHistories)
-            ->whereIn('hangupCause', ['NO_ANSWER', 'SERVICE_UNAVAILABLE'])
+            ->whereIn('lastBridgeHangupCause', ['NO_ANSWER', 'SERVICE_UNAVAILABLE'])
             ->where('adminId', $user->id)
             ->count();
         Log::debug('Missed calls calculated', ['missed_calls' => $missedCalls]);
