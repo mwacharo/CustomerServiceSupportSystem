@@ -71,17 +71,19 @@
                   v-model="selectedStatus"
                   :items="statusTypes"
                   label="Call Status"
+                  item-title="description"
                 />
               </v-col>
 
 
-              <v-col cols="12" md="4">
+                <!-- if type of report is IVR Report, show IVR options -->
+                <v-col cols="12" md="4" v-if="selectedReportType === 'IVR Report'">
                 <v-autocomplete
-                  v-model="selectedStatus"
+                  v-model="selectedIvrOption"
                   :items="ivrOptions"
-                  label="ivrp options"
+                  label="IVR Options"
                 />
-              </v-col>
+                </v-col>
 
               <v-col cols="12" class="text-right">
                 <v-btn color="primary" @click="generateReport">
