@@ -566,23 +566,23 @@ class ApiCallCentreController extends Controller
             );
 
 
-            $updatedRows = User::where('sessionId', $payload['sessionId'] ?? null)
-                ->update([
-                    'status' => 'available',
-                    'sessionId' => null,
-                    'updated_at' => now()
-                ]);
+            // $updatedRows = User::where('sessionId', $payload['sessionId'] ?? null)
+            //     ->update([
+            //         'status' => 'available',
+            //         'sessionId' => null,
+            //         'updated_at' => now()
+            //     ]);
 
-            if ($updatedRows > 0) {
-                Log::info("User has been reset to available.", [
-                    'sessionId' => $payload['sessionId'] ?? null,
-                    'updated_rows' => $updatedRows
-                ]);
-            } else {
-                Log::warning("No user found with the provided sessionId to reset.", [
-                    'sessionId' => $payload['sessionId'] ?? null
-                ]);
-            }
+            // if ($updatedRows > 0) {
+            //     Log::info("User has been reset to available.", [
+            //         'sessionId' => $payload['sessionId'] ?? null,
+            //         'updated_rows' => $updatedRows
+            //     ]);
+            // } else {
+            //     Log::warning("No user found with the provided sessionId to reset.", [
+            //         'sessionId' => $payload['sessionId'] ?? null
+            //     ]);
+            // }
 
             return response()->json(['status' => 'success'], 200);
         } catch (\Exception $e) {
