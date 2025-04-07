@@ -15,77 +15,78 @@ class CallStatsService
 
 
     public function getAgentStats(User $user, ?array $dateRange = null): array
-{
-    Log::info('Fetching agent stats', ['user_id' => $user->id, 'date_range' => $dateRange]);
+    {
+        Log::info('Fetching agent stats', ['user_id' => $user->id, 'date_range' => $dateRange]);
 
-    $phone_number = $user->phone_number;
+        $phone_number = $user->phone_number;
 
-    // Base query for outgoing calls
-    $outgoingQuery = CallHistory::query()
-        ->where('callerNumber', $phone_number)
-        ->whereNull('deleted_at');
+        // Base query for outgoing calls
+        $outgoingQuery = CallHistory::query()
+            ->where('callerNumber', $phone_number)
+            ->whereNull('deleted_at');
 
-    // Base query for incoming calls
-    $incomingQuery = CallHistory::query()
-        ->where('adminId', $user->id)
-        ->whereNull('deleted_at');
+        // Base query for incoming calls
+        $incomingQuery = CallHistory::query()
+            ->where('adminId', $user->id)
+            ->whereNull('deleted_at');
 
-    if ($dateRange) {
-        Log::debug('Applying date range filter', ['date_range' => $dateRange]);
+        if ($dateRange) {
+            Log::debug('Applying date range filter', ['date_range' => $dateRange]);
 
-        $incomingQuery->whereBetween('created_at', $dateRange);
-        $outgoingQuery->whereBetween('created_at', $dateRange);
+            $incomingQuery->whereBetween('created_at', $dateRange);
+            $outgoingQuery->whereBetween('created_at', $dateRange);
+        }
+
+        // Total calls = incoming + outgoing
+        $incomingCalls = (clone $incomingQuery)->count();
+        $outgoingCalls = (clone $outgoingQuery)->count();
+        $totalCalls = $incomingCalls + $outgoingCalls;
+
+        // Missed calls from incoming
+        $missedCalls = (clone $incomingQuery)
+            ->whereIn('lastBridgeHangupCause', ['NO_ANSWER', 'SERVICE_UNAVAILABLE'])
+            ->count();
+
+        // Total call duration from both
+        $incomingDuration = (clone $incomingQuery)->sum('durationInSeconds') ?? 0;
+        $outgoingDuration = (clone $outgoingQuery)->sum('durationInSeconds') ?? 0;
+        $totalDuration = $incomingDuration + $outgoingDuration;
+
+
+        // ivr statistics
+
+        $ivrOptions = IvrOption::all();
+        $ivrStats = CallHistory::all(); 
+        
+        $ivrAnalysis = $this->analyzeIvrStatistics($ivrOptions, $ivrStats);
+        
+        // You can now use $ivrAnalysis to view each IVR option with stats
+        
+
+       
+
+
+
+
+        $result = [
+            'id' => $user->id,
+            'phone_number' => $user->phone_number,
+            'status' => $user->status,
+            'sessionId' => $user->sessionId,
+            'summary_call_completed' => $totalCalls,
+            'summary_inbound_call_completed' => $incomingCalls,
+            'summary_outbound_call_completed' => $outgoingCalls,
+            'summary_call_duration' => $totalDuration,
+            'summary_call_missed' => $missedCalls,
+            'updated_at' => $user->updated_at,
+        ];
+
+        Log::info('Agent stats fetched successfully', ['result' => $result]);
+
+        return $result;
     }
 
-    // Total calls = incoming + outgoing
-    $incomingCalls = (clone $incomingQuery)->count();
-    $outgoingCalls = (clone $outgoingQuery)->count();
-    $totalCalls = $incomingCalls + $outgoingCalls;
 
-    // Missed calls from incoming
-    $missedCalls = (clone $incomingQuery)
-        ->whereIn('lastBridgeHangupCause', ['NO_ANSWER', 'SERVICE_UNAVAILABLE'])
-        ->count();
-
-    // Total call duration from both
-    $incomingDuration = (clone $incomingQuery)->sum('durationInSeconds') ?? 0;
-    $outgoingDuration = (clone $outgoingQuery)->sum('durationInSeconds') ?? 0;
-    $totalDuration = $incomingDuration + $outgoingDuration;
-
-
-    // ivroption statitiscs 
-
-     $ivrStats = CallHistory::query()
-        // ->where('adminId', $user->id)
-        ->whereNotNull('agentId') 
-        // ->whereNotNull('ivrOptionId')
-        ->whereNull('deleted_at');
-
-
-        // how many times  ivr option was selected
-
-        $ivrOptios=IvrOption::all();
-
-
-    $result = [
-        'id' => $user->id,
-        'phone_number' => $user->phone_number,
-        'status' => $user->status,
-        'sessionId' => $user->sessionId,
-        'summary_call_completed' => $totalCalls,
-        'summary_inbound_call_completed' => $incomingCalls,
-        'summary_outbound_call_completed' => $outgoingCalls,
-        'summary_call_duration' => $totalDuration,
-        'summary_call_missed' => $missedCalls,
-        'updated_at' => $user->updated_at,
-    ];
-
-    Log::info('Agent stats fetched successfully', ['result' => $result]);
-
-    return $result;
-}
-
-    
 
 
     /**
@@ -99,7 +100,7 @@ class CallStatsService
 
 
 
-        
+
         $query = CallHistory::with('agent:id,name');
 
         // Apply filters
@@ -114,6 +115,18 @@ class CallStatsService
         // Get all filtered data
         $callHistories = $query->get();
 
+
+        // ivroption statitiscs 
+
+        $ivrStats = CallHistory::query()
+            // ->where('adminId', $user->id)
+            ->whereNotNull('agentId')
+            // ->whereNotNull('ivrOptionId')
+            ->whereNull('deleted_at');
+
+
+     
+
         // Group by agentId and aggregate with collection methods
         return $callHistories->groupBy('agentId')->map(function ($calls, $agentId) {
             return [
@@ -125,4 +138,20 @@ class CallStatsService
             ];
         })->values(); // Reset keys
     }
+
+
+
+    public function analyzeIvrStatistics(Collection $ivrOptions, Collection $ivrStats): Collection
+{
+    return $ivrOptions->map(function ($ivrOption) use ($ivrStats) {
+        // Filter stats matching the current IVR option
+        $matchedStats = $ivrStats->where('agentId', $ivrOption->id);
+
+        // Add computed values
+        $ivrOption->total_selected = $matchedStats->count();
+        $ivrOption->total_duration = $matchedStats->sum('durationInSeconds') ?? 0;
+
+        return $ivrOption;
+    });
+}
 }
