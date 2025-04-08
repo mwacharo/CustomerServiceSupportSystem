@@ -57,16 +57,8 @@ class CallStatsService
 
         $ivrOptions = IvrOption::all();
         $ivrStats = CallHistory::all(); 
-        
         $ivrAnalysis = $this->analyzeIvrStatistics($ivrOptions, $ivrStats);
-        
-        // You can now use $ivrAnalysis to view each IVR option with stats
-        
-
-       
-
-
-
+    
 
         $result = [
             'id' => $user->id,
@@ -79,6 +71,7 @@ class CallStatsService
             'summary_call_duration' => $totalDuration,
             'summary_call_missed' => $missedCalls,
             'updated_at' => $user->updated_at,
+            'ivr_analysis' => $ivrAnalysis,
         ];
 
         Log::info('Agent stats fetched successfully', ['result' => $result]);
