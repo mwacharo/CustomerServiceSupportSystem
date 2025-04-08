@@ -90,10 +90,6 @@ class CallStatsService
      */
     public function generateCallSummaryReport(array $filters)
     {
-
-
-
-
         $query = CallHistory::with('agent')
             ->whereNull('deleted_at');
 
@@ -106,6 +102,9 @@ class CallStatsService
             $query->whereIn('status', $filters['status']);
         }
 
+        // Log the query being executed
+        $query->getQuery()->logQuery();
+
         // Get all filtered data
         $callHistories = $query->get();
 
@@ -114,18 +113,14 @@ class CallStatsService
 
         $ivrAnalysis = $this->analyzeIvrStatistics($ivrOptions, $ivrStats);
 
-
         // Group by agentId and aggregate with collection methods
         return $callHistories->groupBy('agentId')->map(function ($calls, $agentId) {
             return [
-                // 'agent' => optional($calls->first()->agent)->name ?? 'N/A',
-
                 'total_calls' => $calls->count(),
                 'answered' => $calls->where('status', 'Answered')->count(),
                 'missed' => $calls->where('status', 'Missed')->count(),
                 'escalated' => $calls->where('status', 'Escalated')->count(),
                 'total_duration' => $calls->sum('durationInSeconds') ?? 0,
-                // 'ivr_analysis' => $ivrAnalysis,
             ];
         })->values(); // Reset keys
     }
