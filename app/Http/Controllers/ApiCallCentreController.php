@@ -29,6 +29,7 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Http;
 use App\Models\Ticket;
 use App\Models\Contact;
+use Illuminate\Support\Facades\DB;
 
 class ApiCallCentreController extends Controller
 {
@@ -907,21 +908,21 @@ class ApiCallCentreController extends Controller
     }
 
 
-
     public function fetchCallhistory()
     {
         try {
+            // Enable query logging
+            DB::enableQueryLog();
 
-            // $callHistories = CallHistory::where('created_at', '>=', Carbon::now()->subDays(1))
-            // $callHistories = CallHistory::all();
-            $callHistories = CallHistory::with('agent');
+            // Fetch call histories with agent relationship
+            $callHistories = CallHistory::with('agent')->get();
 
-
-            // ->orderBy('created_at', 'asc')
-            // ->get();
+            // Log the executed query
+            $queries = DB::getQueryLog();
+            Log::info('Executed Queries:', $queries);
 
             return response()->json([
-                'test' => $callHistories,
+                'data' => $callHistories,
             ], 200);
         } catch (Exception $e) {
             Log::error("Error fetching call history: " . $e->getMessage());
