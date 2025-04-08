@@ -26,6 +26,7 @@ class CallHistory extends Model
         'amount',
         'hangupCause',
         'adminId',
+        'user_id', 
         'agentId',
         'orderNo',
         'notes',
@@ -37,19 +38,12 @@ class CallHistory extends Model
         'callerCountryCode',
         'callerCarrierName',
         'callStartTime',
-        'lastBridgeHangupCause'
+        'lastBridgeHangupCause',
+      
     ];
 
 
-    // public function agent()
-    // {
-    //     return $this->belongsTo(User::class, 'adminId');
-    // }
-
-    // public function user()
-    // {
-    //     return $this->belongsTo(User::class);
-    // }
+   
 
     public function agent()
 {
@@ -63,8 +57,4 @@ class CallHistory extends Model
         return $this->belongsTo(IvrOption::class, 'agentId');
     }
 
-    // public function getAttributeCreatedAt()
-    // {
-    //     return $this->attributes['created_at'] ?? null;
-    // }
 }
