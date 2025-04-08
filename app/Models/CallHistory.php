@@ -12,7 +12,7 @@ class CallHistory extends Model
     protected $casts = [
         'created_at' => 'datetime:Y-m-d H:i:s',
     ];
-    
+
 
     protected $fillable = [
         'isActive',
@@ -41,10 +41,22 @@ class CallHistory extends Model
     ];
 
 
+    // public function agent()
+    // {
+    //     return $this->belongsTo(User::class, 'adminId');
+    // }
+
+    // public function user()
+    // {
+    //     return $this->belongsTo(User::class);
+    // }
+
     public function agent()
-    {
-        return $this->belongsTo(User::class, 'adminId');
-    }
+{
+    return $this->belongsTo(User::class, 'user_id');
+}
+
+
 
     public function  ivrOption()
     {

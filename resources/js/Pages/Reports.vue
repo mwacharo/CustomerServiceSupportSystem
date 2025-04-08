@@ -200,7 +200,7 @@ export default {
       switch (this.selectedReportType) {
         case 'Call Summary Report':
           this.headers = [
-            { title: 'Agent', value: 'agent' },
+            { title: 'Agent', value: 'name' },
             { title: 'Total Calls', value: 'total_calls' },
             { title: 'Answered', value: 'answered' },
             { title: 'Missed', value: 'missed' },
@@ -212,8 +212,8 @@ export default {
 
         case 'Agent Performance':
           this.headers = [
-            { title: 'Agent', value: 'agent' },
-            { title: 'Calls Handled', value: 'calls_handled' },
+            { title: 'Agent', value: 'name' },
+            { title: 'Calls Handled', value: 'total_calls' },
             { title: 'Avg Duration (min)', value: 'avg_duration' },
             { title: 'CSAT (%)', value: 'csat' },
             { title: 'Tickets Resolved', value: 'tickets_resolved' }
@@ -278,7 +278,7 @@ export default {
 
          case 'IVR Report':
           this.headers = [
-            { title: 'IVR Path', value: 'ivr_path' },
+            { title: 'IVR Path', value: 'descrp' },
             { title: 'Total Calls', value: 'total_calls' },
             { title: 'Completed', value: 'completed' },
             { title: 'Abandoned', value: 'abandoned' },
@@ -295,7 +295,11 @@ export default {
           params: {
             startDate: this.startDate,
             endDate: this.endDate,
-            status: this.selectedStatus
+            status: this.selectedStatus,
+            adminId: this.selectedAgent,
+            ivrOptions: this.selectedIvrOption,
+            reportType: this.selectedReportType
+
           }
         });
         this.reportData = response.data;

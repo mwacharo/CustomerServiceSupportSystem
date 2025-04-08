@@ -108,17 +108,11 @@ class CallStatsService
         // Get all filtered data
         $callHistories = $query->get();
 
+        $ivrOptions = IvrOption::all();
+        $ivrStats = CallHistory::all(); 
 
-        // ivroption statitiscs 
+        $ivrAnalysis = $this->analyzeIvrStatistics($ivrOptions, $ivrStats);
 
-        $ivrStats = CallHistory::query()
-            // ->where('adminId', $user->id)
-            ->whereNotNull('agentId')
-            // ->whereNotNull('ivrOptionId')
-            ->whereNull('deleted_at');
-
-
-     
 
         // Group by agentId and aggregate with collection methods
         return $callHistories->groupBy('agentId')->map(function ($calls, $agentId) {
@@ -128,6 +122,8 @@ class CallStatsService
                 'answered' => $calls->where('status', 'Answered')->count(),
                 'missed' => $calls->where('status', 'Missed')->count(),
                 'escalated' => $calls->where('status', 'Escalated')->count(),
+                'total_duration' => $calls->sum('durationInSeconds') ?? 0,
+                // 'ivr_analysis' => $ivrAnalysis,
             ];
         })->values(); // Reset keys
     }

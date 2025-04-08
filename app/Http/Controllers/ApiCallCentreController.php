@@ -913,7 +913,9 @@ class ApiCallCentreController extends Controller
         try {
 
             // $callHistories = CallHistory::where('created_at', '>=', Carbon::now()->subDays(1))
-            $callHistories = CallHistory::all();
+            // $callHistories = CallHistory::all();
+            $callHistories = CallHistory::with('agent');
+
 
             // ->orderBy('created_at', 'asc')
             // ->get();
@@ -1023,7 +1025,7 @@ class ApiCallCentreController extends Controller
         // ivrOptions: this.selectedIvrOption,
         // reportType: this.selectedReportType
 
-        $filters = $request->only(['startDate', 'endDate', 'status','agent', 'ivrOptions', 'reportType']);
+        $filters = $request->only(['startDate', 'endDate', 'status','adminId', 'ivrOptions', 'reportType']);
 
 
         $reportData = $this->callStatsService->generateCallSummaryReport($filters);
