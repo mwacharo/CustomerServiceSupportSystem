@@ -95,7 +95,8 @@ class CallStatsService
 
 
         $query = CallHistory::with('agent')
-            ->whereNull('deleted_at');
+            ->whereNull('deleted_at')
+            ->where('user_id', '!=', null);
 
         // Apply filters
         if (!empty($filters['startDate']) && !empty($filters['endDate'])) {
