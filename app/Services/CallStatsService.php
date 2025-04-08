@@ -94,7 +94,8 @@ class CallStatsService
 
 
 
-        $query = CallHistory::with('agent:id,name');
+        $query = CallHistory::with('agent')
+            ->whereNull('deleted_at');
 
         // Apply filters
         if (!empty($filters['startDate']) && !empty($filters['endDate'])) {
@@ -117,7 +118,8 @@ class CallStatsService
         // Group by agentId and aggregate with collection methods
         return $callHistories->groupBy('agentId')->map(function ($calls, $agentId) {
             return [
-                'agent' => optional($calls->first()->agent)->name ?? 'N/A',
+                // 'agent' => optional($calls->first()->agent)->name ?? 'N/A',
+
                 'total_calls' => $calls->count(),
                 'answered' => $calls->where('status', 'Answered')->count(),
                 'missed' => $calls->where('status', 'Missed')->count(),
