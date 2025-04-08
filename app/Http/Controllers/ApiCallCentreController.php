@@ -915,7 +915,8 @@ class ApiCallCentreController extends Controller
             DB::enableQueryLog();
 
             // Fetch call histories with agent relationship
-            $callHistories = CallHistory::with('agent')->get();
+            // $callHistories = CallHistory::with('agent')->get();
+            $callHistories = CallHistory::whereNotNull('user_id')->get();
 
             // Log the executed query
             $queries = DB::getQueryLog();
