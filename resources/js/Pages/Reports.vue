@@ -52,14 +52,14 @@
                 />
                 </v-col>
 
-              <v-col cols="12" md="4">
+                <v-col cols="12" md="4" v-if="selectedReportType !== 'IVR Report'">
                 <v-autocomplete
                   v-model="selectedStatus"
                   :items="statusTypes"
                   label="Call Status"
                   multiple
                 />
-              </v-col>
+                </v-col>
 
 
                 <!-- if type of report is IVR Report, show IVR options -->
@@ -77,7 +77,7 @@
                 </v-col>
 
                 <!-- Agents -->
-                 <v-col cols="12" md="4" v-if="selectedReportType == 'Agent Performance'">
+                 <v-col cols="12" md="4" v-if="selectedReportType === 'Agent Performance' || selectedReportType === 'IVR Report'">
                   <v-autocomplete
                     v-model="selectedAgent"
                     :items="users"
@@ -143,14 +143,15 @@ export default {
         'Ticket Resolution',
         'Average Call Duration',
         'IVR Report', 
+        'Airtime Report'
       ],
 
       statusTypes: [
-        'All',
-        'Answered',
-        'Missed',
-        'In Progress',
-        'Escalated',
+        // 'All',
+        // 'Answered',
+        // 'Missed',
+        // 'In Progress',
+        // 'Escalated',
         'NO_ANSWER', // The recipient's phone rang but wasn't answered.
         'USER_BUSY', // The recipient's line was busy.
         'CALL_REJECTED', // The call was explicitly rejected by the recipient.
@@ -283,6 +284,16 @@ export default {
             { title: 'Completed', value: 'completed' },
             { title: 'Abandoned', value: 'abandoned' },
             { title: 'Avg Duration (min)', value: 'avg_duration' }
+          ];
+          case 'Airtime Report':
+          this.headers = [
+            { title: 'Agent', value: 'agent' },
+            { title: 'Total Airtime', value: 'total_airtime' },
+            { title: 'Avg Duration ', value: 'avg_duration' },
+            { title: 'Total Calls', value: 'total_calls' },
+            { title: 'Period ', value: 'filter_dates' }
+
+           
           ];
           this.fetchReportData('/api/v1/reports/call-summary'); 
           break;

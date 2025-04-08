@@ -25,7 +25,6 @@ class CallHistory extends Model
         'recordingUrl',
         'amount',
         'hangupCause',
-        'adminId',
         'user_id', 
         'agentId',
         'orderNo',

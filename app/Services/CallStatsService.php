@@ -27,7 +27,7 @@ class CallStatsService
 
         // Base query for incoming calls
         $incomingQuery = CallHistory::query()
-            ->where('adminId', $user->id)
+            ->where('user_id', $user->id)
             ->whereNull('deleted_at');
 
         if ($dateRange) {
@@ -107,6 +107,13 @@ class CallStatsService
             $query->whereIn('status', $filters['status']);
         }
 
+
+         // Apply agent filter
+    if (!empty($filters['user_id'])) {
+        $query->where('user_id', $filters['user_id']);
+    }
+
+
         // Get all filtered data
         $callHistories = $query->get();
 
@@ -119,7 +126,7 @@ class CallStatsService
         // Group by agentId and aggregate with collection methods
         return $callHistories->groupBy('agentId')->map(function ($calls, $agentId) {
             return [
-                // 'agent' => optional($calls->first()->agent)->name ?? 'N/A',
+                'agent' => optional($calls->first()->agent)->name ?? 'N/A',
 
                 'total_calls' => $calls->count(),
                 'answered' => $calls->where('status', 'Answered')->count(),
