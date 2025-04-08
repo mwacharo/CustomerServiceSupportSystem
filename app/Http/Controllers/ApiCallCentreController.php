@@ -921,7 +921,7 @@ class ApiCallCentreController extends Controller
             // ->get();
 
             return response()->json([
-                'callHistories' => $callHistories,
+                'test' => $callHistories,
             ], 200);
         } catch (Exception $e) {
             Log::error("Error fetching call history: " . $e->getMessage());
