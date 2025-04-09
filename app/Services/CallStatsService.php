@@ -177,7 +177,7 @@ class CallStatsService
         $totalSelections = $ivrStats->count();
 
         return $ivrOptions->map(function ($ivrOption) use ($ivrStats, $totalSelections) {
-            $matchedStats = $ivrStats->where('ivr_option_id', $ivrOption->id);
+            $matchedStats = $ivrStats->where('agentid', $ivrOption->id);
 
             $totalSelected = $matchedStats->count();
             $totalDuration = $matchedStats->sum('durationInSeconds') ?? 0;
