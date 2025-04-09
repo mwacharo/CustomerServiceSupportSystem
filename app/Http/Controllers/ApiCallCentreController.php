@@ -1021,18 +1021,16 @@ class ApiCallCentreController extends Controller
     public function callSummaryReport(Request $request)
     {
 
-        // ivr options ,call status, selected agents
-        // startDate: this.startDate,
-        //     endDate: this.endDate,
-        // status: this.selectedStatus,
-        // agent: this.selectedAgent,
-        // ivrOptions: this.selectedIvrOption,
-        // reportType: this.selectedReportType
+       
+        Log::info('Call Summary Report Request:', $request->all());
 
-        $filters = $request->only(['startDate', 'endDate', 'status','adminId', 'ivrOptions', 'reportType']);
 
+        $filters = $request->only(['startDate', 'endDate', 'status','user_id', 'ivrOptions', 'reportType']);
+
+        Log::info('Call Summary Report Filters:', $filters);
 
         $reportData = $this->callStatsService->generateCallSummaryReport($filters);
+        // dd($reportData);
 
         return response()->json($reportData);
     }

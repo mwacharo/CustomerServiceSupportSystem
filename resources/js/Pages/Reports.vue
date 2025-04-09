@@ -303,15 +303,13 @@ export default {
     async fetchReportData(endpoint) {
       try {
         const response = await axios.post(endpoint, {
-          params: {
             startDate: this.startDate,
             endDate: this.endDate,
             status: this.selectedStatus,
-            adminId: this.selectedAgent,
+            user_id: this.selectedAgent,
             ivrOptions: this.selectedIvrOption,
             reportType: this.selectedReportType
-
-          }
+        
         });
         this.reportData = response.data;
       } catch (error) {

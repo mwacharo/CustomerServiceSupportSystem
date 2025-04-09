@@ -7,6 +7,7 @@ use App\Models\IvrOption;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class CallStatsService
@@ -56,9 +57,9 @@ class CallStatsService
         // ivr statistics
 
         $ivrOptions = IvrOption::all();
-        $ivrStats = CallHistory::all(); 
+        $ivrStats = CallHistory::all();
         $ivrAnalysis = $this->analyzeIvrStatistics($ivrOptions, $ivrStats);
-    
+
 
         $result = [
             'id' => $user->id,
@@ -90,9 +91,8 @@ class CallStatsService
      */
     public function generateCallSummaryReport(array $filters)
     {
-
-
-
+        // Enable query log
+        DB::enableQueryLog();
 
         $query = CallHistory::with('agent')
             ->whereNull('deleted_at')
@@ -102,55 +102,100 @@ class CallStatsService
         if (!empty($filters['startDate']) && !empty($filters['endDate'])) {
             $query->whereBetween('created_at', [$filters['startDate'], $filters['endDate']]);
         }
-
         if (!empty($filters['status'])) {
-            $query->whereIn('status', $filters['status']);
+            if (is_array($filters['status'])) {
+                $query->whereIn('status', $filters['status']);
+            } else {
+                $query->where('status', $filters['status']);
+            }
         }
 
+        // Apply agent filter
+        if (!empty($filters['user_id'])) {
+            if (is_array($filters['user_id'])) {
+                $query->whereIn('user_id', $filters['user_id']);
+            } else {
+                $query->where('user_id', $filters['user_id']);
+            }
+        }
 
-         // Apply agent filter
-    if (!empty($filters['user_id'])) {
-        $query->where('user_id', $filters['user_id']);
-    }
-
-
-        // Get all filtered data
+        // Execute query
         $callHistories = $query->get();
 
-        $ivrOptions = IvrOption::all();
-        $ivrStats = CallHistory::all(); 
+        // Log the executed SQL query
+        Log::info('Executed Query:', DB::getQueryLog());
 
-        $ivrAnalysis = $this->analyzeIvrStatistics($ivrOptions, $ivrStats);
+        // You may also log the raw SQL and bindings separately like this:
+        // $sql = $query->toSql();
+        // Log::info("Raw SQL: " . $sql);
+        Log::info("Bindings: ", $query->getBindings());
 
 
-        // Group by agentId and aggregate with collection methods
-        return $callHistories->groupBy('agentId')->map(function ($calls, $agentId) {
-            return [
-                'agent' => optional($calls->first()->agent)->name ?? 'N/A',
 
-                'total_calls' => $calls->count(),
-                'answered' => $calls->where('status', 'Answered')->count(),
-                'missed' => $calls->where('status', 'Missed')->count(),
-                'escalated' => $calls->where('status', 'Escalated')->count(),
-                'total_duration' => $calls->sum('durationInSeconds') ?? 0,
-                // 'ivr_analysis' => $ivrAnalysis,
-            ];
-        })->values(); // Reset keys
+        // [
+        //     {
+        //       "query": "select * from `call_histories` where `deleted_at` is null and `user_id` is not null and `created_at` between ? and ? and `status` in (?, ?, ?)",
+        //       "bindings": [
+        //         "2025-03-01",
+        //         "2025-05-08",
+        //         "NO_ANSWER",
+        //         "USER_BUSY",
+        //         "CALL_REJECTED"
+        //       ],
+        //       "time": 1.86
+        //     }
+        //   ]
+
+        // $ivrOptions = IvrOption::all();
+        // $ivrStats = CallHistory::all();
+        // $ivrAnalysis = $this->analyzeIvrStatistics($ivrOptions, $ivrStats);
+
+
+        Log::info('Call summary report generated', ['call_histories' => $callHistories]);
+        // $callHistory is null log warning  no data 
+
+        if ($callHistories->isEmpty()) {
+            Log::warning('No call history found for the given filters.', $filters);
+        }
+        return $callHistories;
+        // ->map(function ($call) {
+        //     return [
+        //         'id' => $call->id,
+        //         'callerNumber' => $call->callerNumber,
+        //         'destinationNumber' => $call->destinationNumber,
+        //         'durationInSeconds' => $call->durationInSeconds,
+        //         'status' => $call->status,
+        //         'created_at' => $call->created_at,
+        //         'updated_at' => $call->updated_at,
+        //         // Add any other fields you want to include
+        //     ];
+        // });
+
+        // return $callHistories->groupBy('agentId')->map(function ($calls, $agentId) {
+        //     return [
+        //         // 'agent' => optional($calls->first()->agent)->name ?? 'N/A',
+        //         'total_calls' => $calls->count(),
+        //         'answered' => $calls->where('status', 'Answered')->count(),
+        //         'missed' => $calls->where('status', 'Missed')->count(),
+        //         'escalated' => $calls->where('status', 'Escalated')->count(),
+        //         'total_duration' => $calls->sum('durationInSeconds') ?? 0,
+        //     ];
+        // })->values();
     }
 
 
 
     public function analyzeIvrStatistics(Collection $ivrOptions, Collection $ivrStats): Collection
-{
-    return $ivrOptions->map(function ($ivrOption) use ($ivrStats) {
-        // Filter stats matching the current IVR option
-        $matchedStats = $ivrStats->where('agentId', $ivrOption->id);
+    {
+        return $ivrOptions->map(function ($ivrOption) use ($ivrStats) {
+            // Filter stats matching the current IVR option
+            $matchedStats = $ivrStats->where('agentId', $ivrOption->id);
 
-        // Add computed values
-        $ivrOption->total_selected = $matchedStats->count();
-        $ivrOption->total_duration = $matchedStats->sum('durationInSeconds') ?? 0;
+            // Add computed values
+            $ivrOption->total_selected = $matchedStats->count();
+            $ivrOption->total_duration = $matchedStats->sum('durationInSeconds') ?? 0;
 
-        return $ivrOption;
-    });
-}
+            return $ivrOption;
+        });
+    }
 }
