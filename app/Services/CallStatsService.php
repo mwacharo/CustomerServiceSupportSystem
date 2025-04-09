@@ -143,7 +143,8 @@ class CallStatsService
 
         $ivrOptions = IvrOption::all();
         $ivrStats = CallHistory::all();
-        $ivrAnalysis = $this->analyzeIvrStatistics($ivrOptions, $ivrStats);
+        // pass user_id or user_id array also 
+        $ivrAnalysis = $this->analyzeIvrStatistics($ivrOptions,$filters, $ivrStats);
 
 
         Log::info('Call summary report generated', ['call_histories' => $callHistories]);
@@ -170,29 +171,44 @@ class CallStatsService
 
 
 
-    public function analyzeIvrStatistics(Collection $ivrOptions, Collection $ivrStats): Collection
+    public function analyzeIvrStatistics(Collection $ivrOptions, array $filters, Collection $ivrStats): Collection
+{
+    // Filter the already loaded ivrStats collection based on filters
 
-    {
+    if (!empty($filters['user_id'])) {
+        if (is_array($filters['user_id'])) {
+            $ivrStats = $ivrStats->whereIn('user_id', $filters['user_id']);
+        } else {
+            $ivrStats = $ivrStats->where('user_id', $filters['user_id']);
+        }
+    }
 
-        $totalSelections = $ivrStats->count();
-
-        return $ivrOptions->map(function ($ivrOption) use ($ivrStats, $totalSelections) {
-            $matchedStats = $ivrStats->where('agentId', $ivrOption->id);
-
-            $totalSelected = $matchedStats->count();
-            $totalDuration = $matchedStats->sum('durationInSeconds') ?? 0;
-
-            return [
-                'id' => $ivrOption->id,
-                'option_number' => $ivrOption->option_number,
-                'description' => $ivrOption->description,
-                'total_selected' => $totalSelected,
-                'total_duration' => $totalDuration,
-                'average_duration' => $totalSelected ? round($totalDuration / $totalSelected, 2) : 0,
-                'selection_percentage' => $totalSelections ? round(($totalSelected / $totalSelections) * 100, 2) : 0,
-            ];
+    if (!empty($filters['startDate']) && !empty($filters['endDate'])) {
+        $ivrStats = $ivrStats->filter(function ($stat) use ($filters) {
+            return $stat->created_at >= $filters['startDate'] && $stat->created_at <= $filters['endDate'];
         });
     }
+
+    $totalSelections = $ivrStats->count();
+
+    return $ivrOptions->map(function ($ivrOption) use ($ivrStats, $totalSelections) {
+        $matchedStats = $ivrStats->where('agentId', $ivrOption->id); // Adjust to match your DB if needed
+
+        $totalSelected = $matchedStats->count();
+        $totalDuration = $matchedStats->sum('durationInSeconds') ?? 0;
+
+        return [
+            'id' => $ivrOption->id,
+            'option_number' => $ivrOption->option_number,
+            'description' => $ivrOption->description,
+            'total_selected' => $totalSelected,
+            'total_duration' => $totalDuration,
+            'average_duration' => $totalSelected ? round($totalDuration / $totalSelected, 2) : 0,
+            'selection_percentage' => $totalSelections ? round(($totalSelected / $totalSelections) * 100, 2) : 0,
+        ];
+    });
+}
+
 
 
     // IVR Trends Over Time

@@ -59,4 +59,10 @@ class User extends Authenticatable
     protected $appends = [
         'profile_photo_url',
     ];
+
+    // return username 
+    public function getUsernameAttribute()
+    {
+        return $this->firstname . ' ' . $this->lastname;
+    }
 }
