@@ -60,7 +60,9 @@ class CallStatsService
         $ivrOptions = IvrOption::all();
         // $ivrStats = CallHistory::all();
         $ivrStats = CallHistory::whereNotNull('agentId')->get();
-        $ivrAnalysis = $this->analyzeIvrStatistics($ivrOptions, $ivrStats ,$dateRange,$user->id);
+        // $ivrAnalysis = $this->analyzeIvrStatistics($ivrOptions, $ivrStats ,$dateRange=null,$user->id);
+        $ivrAnalysis = $this->analyzeIvrStatistics($ivrOptions, $ivrStats, $dateRange, $user->id);
+
 
 
         $result = [
@@ -174,7 +176,7 @@ class CallStatsService
 
 
 
-    public function analyzeIvrStatistics(Collection $ivrOptions, array $filters, Collection $ivrStats): Collection
+    public function analyzeIvrStatistics(Collection $ivrOptions, Collection $ivrStats, ): Collection
 {
     // Filter the already loaded ivrStats collection based on filters
 
