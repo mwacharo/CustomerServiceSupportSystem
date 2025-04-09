@@ -102,11 +102,21 @@ class CallStatsService
         if (!empty($filters['startDate']) && !empty($filters['endDate'])) {
             $query->whereBetween('created_at', [$filters['startDate'], $filters['endDate']]);
         }
-        if (!empty($filters['status'])) {
+        // if (!empty($filters['status'])) {
+        //     if (is_array($filters['status'])) {
+        //         $query->whereIn('status', $filters['status']);
+        //     } else {
+        //         $query->where('status', $filters['status']);
+        //     }
+        // }
+
+
+        if(!empty($filters['status'])) {
+
             if (is_array($filters['status'])) {
-                $query->whereIn('status', $filters['status']);
+                $query->whereIn('lastBridgeHangupCause', $filters['status']);
             } else {
-                $query->where('status', $filters['status']);
+                $query->where('lastBridgeHangupCause', $filters['status']);
             }
         }
 
