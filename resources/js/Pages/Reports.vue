@@ -279,11 +279,12 @@ export default {
 
          case 'IVR Report':
           this.headers = [
-            { title: 'IVR Path', value: 'descrp' },
+            { title: 'IVR Path', value: 'description' },
             { title: 'Total Calls', value: 'total_calls' },
+            { title: 'Total Cost', value: 'total_airtime' },
             { title: 'Completed', value: 'completed' },
             { title: 'Abandoned', value: 'abandoned' },
-            { title: 'Avg Duration (min)', value: 'avg_duration' }
+            { title: 'Avg Duration (min)', value: 'total_duration	' }
           ];
           case 'Airtime Report':
           this.headers = [
