@@ -80,7 +80,7 @@
 
                         <!-- Calls Tab -->
                         <v-window-item value="calls">
-                            <v-data-table :headers="callsheaders" :items="callHistories" item-value="id" 
+                            <v-data-table :headers="callsheaders" :items="callHistories" item-value="id"
                                 class="elevation-1 mt-4" :items-per-page="15">
                                 <!-- Example of a custom slot for an actions column -->
                                 <template #item.actions="{ item }">
@@ -99,10 +99,7 @@
 
                         <!-- Orders Tab -->
                         <v-window-item value="orders">
-                            <v-data-table :headers="headers" :items="serverItems" 
-                            show-select
-                                v-model="selected"
-
+                            <v-data-table :headers="headers" :items="serverItems" show-select v-model="selected"
                                 class="elevation-1 mt-4">
                                 <!-- Example of customizing the table body -->
                                 <template #body="{ items }">
@@ -543,6 +540,10 @@ export default {
 
     components: { AppLayout },
     data: () => ({
+        agents: [],
+        orders: [],
+        stats: [],
+        userid:'',
         loading: false, // this is used by :loading binding
         isMuted: false, // Initially not muted
         isOnHold: false, // Initially not on hold
@@ -637,30 +638,30 @@ export default {
 
     created() {
 
-this.fetchOrders();
-this.fetchCallHistory();
-this.fetchAgentstats();
-this.fetchUsers();
+        this.fetchOrders();
+        this.fetchCallHistory();
+        this.fetchAgentstats();
+        this.fetchUsers();
 
-},
+    },
 
     methods: {
 
-        sendWhatsApp(phone) {
+        // sendWhatsApp(phone) {
 
-            //   window.open(`https://wa.me/${phone}`, "_blank");
+        //     //   window.open(`https://wa.me/${phone}`, "_blank");
 
-            const text = encodeURIComponent("Hello! I’d like to follow up.");
-            window.open(`https://wa.me/${phone}?text=${text}`, "_blank");
-
-
-        },
-        sendTelegram(phone) {
-
-            window.open(`https://t.me/${phone}`, "_blank");
+        //     const text = encodeURIComponent("Hello! I’d like to follow up.");
+        //     window.open(`https://wa.me/${phone}?text=${text}`, "_blank");
 
 
-        },
+        // },
+        // sendTelegram(phone) {
+
+        //     window.open(`https://t.me/${phone}`, "_blank");
+
+
+        // },
 
         waitForToken() {
             return new Promise((resolve) => {
@@ -723,8 +724,8 @@ this.fetchUsers();
                     console.log("Incoming call hung up:", event.reason);
                     this.$toastr.error("Incoming call hung up: ", event.reason);
                     this.incomingCallDialog = false;
-                //    reset status of agent handling the call to available
-                // update
+                    //    reset status of agent handling the call to available
+                    // update
 
 
                 });
@@ -1015,7 +1016,7 @@ this.fetchUsers();
                 .catch(error => {
                     console.error('Error fetching call history:', error);
                 })
-            ;
+                ;
         },
         async fetchOrders() {
             axios.get('/api/v1/orders')
@@ -1029,34 +1030,32 @@ this.fetchUsers();
 
 
 
-        fetchAgentstats() {
-            axios.get('api/v1/agent-stats'/ + this.userId) // Use the userId prop to fetch agent stats
-                .then(response => {
-                    this.stats = response.data;
-                })
-               
-                .catch(error => {
-                    console.error('Error fetching agent stats:', error);
-                });
-        },
-
+    fetchAgentstats() {
+    axios.get(`/api/v1/agent-stats/${userId.value}`)
+        .then(response => {
+            this.stats = response.data;
+        })
+        .catch(error => {
+            console.error('Error fetching agent stats:', error);
+        });
+},
         fetchUsers() {
             axios.get('/v1/users')
-            .then(response => {
-                this.agents = response.data;
-            })
-            .catch(error => {
-                console.error('Error fetching users:', error);
-            })
-          ;
+                .then(response => {
+                    this.agents = response.data;
+                })
+                .catch(error => {
+                    console.error('Error fetching users:', error);
+                })
+                ;
         },
 
     },
     watch: {
         // Watch for any change in the agents and filter again if needed
-        availableAgents(newAgents) {
-            this.availableAgents = newAgents.filter(agent => !agent.isInCall);
-        }
+        // availableAgents(newAgents) {
+        //     this.availableAgents = newAgents.filter(agent => !agent.isInCall);
+        // }
     },
 
 

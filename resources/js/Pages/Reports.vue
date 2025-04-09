@@ -284,7 +284,7 @@ export default {
             { title: 'Total Cost', value: 'total_airtime' },
             { title: 'Completed', value: 'completed' },
             { title: 'Abandoned', value: 'abandoned' },
-            { title: 'Avg Duration (min)', value: 'total_duration	' }
+            { title: 'Avg Duration', value: 'total_duration	' }
           ];
           case 'Airtime Report':
           this.headers = [

@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Call;
 use App\Models\CallHistory;
 use App\Models\IvrOption;
 use Illuminate\Support\Carbon;
@@ -57,7 +58,8 @@ class CallStatsService
         // ivr statistics
 
         $ivrOptions = IvrOption::all();
-        $ivrStats = CallHistory::all();
+        // $ivrStats = CallHistory::all();
+        $ivrStats = CallHistory::whereNotNull('agentId')->get();
         $ivrAnalysis = $this->analyzeIvrStatistics($ivrOptions, $ivrStats);
 
 
@@ -111,7 +113,7 @@ class CallStatsService
         // }
 
 
-        if(!empty($filters['status'])) {
+        if (!empty($filters['status'])) {
 
             if (is_array($filters['status'])) {
                 $query->whereIn('lastBridgeHangupCause', $filters['status']);
@@ -135,7 +137,7 @@ class CallStatsService
         // Log the executed SQL query
         Log::info('Executed Query:', DB::getQueryLog());
 
-     
+
         Log::info("Bindings: ", $query->getBindings());
 
 
@@ -151,7 +153,7 @@ class CallStatsService
             Log::warning('No call history found for the given filters.', $filters);
         }
         // return $callHistories;
-   
+
 
         return $callHistories->groupBy('user_id')->map(function ($calls, $user_) {
             return [
@@ -159,7 +161,7 @@ class CallStatsService
                 'total_calls' => $calls->count(),
                 'total_airtime' => $calls->sum('amount') ?? 0,
                 'answered' => $calls->where('status', 'Answered')->count(),
-                'missed' => $calls->where('status', 'Missed')->count(),
+                // 'missed' => $calls->where('status', 'Missed')->count(),
                 'escalated' => $calls->where('status', 'Escalated')->count(),
                 'total_duration' => $calls->sum('durationInSeconds') ?? 0,
             ];
@@ -169,123 +171,156 @@ class CallStatsService
 
 
     public function analyzeIvrStatistics(Collection $ivrOptions, Collection $ivrStats): Collection
+
     {
-        return $ivrOptions->map(function ($ivrOption) use ($ivrStats) {
-            // Filter stats matching the current IVR option
-            $matchedStats = $ivrStats->where('agentId', $ivrOption->id);
 
-            // Add computed values
-            $ivrOption->total_selected = $matchedStats->count();
-            $ivrOption->total_duration = $matchedStats->sum('durationInSeconds') ?? 0;
+        $totalSelections = $ivrStats->count();
 
-            return $ivrOption;
+        return $ivrOptions->map(function ($ivrOption) use ($ivrStats, $totalSelections) {
+            $matchedStats = $ivrStats->where('ivr_option_id', $ivrOption->id);
+
+            $totalSelected = $matchedStats->count();
+            $totalDuration = $matchedStats->sum('durationInSeconds') ?? 0;
+
+            return [
+                'id' => $ivrOption->id,
+                'option_number' => $ivrOption->option_number,
+                'description' => $ivrOption->description,
+                'total_selected' => $totalSelected,
+                'total_duration' => $totalDuration,
+                'average_duration' => $totalSelected ? round($totalDuration / $totalSelected, 2) : 0,
+                'selection_percentage' => $totalSelections ? round(($totalSelected / $totalSelections) * 100, 2) : 0,
+            ];
         });
     }
 
 
     // IVR Trends Over Time
     public function ivrTrendsByDate(array $filters = []): Collection
-{
-    $query = CallHistory::query()
-        ->whereNotNull('agentId')
-        ->whereNull('deleted_at');
+    {
+        $query = CallHistory::query()
+            ->whereNotNull('agentId')
+            ->whereNull('deleted_at');
 
-    if (!empty($filters['startDate']) && !empty($filters['endDate'])) {
-        $query->whereBetween('created_at', [$filters['startDate'], $filters['endDate']]);
+        if (!empty($filters['startDate']) && !empty($filters['endDate'])) {
+            $query->whereBetween('created_at', [$filters['startDate'], $filters['endDate']]);
+        }
+
+        return $query->selectRaw('DATE(created_at) as date, agentId, COUNT(*) as total')
+            ->groupBy('date', 'agentId')
+            ->get()
+            ->groupBy('agentId');
     }
 
-    return $query->selectRaw('DATE(created_at) as date, agentId, COUNT(*) as total')
-        ->groupBy('date', 'agentId')
-        ->get()
-        ->groupBy('agentId');
-}
-
-// Call Drop-off / Short Duration Analysis
+    // Call Drop-off / Short Duration Analysis
 
 
-public function analyzeCallDropOffs(array $filters = []): array
-{
-    $query = CallHistory::query()->whereNull('deleted_at');
+    public function analyzeCallDropOffs(array $filters = []): array
+    {
+        $query = CallHistory::query()->whereNull('deleted_at');
 
-    if (!empty($filters['startDate']) && !empty($filters['endDate'])) {
-        $query->whereBetween('created_at', [$filters['startDate'], $filters['endDate']]);
+        if (!empty($filters['startDate']) && !empty($filters['endDate'])) {
+            $query->whereBetween('created_at', [$filters['startDate'], $filters['endDate']]);
+        }
+
+        $shortCalls = (clone $query)->where('durationInSeconds', '<', 10)->count();
+        $missedCalls = (clone $query)->whereIn('lastBridgeHangupCause', ['NO_ANSWER', 'SERVICE_UNAVAILABLE'])->count();
+        $totalCalls = (clone $query)->count();
+
+        return [
+            'total_calls' => $totalCalls,
+            'short_calls' => $shortCalls,
+            'missed_calls' => $missedCalls,
+            'drop_off_rate' => $totalCalls > 0 ? round(($shortCalls + $missedCalls) / $totalCalls * 100, 2) . '%' : '0%'
+        ];
     }
 
-    $shortCalls = (clone $query)->where('durationInSeconds', '<', 10)->count();
-    $missedCalls = (clone $query)->whereIn('lastBridgeHangupCause', ['NO_ANSWER', 'SERVICE_UNAVAILABLE'])->count();
-    $totalCalls = (clone $query)->count();
-
-    return [
-        'total_calls' => $totalCalls,
-        'short_calls' => $shortCalls,
-        'missed_calls' => $missedCalls,
-        'drop_off_rate' => $totalCalls > 0 ? round(($shortCalls + $missedCalls) / $totalCalls * 100, 2) . '%' : '0%'
-    ];
-}
-
-// Peak Call Times (Hour of Day + Day of Week)
+    // Peak Call Times (Hour of Day + Day of Week)
 
 
-public function peakCallTimes(array $filters = []): array
-{
-    $query = CallHistory::query()->whereNull('deleted_at');
+    public function peakCallTimes(array $filters = []): array
+    {
+        $query = CallHistory::query()->whereNull('deleted_at');
 
-    if (!empty($filters['startDate']) && !empty($filters['endDate'])) {
-        $query->whereBetween('created_at', [$filters['startDate'], $filters['endDate']]);
+        if (!empty($filters['startDate']) && !empty($filters['endDate'])) {
+            $query->whereBetween('created_at', [$filters['startDate'], $filters['endDate']]);
+        }
+
+        $hourly = (clone $query)->selectRaw('HOUR(created_at) as hour, COUNT(*) as total')
+            ->groupBy('hour')
+            ->orderBy('hour')
+            ->pluck('total', 'hour');
+
+        $daily = (clone $query)->selectRaw('DAYNAME(created_at) as day, COUNT(*) as total')
+            ->groupBy('day')
+            ->orderByRaw("FIELD(day, 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday')")
+            ->pluck('total', 'day');
+
+        return [
+            'hourly_distribution' => $hourly,
+            'daily_distribution' => $daily,
+        ];
     }
 
-    $hourly = (clone $query)->selectRaw('HOUR(created_at) as hour, COUNT(*) as total')
-        ->groupBy('hour')
-        ->orderBy('hour')
-        ->pluck('total', 'hour');
 
-    $daily = (clone $query)->selectRaw('DAYNAME(created_at) as day, COUNT(*) as total')
-        ->groupBy('day')
-        ->orderByRaw("FIELD(day, 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday')")
-        ->pluck('total', 'day');
+    //  Top Calling Countries
+    public function topCallerCountries(array $filters = []): Collection
+    {
+        $query = CallHistory::query()
+            ->whereNull('deleted_at')
+            ->whereNotNull('callerCountryCode');
 
-    return [
-        'hourly_distribution' => $hourly,
-        'daily_distribution' => $daily,
-    ];
-}
+        if (!empty($filters['startDate']) && !empty($filters['endDate'])) {
+            $query->whereBetween('created_at', [$filters['startDate'], $filters['endDate']]);
+        }
 
-
-//  Top Calling Countries
-public function topCallerCountries(array $filters = []): Collection
-{
-    $query = CallHistory::query()
-        ->whereNull('deleted_at')
-        ->whereNotNull('callerCountryCode');
-
-    if (!empty($filters['startDate']) && !empty($filters['endDate'])) {
-        $query->whereBetween('created_at', [$filters['startDate'], $filters['endDate']]);
+        return $query->selectRaw('callerCountryCode, COUNT(*) as total')
+            ->groupBy('callerCountryCode')
+            ->orderByDesc('total')
+            ->get();
     }
-
-    return $query->selectRaw('callerCountryCode, COUNT(*) as total')
-        ->groupBy('callerCountryCode')
-        ->orderByDesc('total')
-        ->get();
-}
-// . Frequent Callers
+    // . Frequent Callers
 
 
-public function frequentCallers(array $filters = [], int $limit = 10): Collection
-{
-    $query = CallHistory::query()
-        ->whereNull('deleted_at');
+    public function frequentCallers(array $filters = [], int $limit = 10): Collection
+    {
+        $query = CallHistory::query()
+            ->whereNull('deleted_at');
 
-    if (!empty($filters['startDate']) && !empty($filters['endDate'])) {
-        $query->whereBetween('created_at', [$filters['startDate'], $filters['endDate']]);
+        if (!empty($filters['startDate']) && !empty($filters['endDate'])) {
+            $query->whereBetween('created_at', [$filters['startDate'], $filters['endDate']]);
+        }
+
+        return $query->selectRaw('callerNumber, COUNT(*) as call_count')
+            ->groupBy('callerNumber')
+            ->orderByDesc('call_count')
+            ->limit($limit)
+            ->get();
     }
-
-    return $query->selectRaw('callerNumber, COUNT(*) as call_count')
-        ->groupBy('callerNumber')
-        ->orderByDesc('call_count')
-        ->limit($limit)
-        ->get();
-}
+    // Agent Comparison Report
 
 
+    public function agentPerformanceComparison(array $filters = []): Collection
+    {
+        $query = CallHistory::query()
+            ->whereNull('deleted_at')
+            ->whereNotNull('user_id');
 
+        if (!empty($filters['startDate']) && !empty($filters['endDate'])) {
+            $query->whereBetween('created_at', [$filters['startDate'], $filters['endDate']]);
+        }
+
+        return $query->with('agent')
+            ->get()
+            ->groupBy('user_id')
+            ->map(function ($calls) {
+                return [
+                    'agent' => optional($calls->first()->agent)->name ?? 'Unknown',
+                    'total_calls' => $calls->count(),
+                    'average_duration' => round($calls->avg('durationInSeconds'), 2),
+                    'answered_calls' => $calls->where('status', 'Answered')->count(),
+                    'missed_calls' => $calls->where('status', 'Missed')->count(),
+                ];
+            })->values();
+    }
 }
