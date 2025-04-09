@@ -135,30 +135,13 @@ class CallStatsService
         // Log the executed SQL query
         Log::info('Executed Query:', DB::getQueryLog());
 
-        // You may also log the raw SQL and bindings separately like this:
-        // $sql = $query->toSql();
-        // Log::info("Raw SQL: " . $sql);
+     
         Log::info("Bindings: ", $query->getBindings());
 
 
-
-        // [
-        //     {
-        //       "query": "select * from `call_histories` where `deleted_at` is null and `user_id` is not null and `created_at` between ? and ? and `status` in (?, ?, ?)",
-        //       "bindings": [
-        //         "2025-03-01",
-        //         "2025-05-08",
-        //         "NO_ANSWER",
-        //         "USER_BUSY",
-        //         "CALL_REJECTED"
-        //       ],
-        //       "time": 1.86
-        //     }
-        //   ]
-
-        // $ivrOptions = IvrOption::all();
-        // $ivrStats = CallHistory::all();
-        // $ivrAnalysis = $this->analyzeIvrStatistics($ivrOptions, $ivrStats);
+        $ivrOptions = IvrOption::all();
+        $ivrStats = CallHistory::all();
+        $ivrAnalysis = $this->analyzeIvrStatistics($ivrOptions, $ivrStats);
 
 
         Log::info('Call summary report generated', ['call_histories' => $callHistories]);
@@ -167,30 +150,19 @@ class CallStatsService
         if ($callHistories->isEmpty()) {
             Log::warning('No call history found for the given filters.', $filters);
         }
-        return $callHistories;
-        // ->map(function ($call) {
-        //     return [
-        //         'id' => $call->id,
-        //         'callerNumber' => $call->callerNumber,
-        //         'destinationNumber' => $call->destinationNumber,
-        //         'durationInSeconds' => $call->durationInSeconds,
-        //         'status' => $call->status,
-        //         'created_at' => $call->created_at,
-        //         'updated_at' => $call->updated_at,
-        //         // Add any other fields you want to include
-        //     ];
-        // });
+        // return $callHistories;
+   
 
-        // return $callHistories->groupBy('agentId')->map(function ($calls, $agentId) {
-        //     return [
-        //         // 'agent' => optional($calls->first()->agent)->name ?? 'N/A',
-        //         'total_calls' => $calls->count(),
-        //         'answered' => $calls->where('status', 'Answered')->count(),
-        //         'missed' => $calls->where('status', 'Missed')->count(),
-        //         'escalated' => $calls->where('status', 'Escalated')->count(),
-        //         'total_duration' => $calls->sum('durationInSeconds') ?? 0,
-        //     ];
-        // })->values();
+        return $callHistories->groupBy('user_id')->map(function ($calls, $user_) {
+            return [
+                'agent' => optional($calls->first()->agent)->name ?? 'N/A',
+                'total_calls' => $calls->count(),
+                'answered' => $calls->where('status', 'Answered')->count(),
+                'missed' => $calls->where('status', 'Missed')->count(),
+                'escalated' => $calls->where('status', 'Escalated')->count(),
+                'total_duration' => $calls->sum('durationInSeconds') ?? 0,
+            ];
+        })->values();
     }
 
 

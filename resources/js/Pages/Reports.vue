@@ -213,11 +213,11 @@ export default {
 
         case 'Agent Performance':
           this.headers = [
-            { title: 'Agent', value: 'name' },
+            { title: 'Agent', value: 'agent.name' },
             { title: 'Calls Handled', value: 'total_calls' },
             { title: 'Avg Duration (min)', value: 'avg_duration' },
-            { title: 'CSAT (%)', value: 'csat' },
-            { title: 'Tickets Resolved', value: 'tickets_resolved' }
+            // { title: 'CSAT (%)', value: 'csat' },
+            // { title: 'Tickets Resolved', value: 'tickets_resolved' }
           ];
           this.fetchReportData('/api/v1/reports/call-summary');
           break;
