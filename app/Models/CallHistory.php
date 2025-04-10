@@ -38,6 +38,7 @@ class CallHistory extends Model
         'callerCarrierName',
         'callStartTime',
         'lastBridgeHangupCause',
+        'download_status'
       
     ];
 

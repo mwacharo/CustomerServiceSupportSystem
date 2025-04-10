@@ -19,12 +19,12 @@ class Kernel extends ConsoleKernel
         Log::info('🔑 Scheduling daily token generation command at midnight.');
 
         // Schedule the token generation command at midnight daily
-        $schedule->command('token:generate-daily')->dailyAt('00:00');
+        $schedule->command('token:generate-daily')->everyTenMinutes('00:00');
     
 
         Log::info('📥 Starting Call Recordings Download Job');
 
-        $schedule->job(new DownloadCallRecordingsJob)->everyTwoHours();
+        $schedule->job(new DownloadCallRecordingsJob)->everyTwoMinutes();
 
 
     }

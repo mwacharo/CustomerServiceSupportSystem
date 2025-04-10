@@ -25,7 +25,7 @@ class DownloadCallRecordingsJob implements ShouldQueue
         Log::info('📥 Starting Call Recordings Download Job');
 
         // Fetch all call histories with a valid recording URL
-        $callHistories = CallHistory::whereNotNull('recordingUrl')->where('status', '!=', 'downloaded')->get();
+        $callHistories = CallHistory::whereNotNull('recordingUrl')->where('download_status', '!=', 'downloaded')->get();
 
         foreach ($callHistories as $call) {
             try {
@@ -41,7 +41,7 @@ class DownloadCallRecordingsJob implements ShouldQueue
 
                     // Update call history record
                     $call->update([
-                        'status' => 'downloaded',
+                        'download_status' => 'downloaded',
                         'recordingUrl' => asset("storage/{$filePath}"),
                     ]);
 
