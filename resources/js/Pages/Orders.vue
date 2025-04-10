@@ -1033,6 +1033,7 @@ this.fetchUsers();
             axios.get('api/v1/agent-stats'/ + this.userId) // Use the userId prop to fetch agent stats
                 .then(response => {
                     this.stats = response.data;
+                    console.log('Agent stats:', this.stats);
                 })
                
                 .catch(error => {
