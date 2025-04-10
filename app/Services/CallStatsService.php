@@ -59,7 +59,7 @@ class CallStatsService
 
         $ivrOptions = IvrOption::all();
         // $ivrStats = CallHistory::all();
-        $ivrStats = CallHistory::whereNotNull('agentId')->get();
+        $ivrStats = CallHistory::whereNotNull('ivr_option_id')->get();
         // $ivrAnalysis = $this->analyzeIvrStatistics($ivrOptions, $ivrStats ,$dateRange=null,$user->id);
         $ivrAnalysis = $this->analyzeIvrStatistics($ivrOptions, $ivrStats, $dateRange, $user->id);
 

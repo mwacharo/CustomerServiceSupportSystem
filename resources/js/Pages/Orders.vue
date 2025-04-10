@@ -1017,15 +1017,15 @@ this.fetchUsers();
                 })
             ;
         },
-        async fetchOrders() {
-            axios.get('/api/v1/orders')
-                .then(response => {
-                    this.orders = response.data.orders;
-                })
-                .catch(error => {
-                    console.error('Error fetching orders:', error);
-                });
-        },
+        // async fetchOrders() {
+        //     axios.get('/api/v1/orders')
+        //         .then(response => {
+        //             this.orders = response.data.orders;
+        //         })
+        //         .catch(error => {
+        //             console.error('Error fetching orders:', error);
+        //         });
+        // },
 
 
 
