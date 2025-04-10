@@ -816,7 +816,7 @@ class ApiCallCentreController extends Controller
             [
             'callerNumber' => $callerNumber,
             // note agentId is used to store the selected option in the database
-            'agentId' => $dtmfDigits,
+            'ivr_option_id' => $dtmfDigits,
             'isActive' => 1, // Mark as active while handling selection
             ]
         );
