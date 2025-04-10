@@ -492,7 +492,7 @@ class ApiCallCentreController extends Controller
 
             // Update the call history with the assigned agent
             $updatedRows = CallHistory::where('sessionId', $sessionId)
-                ->update(['adminId' => $agent->id]);
+                ->update(['user_id' => $agent->id]);
 
             // Log the number of rows updated in call history
             Log::info("Call history updated with assigned agent", [
