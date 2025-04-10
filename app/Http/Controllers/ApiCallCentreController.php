@@ -29,6 +29,7 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Http;
 use App\Models\Ticket;
 use App\Models\Contact;
+use Exception;
 use Illuminate\Support\Facades\DB;
 
 class ApiCallCentreController extends Controller
