@@ -201,7 +201,7 @@ export default {
       switch (this.selectedReportType) {
         case 'Call Summary Report':
           this.headers = [
-            { title: 'Agent', value: 'name' },
+            { title: 'Agent', value: 'agent.name' },
             { title: 'Total Calls', value: 'total_calls' },
             { title: 'Answered', value: 'answered' },
             { title: 'Missed', value: 'missed' },

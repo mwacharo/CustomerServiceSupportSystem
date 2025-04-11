@@ -26,7 +26,7 @@ class CallHistory extends Model
         'amount',
         'hangupCause',
         'user_id', 
-        'agentId',
+        // 'agentId',
         'orderNo',
         'notes',
         'nextCallStep',
