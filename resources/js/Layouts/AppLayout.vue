@@ -131,8 +131,13 @@ onMounted(() => {
     <v-app>
       <v-navigation-drawer v-model="drawer" app color="black" width="300" >
         <!-- Logo -->
+
+       
         <v-list-item>
-          <v-img src="path/to/logo.png" alt="Logo" height="60" contain></v-img>
+           
+          <img src="/assets/img/logo.png" alt="Boxleo Logo" class="sidebar-logo" width="150">
+          
+      
         </v-list-item>
 
         <!-- Navigation Menu -->
