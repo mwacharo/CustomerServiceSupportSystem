@@ -201,7 +201,7 @@ export default {
       switch (this.selectedReportType) {
         case 'Call Summary Report':
           this.headers = [
-            { title: 'Agent', value: 'agent.name' },
+            { title: 'Agent', value: 'agent' },
             { title: 'Total Calls', value: 'total_calls' },
             { title: 'Answered', value: 'answered' },
             { title: 'Missed', value: 'missed' },
@@ -213,7 +213,7 @@ export default {
 
         case 'Agent Performance':
           this.headers = [
-            { title: 'Agent', value: 'agent.name' },
+            { title: 'Agent', value: 'agent' },
             { title: 'Calls Handled', value: 'total_calls' },
             { title: 'Avg Duration (min)', value: 'avg_duration' },
             // { title: 'CSAT (%)', value: 'csat' },
