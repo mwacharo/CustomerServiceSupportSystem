@@ -329,7 +329,7 @@
                              -->
 
                             <v-list>
-                                <v-list-item v-for="agent in agents" @click="handleTransfer(agent)" :key="agent.name"
+                                <v-list-item v-for="availableAgent in availableAgents" @click="handleTransfer(availableAgent)" :key="availableAgent.name"
                                     class="agent-item
                 ">
                                     <div>
@@ -543,6 +543,7 @@ export default {
 
     components: { AppLayout },
     data: () => ({
+    stats:[],
         loading: false, // this is used by :loading binding
         isMuted: false, // Initially not muted
         isOnHold: false, // Initially not on hold
@@ -637,7 +638,7 @@ export default {
 
     created() {
 
-this.fetchOrders();
+// this.fetchOrders();
 this.fetchCallHistory();
 this.fetchAgentstats();
 this.fetchUsers();
