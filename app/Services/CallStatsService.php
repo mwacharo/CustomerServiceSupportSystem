@@ -16,73 +16,169 @@ class CallStatsService
 
 
 
+    // public function getAgentStats(User $user, ?array $dateRange = null): array
+    // {
+    //     Log::info('Fetching agent stats', ['user_id' => $user->id, 'date_range' => $dateRange]);
+
+    //     $phone_number = $user->phone_number;
+
+    //     // Base query for outgoing calls
+    //     $outgoingQuery = CallHistory::query()
+    //         ->where('callerNumber', $phone_number)
+    //         ->whereNull('deleted_at');
+
+    //     // Base query for incoming calls
+    //     $incomingQuery = CallHistory::query()
+    //         ->where('user_id', $user->id)
+    //         ->whereNull('deleted_at');
+
+    //     if ($dateRange) {
+    //         Log::debug('Applying date range filter', ['date_range' => $dateRange]);
+
+    //         $incomingQuery->whereBetween('created_at', $dateRange);
+    //         $outgoingQuery->whereBetween('created_at', $dateRange);
+    //     }
+
+    //     // Total calls = incoming + outgoing
+    //     $incomingCalls = (clone $incomingQuery)->count();
+    //     $outgoingCalls = (clone $outgoingQuery)->count();
+    //     $totalCalls = $incomingCalls + $outgoingCalls;
+
+    //     // Missed calls from incoming
+    //     $missedCalls = (clone $incomingQuery)
+    //         ->whereIn('lastBridgeHangupCause', ['NO_ANSWER', 'SERVICE_UNAVAILABLE'])
+    //         ->count();
+
+
+    //     $rejectedIncomingCalls = (clone $incomingQuery)
+    //         ->where('lastBridgeHangupCause', 'CALL_REJECTED','NORMAL_CLEARING')
+    //         ->count();  
+            
+    //     $userBusyOutgoingCalls = (clone $outgoingQuery)
+    //         ->where('lastBridgeHangupCause', 'USER_BUSY')
+    //         ->count();
+
+    //      $rejectedOutingCalls=   (clone $outgoingQuery)
+    //      ->where('lastBridgeHangupCause', 'CALL_REJECTED')
+    //      ->count();    
+            
+            
+            
+    
+
+    //     // Total call duration from both
+    //     $incomingDuration = (clone $incomingQuery)->sum('durationInSeconds') ?? 0;
+    //     $outgoingDuration = (clone $outgoingQuery)->sum('durationInSeconds') ?? 0;
+    //     $totalDuration = $incomingDuration + $outgoingDuration;
+
+
+    //     // ivr statistics
+
+    //     $ivrOptions = IvrOption::all();
+    //     // $ivrStats = CallHistory::all();
+    //     $ivrStats = CallHistory::whereNotNull('ivr_option_id')->get();
+    //     // $ivrAnalysis = $this->analyzeIvrStatistics($ivrOptions, $ivrStats ,$dateRange=null,$user->id);
+    //     $ivrAnalysis = $this->analyzeIvrStatistics($ivrOptions, $ivrStats, $dateRange, $user->id);
+
+
+
+    //     $result = [
+    //         'id' => $user->id,
+    //         'phone_number' => $user->phone_number,
+    //         'status' => $user->status,
+    //         'sessionId' => $user->sessionId,
+    //         'summary_call_completed' => $totalCalls,
+    //         'summary_inbound_call_completed' => $incomingCalls,
+    //         'summary_outbound_call_completed' => $outgoingCalls,
+    //         'summary_call_duration' => $totalDuration,
+    //         'summary_call_missed' => $missedCalls,
+    //         'updated_at' => $user->updated_at,
+    //         'ivr_analysis' => $ivrAnalysis,
+    //     ];
+
+    //     Log::info('Agent stats fetched successfully', ['result' => $result]);
+
+    //     return $result;
+    // }
+
+
     public function getAgentStats(User $user, ?array $dateRange = null): array
-    {
-        Log::info('Fetching agent stats', ['user_id' => $user->id, 'date_range' => $dateRange]);
+{
+    Log::info('Fetching agent stats', ['user_id' => $user->id, 'date_range' => $dateRange]);
 
-        $phone_number = $user->phone_number;
+    $phone_number = $user->phone_number;
 
-        // Base query for outgoing calls
-        $outgoingQuery = CallHistory::query()
-            ->where('callerNumber', $phone_number)
-            ->whereNull('deleted_at');
+    // Base query for outgoing calls
+    $outgoingQuery = CallHistory::query()
+        ->where('callerNumber', $phone_number)
+        ->whereNull('deleted_at');
 
-        // Base query for incoming calls
-        $incomingQuery = CallHistory::query()
-            ->where('user_id', $user->id)
-            ->whereNull('deleted_at');
+    // Base query for incoming calls
+    $incomingQuery = CallHistory::query()
+        ->where('user_id', $user->id)
+        ->whereNull('deleted_at');
 
-        if ($dateRange) {
-            Log::debug('Applying date range filter', ['date_range' => $dateRange]);
+    if ($dateRange) {
+        Log::debug('Applying date range filter', ['date_range' => $dateRange]);
 
-            $incomingQuery->whereBetween('created_at', $dateRange);
-            $outgoingQuery->whereBetween('created_at', $dateRange);
-        }
-
-        // Total calls = incoming + outgoing
-        $incomingCalls = (clone $incomingQuery)->count();
-        $outgoingCalls = (clone $outgoingQuery)->count();
-        $totalCalls = $incomingCalls + $outgoingCalls;
-
-        // Missed calls from incoming
-        $missedCalls = (clone $incomingQuery)
-            ->whereIn('lastBridgeHangupCause', ['NO_ANSWER', 'SERVICE_UNAVAILABLE'])
-            ->count();
-
-        // Total call duration from both
-        $incomingDuration = (clone $incomingQuery)->sum('durationInSeconds') ?? 0;
-        $outgoingDuration = (clone $outgoingQuery)->sum('durationInSeconds') ?? 0;
-        $totalDuration = $incomingDuration + $outgoingDuration;
-
-
-        // ivr statistics
-
-        $ivrOptions = IvrOption::all();
-        // $ivrStats = CallHistory::all();
-        $ivrStats = CallHistory::whereNotNull('ivr_option_id')->get();
-        // $ivrAnalysis = $this->analyzeIvrStatistics($ivrOptions, $ivrStats ,$dateRange=null,$user->id);
-        $ivrAnalysis = $this->analyzeIvrStatistics($ivrOptions, $ivrStats, $dateRange, $user->id);
-
-
-
-        $result = [
-            'id' => $user->id,
-            'phone_number' => $user->phone_number,
-            'status' => $user->status,
-            'sessionId' => $user->sessionId,
-            'summary_call_completed' => $totalCalls,
-            'summary_inbound_call_completed' => $incomingCalls,
-            'summary_outbound_call_completed' => $outgoingCalls,
-            'summary_call_duration' => $totalDuration,
-            'summary_call_missed' => $missedCalls,
-            'updated_at' => $user->updated_at,
-            'ivr_analysis' => $ivrAnalysis,
-        ];
-
-        Log::info('Agent stats fetched successfully', ['result' => $result]);
-
-        return $result;
+        $incomingQuery->whereBetween('created_at', $dateRange);
+        $outgoingQuery->whereBetween('created_at', $dateRange);
     }
+
+    // Total calls = incoming + outgoing
+    $incomingCalls = (clone $incomingQuery)->count();
+    $outgoingCalls = (clone $outgoingQuery)->count();
+    $totalCalls = $incomingCalls + $outgoingCalls;
+
+    // Missed calls from incoming
+    $missedCalls = (clone $incomingQuery)
+        ->whereIn('lastBridgeHangupCause', ['NO_ANSWER', 'SERVICE_UNAVAILABLE'])
+        ->count();
+
+    $rejectedIncomingCalls = (clone $incomingQuery)
+        ->whereIn('lastBridgeHangupCause', ['CALL_REJECTED', 'NORMAL_CLEARING'])
+        ->count();
+
+    $userBusyOutgoingCalls = (clone $outgoingQuery)
+        ->where('lastBridgeHangupCause', 'USER_BUSY')
+        ->count();
+
+    $rejectedOutingCalls = (clone $outgoingQuery)
+        ->where('lastBridgeHangupCause', 'CALL_REJECTED')
+        ->count();
+
+    // Total call duration from both
+    $incomingDuration = (clone $incomingQuery)->sum('durationInSeconds') ?? 0;
+    $outgoingDuration = (clone $outgoingQuery)->sum('durationInSeconds') ?? 0;
+    $totalDuration = $incomingDuration + $outgoingDuration;
+
+    // IVR statistics
+    $ivrOptions = IvrOption::all();
+    $ivrStats = CallHistory::whereNotNull('ivr_option_id')->get();
+    $ivrAnalysis = $this->analyzeIvrStatistics($ivrOptions, $ivrStats, $dateRange, $user->id);
+
+    $result = [
+        'id' => $user->id,
+        'phone_number' => $user->phone_number,
+        'status' => $user->status,
+        'sessionId' => $user->sessionId,
+        'summary_call_completed' => $totalCalls,
+        'summary_inbound_call_completed' => $incomingCalls,
+        'summary_outbound_call_completed' => $outgoingCalls,
+        'summary_call_duration' => $totalDuration,
+        'summary_call_missed' => $missedCalls,
+        'summary_rejected_incoming_calls' => $rejectedIncomingCalls,
+        'summary_user_busy_outgoing_calls' => $userBusyOutgoingCalls,
+        'summary_rejected_outgoing_calls' => $rejectedOutingCalls,
+        'updated_at' => $user->updated_at,
+        'ivr_analysis' => $ivrAnalysis,
+    ];
+
+    Log::info('Agent stats fetched successfully', ['result' => $result]);
+
+    return $result;
+}
+
 
 
 

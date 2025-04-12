@@ -909,30 +909,66 @@ class ApiCallCentreController extends Controller
     }
 
 
-    public function fetchCallhistory()
+    // public function fetchCallhistory()
+    // {
+    //     try {
+    //         // Enable query logging
+    //         DB::enableQueryLog();
+
+    //         // Fetch call histories with agent relationship
+    //         $callHistories = CallHistory::with('agent')->get();
+    //         // $callHistories = CallHistory::
+    //         // with('agent')->
+    //         // whereNotNull('user_id')->get();
+
+    //         // Log the executed query
+    //         $queries = DB::getQueryLog();
+    //         Log::info('Executed Queries:', $queries);
+
+    //         return response()->json([
+    //             'data' => $callHistories,
+    //         ], 200);
+    //     } catch (Exception $e) {
+    //         Log::error("Error fetching call history: " . $e->getMessage());
+    //         return response()->json(['error' => 'Failed to fetch call history'], 500);
+    //     }
+    // }
+
+    public function fetchCallhistory(Request $request)
     {
         try {
-            // Enable query logging
-            DB::enableQueryLog();
-
-            // Fetch call histories with agent relationship
-            $callHistories = CallHistory::with('agent')->get();
-            // $callHistories = CallHistory::
-            // with('agent')->
-            // whereNotNull('user_id')->get();
-
-            // Log the executed query
-            $queries = DB::getQueryLog();
-            Log::info('Executed Queries:', $queries);
-
-            return response()->json([
-                'data' => $callHistories,
-            ], 200);
+            $perPage = $request->get('per_page', 15); // items per page
+            $page = $request->get('page', 1); // current page
+            $search = $request->get('search');
+            $sortBy = $request->get('sort_by');
+            $sortDesc = $request->boolean('sort_desc', false);
+    
+            $query = CallHistory::with('agent');
+    
+            if ($search) {
+                $query->where(function ($q) use ($search) {
+                    $q->where('lastBridgeHangupCause', 'like', "%{$search}%")
+                      ->orWhere('callerNumber', 'like', "%{$search}%")
+                      ->orWhere('clientDialedNumber', 'like', "%{$search}%");
+                });
+            }
+    
+            // 🔃 Use client-side sort if provided, otherwise sort by latest
+            if ($sortBy) {
+                $query->orderBy($sortBy, $sortDesc ? 'desc' : 'asc');
+            } else {
+                $query->orderBy('created_at', 'desc'); // 👈 default sort
+            }
+    
+            $callHistories = $query->paginate($perPage, ['*'], 'page', $page);
+    
+            return response()->json($callHistories, 200);
         } catch (Exception $e) {
             Log::error("Error fetching call history: " . $e->getMessage());
             return response()->json(['error' => 'Failed to fetch call history'], 500);
         }
     }
+    
 
 
 

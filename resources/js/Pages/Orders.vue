@@ -21,7 +21,7 @@
                                 <div class="d-flex align-center mt-2">
                                     <v-icon color="red">mdi-phone-missed</v-icon>
                                     <span class="ml-3">Missed Calls</span>
-                                    <span class="ml-auto">60,400</span>
+                                    <span class="ml-auto">{{ summary_call_missed }}</span>
                                 </div>
 
                                 <div class="d-flex align-center mt-2" @click="openQueueDialog">
@@ -41,16 +41,18 @@
                                         <span>AM</span>
                                     </v-avatar>
                                     <div>
-                                        <p class="mb-0">John Mwacahro</p>
+                                        <p class="mb-0">John Mwacharo</p>
                                         <small>john.boxleo@gmail.com</small>
                                     </div>
                                     <v-chip class="ml-auto" color="green" text-color="white">Online</v-chip>
                                 </div>
                                 <div class="mt-4">
-                                    <p>Calls connected: <strong>0</strong></p>
-                                    <p>Calls made: <strong>0</strong></p>
-                                    <p>Calls rejected: <strong>0</strong></p>
-                                    <p>Incoming Calls: <strong>0</strong></p>
+                                    <p>Calls connected: <strong>{{ summary_call_completed }}</strong></p>
+                                    <p>Calls made: <strong>{{summary_outbound_call_completed }}</strong></p>
+                                    <p>Calls Incoming rejected: <strong>{{ rejectedIncomingCalls }}</strong></p>
+                                    <p>Calls Outgoing rejected: <strong>{{ rejectedOutingCalls}}</strong></p>
+                                    <p>Calls Outgoing User Busy: <strong>{{ userBusyOutgoingCalls }}</strong></p>
+                                    <p>Incoming Calls: <strong>{{ summary_inbound_call_completed }}</strong></p>
                                 </div>
                             </v-card-text>
                         </v-card>
@@ -62,7 +64,7 @@
 
                     <!-- Include search area with mdi magnify icon -->
 
-                    <v-text-field v-model="searchQuery" label="Search" prepend-inner-icon="mdi-magnify" outlined dense
+                    <v-text-field v-model="search" label="Search" prepend-inner-icon="mdi-magnify" outlined dense
                         clearable></v-text-field>
                     <!-- Tabs at the top -->
                     <v-tabs v-model="tab" color="primary">
@@ -80,8 +82,9 @@
 
                         <!-- Calls Tab -->
                         <v-window-item value="calls">
-                            <v-data-table :headers="callsheaders" :items="callHistories" item-value="id" 
-                                class="elevation-1 mt-4" :items-per-page="15">
+                            <v-data-table-server :headers="callsheaders" :items="callHistories" item-value="id"
+                                :items-length="totalItems" :loading="loading" :search="search"
+                                @update:options="loadItems" class="elevation-1 mt-4" items-per-page="15">
                                 <!-- Example of a custom slot for an actions column -->
                                 <template #item.actions="{ item }">
 
@@ -94,15 +97,12 @@
 
                                 </template>
 
-                            </v-data-table>
+                            </v-data-table-server>
                         </v-window-item>
 
                         <!-- Orders Tab -->
                         <v-window-item value="orders">
-                            <v-data-table :headers="headers" :items="serverItems" 
-                            show-select
-                                v-model="selected"
-
+                            <v-data-table :headers="headers" :items="serverItems" show-select v-model="selected"
                                 class="elevation-1 mt-4">
                                 <!-- Example of customizing the table body -->
                                 <template #body="{ items }">
@@ -329,8 +329,8 @@
                              -->
 
                             <v-list>
-                                <v-list-item v-for="availableAgent in availableAgents" @click="handleTransfer(availableAgent)" :key="availableAgent.name"
-                                    class="agent-item
+                                <v-list-item v-for="availableAgent in availableAgents"
+                                    @click="handleTransfer(availableAgent)" :key="availableAgent.name" class="agent-item
                 ">
                                     <div>
                                         <strong>{{ agent.name }}</strong>
@@ -543,7 +543,8 @@ export default {
 
     components: { AppLayout },
     data: () => ({
-    stats:[],
+        search: '',
+        stats: [],
         loading: false, // this is used by :loading binding
         isMuted: false, // Initially not muted
         isOnHold: false, // Initially not on hold
@@ -638,12 +639,12 @@ export default {
 
     created() {
 
-// this.fetchOrders();
-this.fetchCallHistory();
-this.fetchAgentstats();
-this.fetchUsers();
+        // this.fetchOrders();
+  
+        this.fetchAgentstats();
+        this.fetchUsers();
 
-},
+    },
 
     methods: {
 
@@ -724,8 +725,8 @@ this.fetchUsers();
                     console.log("Incoming call hung up:", event.reason);
                     this.$toastr.error("Incoming call hung up: ", event.reason);
                     this.incomingCallDialog = false;
-                //    reset status of agent handling the call to available
-                // update
+                    //    reset status of agent handling the call to available
+                    // update
 
 
                 });
@@ -983,17 +984,18 @@ this.fetchUsers();
             }
         }
         ,
-        loadItems({ page, itemsPerPage, sortBy }) {
-            FakeAPI.fetch({
-                page,
-                itemsPerPage,
-                sortBy,
-                search: {},
-            }).then(({ items, total }) => {
-                this.serverItems = items;
-                this.totalItems = total;
-            });
-        },
+        // loadItems({ page, itemsPerPage, sortBy }) {
+        //     FakeAPI.fetch({
+        //         page,
+        //         itemsPerPage,
+        //         sortBy,
+        //         search: {},
+        //     }).then(({ items, total }) => {
+        //         this.serverItems = items;
+        //         this.totalItems = total;
+        //     });
+        // }
+        // ,
         openStatusModal(item) {
             this.selectedItem = item;
             this.statusModal = true;
@@ -1008,16 +1010,34 @@ this.fetchUsers();
         },
 
 
-        async fetchCallHistory() {
-            axios.get('/api/v1/call-history')
-                .then(response => {
-                    this.callHistories = response.data.callHistories;
-                })
-                .catch(error => {
-                    console.error('Error fetching call history:', error);
-                })
-            ;
-        },
+        async loadItems(options) {
+    this.loading = true;
+    try {
+      const { page, itemsPerPage, sortBy } = options;
+      const params = {
+        page,
+        per_page: itemsPerPage,
+        search: this.search,
+      };
+
+      if (sortBy.length > 0) {
+        params.sort_by = sortBy[0].key;
+        params.sort_desc = sortBy[0].order === 'desc';
+      }
+
+      const response = await axios.get('/api/v1/call-history', { params });
+
+      this.callHistories = response.data.data; // assuming 'data' contains the items
+      this.totalItems = response.data.total;
+    } catch (error) {
+      console.error('Failed to load call history:', error);
+    } finally {
+      this.loading = false;
+    }
+  },
+
+
+
         // async fetchOrders() {
         //     axios.get('/api/v1/orders')
         //         .then(response => {
@@ -1030,13 +1050,19 @@ this.fetchUsers();
 
 
 
+        // summary_call_completed
+        // summary_inbound_call_completed
+        // summary_outbound_call_completed	1
+        // summary_call_duration	
+        // summary_call_missed	
+
         fetchAgentstats() {
-            axios.get('api/v1/agent-stats'/ + this.userId) // Use the userId prop to fetch agent stats
+            axios.get('api/v1/agent-stats' / + this.userId) // Use the userId prop to fetch agent stats
                 .then(response => {
                     this.stats = response.data;
                     console.log('Agent stats:', this.stats);
                 })
-               
+
                 .catch(error => {
                     console.error('Error fetching agent stats:', error);
                 });
@@ -1044,13 +1070,13 @@ this.fetchUsers();
 
         fetchUsers() {
             axios.get('/v1/users')
-            .then(response => {
-                this.agents = response.data;
-            })
-            .catch(error => {
-                console.error('Error fetching users:', error);
-            })
-          ;
+                .then(response => {
+                    this.agents = response.data;
+                })
+                .catch(error => {
+                    console.error('Error fetching users:', error);
+                })
+                ;
         },
 
     },
