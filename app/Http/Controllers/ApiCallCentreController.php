@@ -943,8 +943,8 @@ class ApiCallCentreController extends Controller
             $sortBy = $request->get('sort_by');
             $sortDesc = $request->boolean('sort_desc', false);
     
-            $query = CallHistory::with('agent','ivrOption')
-                ->whereNotNull('user_id');
+            $query = CallHistory::with('agent','ivrOption');
+                // ->whereNotNull('user_id');
     
             if ($search) {
                 $query->where(function ($q) use ($search) {
