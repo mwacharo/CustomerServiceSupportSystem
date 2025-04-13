@@ -3,12 +3,12 @@
 namespace Database\Factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
-use App\Models\Branch;
 
-class BranchFactory extends Factory
+/**
+ * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Product>
+ */
+class ProductFactory extends Factory
 {
-    protected $model = Branch::class;
-
     /**
      * Define the model's default state.
      *
@@ -16,6 +16,8 @@ class BranchFactory extends Factory
      */
     public function definition(): array
     {
-        
+        return [
+            //
+        ];
     }
 }

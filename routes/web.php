@@ -62,6 +62,18 @@ Route::middleware([
       Route::get('/orders', function () {
         return Inertia::render('Orders');
     })->name('orders');
+    
+
+    Route::get('/contacts', function () {
+        return Inertia::render('Contacts');
+    })->name('contacts');
+
+
+
+    Route::get('/tickets', function () {
+        return Inertia::render('Tickets');
+    })->name('tickets');
+
 
     Route::get('/reports', function () {
         return Inertia::render('Reports');

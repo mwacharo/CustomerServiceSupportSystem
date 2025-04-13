@@ -15,8 +15,10 @@ class DatabaseSeeder extends Seeder
         //
 
                 // Example: $this->call(UserSeeder::class);
-        $this->call(IvrOptionSeeder::class);
-        $this->call(BranchSeeder::class);
+        // $this->call(IvrOptionSeeder::class);
+        // $this->call(CountrySeeder::class);
+        // $this->call(BranchSeeder::class);
+        $this->call(ContactSeeder::class);
 
     }
 }

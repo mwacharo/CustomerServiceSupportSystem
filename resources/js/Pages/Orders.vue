@@ -590,7 +590,8 @@ export default {
             { title: "Destination Number", value: "destinationNumber" },
             { title: "clientDialed Number", value: "clientDialedNumber" },
             { title: "Duration In Seconds", value: "durationInSeconds" },
-            { title: "Caller Carrier", value: "callerCarrier" },
+            { title: "Service Type", value: "ivr_option_id"
+            { title: "Caller Carrier", value: "callerCarrierName" },
             { title: "Call Status", value: "status" },
             { title: "HangupCause", value: "lastBridgeHangupCause" },
             { title: "Call Session State", value: "callSessionState" },

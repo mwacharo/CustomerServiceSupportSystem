@@ -177,7 +177,11 @@ onMounted(() => {
         </v-chip>
 
         <Logout />
-      
+
+        <!-- Include dark and light mode toggle -->
+        <v-btn icon @click="$vuetify.theme.dark = !$vuetify.theme.dark">
+          <v-icon>{{ $vuetify.theme.dark ? 'mdi-weather-night' : 'mdi-white-balance-sunny' }}</v-icon>
+        </v-btn>  
 
         <!-- Notifications -->
         <v-btn icon="mdi-bell">

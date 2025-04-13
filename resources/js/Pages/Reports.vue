@@ -6,13 +6,7 @@
         <v-divider />
         <v-row class="mt-4">
           <v-col>
-            <v-text-field
-              v-model="search"
-              label="Search"
-              prepend-inner-icon="mdi-magnify"
-              clearable
-              outlined
-            />
+            <v-text-field v-model="search" label="Search" prepend-inner-icon="mdi-magnify" clearable outlined />
           </v-col>
           <v-col cols="auto">
             <v-btn icon>
@@ -25,69 +19,34 @@
           <v-container>
             <v-row>
               <v-col cols="12" md="4">
-                <v-autocomplete
-                  v-model="selectedReportType"
-                  :items="reportTypes"
-                  label="Report Type"
-                />
+                <v-autocomplete v-model="selectedReportType" :items="reportTypes" label="Report Type" />
               </v-col>
 
-                <v-col cols="12" md="4">
-                <v-text-field
-                  v-model="startDate"
-                  label="Start Date"
-                  prepend-icon="mdi-calendar"
-                  type="date"
-                  outlined
-                />
-                </v-col>
+              <v-col cols="12" md="4">
+                <v-text-field v-model="startDate" label="Start Date" prepend-icon="mdi-calendar" type="date" outlined />
+              </v-col>
 
-                <v-col cols="12" md="4">
-                <v-text-field
-                  v-model="endDate"
-                  label="End Date"
-                  prepend-icon="mdi-calendar"
-                  type="date"
-                  outlined
-                />
-                </v-col>
+              <v-col cols="12" md="4">
+                <v-text-field v-model="endDate" label="End Date" prepend-icon="mdi-calendar" type="date" outlined />
+              </v-col>
 
-                <v-col cols="12" md="4" v-if="selectedReportType !== 'IVR Report'">
-                <v-autocomplete
-                  v-model="selectedStatus"
-                  :items="statusTypes"
-                  label="Call Status"
-                  multiple
-                />
-                </v-col>
+              <v-col cols="12" md="4" v-if="selectedReportType !== 'IVR Report'">
+                <v-autocomplete v-model="selectedStatus" :items="statusTypes" label="Call Status" multiple />
+              </v-col>
 
 
-                <!-- if type of report is IVR Report, show IVR options -->
-                <v-col cols="12" md="4" v-if="selectedReportType === 'IVR Report'">
-                <v-autocomplete
-                  v-model="selectedIvrOption"
-                  :items="ivrOptions"
-                  label="IVR Options"
-                  item-title="description"
-                  item-value="id"
-                  clearable
-                  multiple
+              <!-- if type of report is IVR Report, show IVR options -->
+              <v-col cols="12" md="4" v-if="selectedReportType === 'IVR Report'">
+                <v-autocomplete v-model="selectedIvrOption" :items="ivrOptions" label="IVR Options"
+                  item-title="description" item-value="id" clearable multiple />
+              </v-col>
 
-                />
-                </v-col>
-
-                <!-- Agents -->
-                 <v-col cols="12" md="4" v-if="selectedReportType === 'Agent Performance' || selectedReportType === 'IVR Report'">
-                  <v-autocomplete
-                    v-model="selectedAgent"
-                    :items="users"
-                    label="Select Agent"
-                    item-title="name"
-                    item-value="id"
-                    clearable
-                    multiple
-                  />
-                </v-col>
+              <!-- Agents -->
+              <v-col cols="12" md="4"
+                v-if="selectedReportType === 'Agent Performance' || selectedReportType === 'IVR Report'">
+                <v-autocomplete v-model="selectedAgent" :items="users" label="Select Agent" item-title="name"
+                  item-value="id" clearable multiple />
+              </v-col>
 
               <v-col cols="12" class="text-right">
                 <v-btn color="primary" @click="generateReport">
@@ -99,13 +58,8 @@
               </v-col>
             </v-row>
 
-            <v-data-table
-              :headers="headers"
-              :items="reportData"
-              :items-per-page="10"
-              :search="search"
-              class="elevation-1"
-            />
+            <v-data-table :headers="headers" :items="reportData" :items-per-page="10" :search="search"
+              class="elevation-1" />
           </v-container>
         </v-card>
       </v-main>
@@ -137,12 +91,12 @@ export default {
       reportTypes: [
         'Call Summary Report',
         'Agent Performance',
-        'Call Logs',
+        // 'Call Logs',
         'Missed Calls',
-        'Customer Feedback',
-        'Ticket Resolution',
-        'Average Call Duration',
-        'IVR Report', 
+        // 'Customer Feedback',
+        // 'Ticket Resolution',
+        // 'Average Call Duration',
+        'IVR Report',
         'Airtime Report'
       ],
 
@@ -170,10 +124,10 @@ export default {
   },
 
   created() {
-        this.fetchIvrOptions();
-        this.fetchUsers();
-        
-    },
+    this.fetchIvrOptions();
+    this.fetchUsers();
+
+  },
   methods: {
 
     fetchUsers() {
@@ -191,22 +145,30 @@ export default {
     },
 
     fetchIvrOptions() {
-            axios.get("api/v1/ivr-options")
-                .then(response => {
-                    this.ivrOptions = response.data.ivrOptions;
-                })
-                .catch(error => console.error("API Error:", error));
-        },
+      axios.get("api/v1/ivr-options")
+        .then(response => {
+          this.ivrOptions = response.data.ivrOptions;
+        })
+        .catch(error => console.error("API Error:", error));
+    },
     generateReport() {
       switch (this.selectedReportType) {
         case 'Call Summary Report':
           this.headers = [
+            // { title: 'Agent', value: 'agent' },
+            // { title: 'Total Calls', value: 'total_calls' },
+            // { title: 'Answered', value: 'answered' },
+            // { title: 'Missed', value: 'missed' },
+
             { title: 'Agent', value: 'agent' },
-            { title: 'Total Calls', value: 'total_calls' },
-            { title: 'Answered', value: 'answered' },
-            { title: 'Missed', value: 'missed' },
-            { title: 'Escalated', value: 'escalated' },
-            { title: 'Date', value: 'date' }
+            { title: 'Total Calls', value: 'summary_call_completed' },
+            { title: 'Inbound Calls', value: 'summary_inbound_call_completed' },
+            { title: 'Outbound Calls', value: 'summary_outbound_call_completed' },
+            { title: 'Call Duration', value: 'summary_call_duration' },
+            { title: 'Missed Calls', value: 'summary_call_missed' },
+            { title: 'Rejected Incoming', value: 'summary_rejected_incoming_calls' },
+            { title: 'User Busy Outgoing', value: 'summary_user_busy_outgoing_calls' },
+            { title: 'Rejected Outgoing', value: 'summary_rejected_outgoing_calls' },
           ];
           this.fetchReportData('/api/v1/reports/call-summary');
           break;
@@ -222,18 +184,18 @@ export default {
           this.fetchReportData('/api/v1/reports/call-summary');
           break;
 
-        case 'Call Logs':
-          this.headers = [
-            { title: 'Call ID', value: 'call_id' },
-            { title: 'Customer', value: 'customer' },
-            { title: 'Agent', value: 'agent' },
-            { title: 'Status', value: 'status' },
-            { title: 'Start Time', value: 'start_time' },
-            { title: 'End Time', value: 'end_time' },
-            { title: 'Duration (min)', value: 'duration' }
-          ];
-          this.fetchReportData('/api/v1/reports/call-summary');
-          break;
+        // case 'Call Logs':
+        //   this.headers = [
+        //     { title: 'Call ID', value: 'call_id' },
+        //     { title: 'Customer', value: 'customer' },
+        //     { title: 'Agent', value: 'agent' },
+        //     { title: 'Status', value: 'status' },
+        //     { title: 'Start Time', value: 'start_time' },
+        //     { title: 'End Time', value: 'end_time' },
+        //     { title: 'Duration (min)', value: 'duration' }
+        //   ];
+        //   this.fetchReportData('/api/v1/reports/call-summary');
+        //   break;
 
         case 'Missed Calls':
           this.headers = [
@@ -245,39 +207,39 @@ export default {
           this.fetchReportData('/api/v1/reports/call-summary');
           break;
 
-        case 'Customer Feedback':
-          this.headers = [
-            { title: 'Customer', value: 'customer' },
-            { title: 'Agent', value: 'agent' },
-            { title: 'Rating', value: 'rating' },
-            { title: 'Comment', value: 'comment' },
-            { title: 'Date', value: 'date' }
-          ];
-          this.fetchReportData('/api/v1/reports/call-summary');
-          break;
+        // case 'Customer Feedback':
+        //   this.headers = [
+        //     { title: 'Customer', value: 'customer' },
+        //     { title: 'Agent', value: 'agent' },
+        //     { title: 'Rating', value: 'rating' },
+        //     { title: 'Comment', value: 'comment' },
+        //     { title: 'Date', value: 'date' }
+        //   ];
+        //   this.fetchReportData('/api/v1/reports/call-summary');
+        //   break;
 
-        case 'Ticket Resolution':
-          this.headers = [
-            { title: 'Ticket ID', value: 'ticket_id' },
-            { title: 'Customer', value: 'customer' },
-            { title: 'Agent', value: 'agent' },
-            { title: 'Status', value: 'status' },
-            { title: 'Resolved On', value: 'resolved_on' }
-          ];
-          this.fetchReportData('/api/v1/reports/call-summary');
-          break;
+        // case 'Ticket Resolution':
+        //   this.headers = [
+        //     { title: 'Ticket ID', value: 'ticket_id' },
+        //     { title: 'Customer', value: 'customer' },
+        //     { title: 'Agent', value: 'agent' },
+        //     { title: 'Status', value: 'status' },
+        //     { title: 'Resolved On', value: 'resolved_on' }
+        //   ];
+        //   this.fetchReportData('/api/v1/reports/call-summary');
+        //   break;
 
-        case 'Average Call Duration':
-          this.headers = [
-            { title: 'Agent', value: 'agent' },
-            { title: 'Total Calls', value: 'total_calls' },
-            { title: 'Average Duration', value: 'avg_duration' },
-            { title: 'Longest Call', value: 'longest_call' },
-            { title: 'Shortest Call', value: 'shortest_call' }
-          ];
-          this.fetchReportData('/api/v1/reports/call-summary');
+        // case 'Average Call Duration':
+        //   this.headers = [
+        //     { title: 'Agent', value: 'agent' },
+        //     { title: 'Total Calls', value: 'total_calls' },
+        //     { title: 'Average Duration', value: 'avg_duration' },
+        //     { title: 'Longest Call', value: 'longest_call' },
+        //     { title: 'Shortest Call', value: 'shortest_call' }
+        //   ];
+        //   this.fetchReportData('/api/v1/reports/call-summary');
 
-         case 'IVR Report':
+        case 'IVR Report':
           this.headers = [
             { title: 'IVR Path', value: 'description' },
             { title: 'Total Calls', value: 'total_calls' },
@@ -286,7 +248,7 @@ export default {
             { title: 'Abandoned', value: 'abandoned' },
             { title: 'Avg Duration', value: 'total_duration	' }
           ];
-          case 'Airtime Report':
+        case 'Airtime Report':
           this.headers = [
             { title: 'Agent', value: 'agent' },
             { title: 'Total Airtime', value: 'total_airtime' },
@@ -294,9 +256,9 @@ export default {
             { title: 'Total Calls', value: 'total_calls' },
             { title: 'Period ', value: 'filter_dates' }
 
-           
+
           ];
-          this.fetchReportData('/api/v1/reports/call-summary'); 
+          this.fetchReportData('/api/v1/reports/call-summary');
           break;
       }
     },
@@ -304,13 +266,13 @@ export default {
     async fetchReportData(endpoint) {
       try {
         const response = await axios.post(endpoint, {
-            startDate: this.startDate,
-            endDate: this.endDate,
-            status: this.selectedStatus,
-            user_id: this.selectedAgent,
-            ivrOptions: this.selectedIvrOption,
-            reportType: this.selectedReportType
-        
+          startDate: this.startDate,
+          endDate: this.endDate,
+          status: this.selectedStatus,
+          user_id: this.selectedAgent,
+          ivrOptions: this.selectedIvrOption,
+          reportType: this.selectedReportType
+
         });
         this.reportData = response.data;
       } catch (error) {

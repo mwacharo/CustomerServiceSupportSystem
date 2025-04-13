@@ -943,7 +943,8 @@ class ApiCallCentreController extends Controller
             $sortBy = $request->get('sort_by');
             $sortDesc = $request->boolean('sort_desc', false);
     
-            $query = CallHistory::with('agent');
+            $query = CallHistory::with('agent','ivrOption')
+                ->whereNotNull('user_id');
     
             if ($search) {
                 $query->where(function ($q) use ($search) {
@@ -1107,3 +1108,11 @@ class ApiCallCentreController extends Controller
 
 // UNALLOCATED_NUMBER
 // The number dialed does not exist or isn’t assigned to any subscriber.
+
+
+
+        // summary_call_completed
+        // summary_inbound_call_completed
+        // summary_outbound_call_completed	1
+        // summary_call_duration	
+        // summary_call_missed	

@@ -41,4 +41,10 @@ class Vendor extends Model
         return \Carbon\Carbon::parse($value)->format('Y-m-d H:i:s');
     }
 
+    public function countries()
+    {
+        return $this->belongsToMany(Country::class, 'country');
+    }
+    
+
 }
