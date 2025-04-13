@@ -23,8 +23,8 @@ return new class extends Migration
             $table->string('state')->nullable();
             $table->string('zip')->nullable();
             $table->string('zip_code')->nullable();
-            $table->foreignId('country_id')->constrained('countries')->onDelete('cascade');
-            $table->foreignId('branch_id')->constrained('branches')->onDelete('cascade');
+            $table->foreignId('country_id')->nullable()->constrained('countries')->onDelete('cascade');
+            $table->foreignId('branch_id')->nullable()->constrained('branches')->onDelete('cascade');
             $table->text('notes')->nullable();
             $table->foreignId('vendor_id')->nullable()->constrained('vendors')->onDelete('cascade');
             $table->enum('status', ['active', 'inactive'])->default('active');

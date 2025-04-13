@@ -129,7 +129,7 @@ onMounted(() => {
 
   <template>
     <v-app>
-      <v-navigation-drawer v-model="drawer" app color="black" width="300" >
+      <v-navigation-drawer v-model="drawer" app color="white" width="300" >
         <!-- Logo -->
 
        

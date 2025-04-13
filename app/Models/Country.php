@@ -19,6 +19,22 @@ class Country extends Model
         'created_at' => 'datetime:Y-m-d H:i:s',
         'updated_at' => 'datetime:Y-m-d H:i:s',
     ];
+
+    public function vendors()
+{
+    return $this->belongsToMany(Vendor::class)
+                ->using(CountryVendor::class)
+                ->withPivot('sku')
+                ->withTimestamps();
+}
+
+
+// public function products()
+// {
+//     return $this->belongsToMany(Product::class)->withPivot('price', 'tax_rate', 'country_sku')->withTimestamps();
+// }
+
+
     public function branches()
     {
         return $this->hasMany(Branch::class);
@@ -35,6 +51,8 @@ class Country extends Model
     {
         return $this->hasMany(Product::class);
     }
+
+
     public function categories()
     {
         return $this->hasMany(Category::class);

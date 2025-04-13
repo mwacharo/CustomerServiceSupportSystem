@@ -21,7 +21,7 @@ class Client extends Model
         'branch_id',
         'notes',
         'vendor_id',
-        'status',   
+        'status',
         'user_id',
     ];
     protected $casts = [
@@ -32,8 +32,7 @@ class Client extends Model
 
 
     public function calls()
-{
-    return $this->hasMany(Call::class);
-}
-
+    {
+        return $this->hasMany(CallHistory::class);
+    }
 }

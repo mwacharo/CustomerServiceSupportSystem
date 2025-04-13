@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Vendor;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
@@ -18,7 +19,15 @@ class DatabaseSeeder extends Seeder
         // $this->call(IvrOptionSeeder::class);
         // $this->call(CountrySeeder::class);
         // $this->call(BranchSeeder::class);
-        $this->call(ContactSeeder::class);
+        // $this->call(ContactSeeder::class);
+        // $this->call(VendorSeeder::class);
+        // $this->call(CategorySeeder::class);
+        // $this->call(ProductSeeder::class);
+        // $this->call(ProductVariantSeeder::class);
+        $this->call(ClientSeeder::class,);
+
+
+
 
     }
 }

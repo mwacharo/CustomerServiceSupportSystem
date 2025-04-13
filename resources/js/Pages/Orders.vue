@@ -1,67 +1,190 @@
 <template>
     <AppLayout>
         <div class="p-4">
-            <v-container>
-                <!-- Top Information Cards -->
+            <!-- Top Information Cards -->
+            <v-container fluid class="pa-2">
                 <v-row>
+                    <!-- Quick Actions Card -->
                     <v-col cols="12" md="6">
-                        <v-card>
-                            <v-card-text>
+                        <v-card elevation="2" class="rounded-lg">
+                            <v-card-title class="primary white--text d-flex align-center py-3">
+                                <v-icon left color="white">mdi-lightning-bolt</v-icon>
+                                Quick Actions
+                            </v-card-title>
+                            <v-card-text class="py-4">
+                                <v-list nav dense>
+                                    <v-list-item @click="newCall = true" class="rounded-lg mb-2 hover-elevation-2">
+                                        <v-list-item-icon>
+                                            <v-icon color="success">mdi-phone-plus</v-icon>
+                                        </v-list-item-icon>
+                                        <v-list-item-content>
+                                            <v-list-item-title>Make a new Call</v-list-item-title>
+                                        </v-list-item-content>
+                                        <v-list-item-action>
+                                            <v-icon>mdi-chevron-right</v-icon>
+                                        </v-list-item-action>
+                                    </v-list-item>
 
-                                <div class="d-flex align-center" @click="newCall = true">
-                                    <v-icon color="green">mdi-phone</v-icon>
-                                    <span class="ml-3">Make a new Call</span>
-                                </div>
+                                    <v-list-item @click="openCallAgent" class="rounded-lg mb-2 hover-elevation-2">
+                                        <v-list-item-icon>
+                                            <v-icon color="info">mdi-account-voice</v-icon>
+                                        </v-list-item-icon>
+                                        <v-list-item-content>
+                                            <v-list-item-title>Call an agent</v-list-item-title>
+                                        </v-list-item-content>
+                                        <v-list-item-action>
+                                            <v-icon>mdi-chevron-right</v-icon>
+                                        </v-list-item-action>
+                                    </v-list-item>
 
-                                <!-- Call Agent Trigger -->
-                                <div class="d-flex align-center mt-2" @click="openCallAgent">
-                                    <v-icon color="blue">mdi-account</v-icon>
-                                    <span class="ml-3">Call an agent</span>
-                                </div>
-                                <div class="d-flex align-center mt-2">
-                                    <v-icon color="red">mdi-phone-missed</v-icon>
-                                    <span class="ml-3">Missed Calls</span>
-                                    <span class="ml-auto">{{ summary_call_missed }}</span>
-                                </div>
+                                    <v-list-item class="rounded-lg mb-2 hover-elevation-2">
+                                        <v-list-item-icon>
+                                            <v-icon color="error">mdi-phone-missed</v-icon>
+                                        </v-list-item-icon>
+                                        <v-list-item-content>
+                                            <v-list-item-title>Missed Calls</v-list-item-title>
+                                        </v-list-item-content>
+                                        <v-list-item-action>
+                                            <v-badge :content="summary_call_missed" :value="summary_call_missed > 0"
+                                                color="error" overlap>
+                                                <v-icon>mdi-chevron-right</v-icon>
+                                            </v-badge>
+                                        </v-list-item-action>
+                                    </v-list-item>
 
-                                <div class="d-flex align-center mt-2" @click="openQueueDialog">
-                                    <v-icon color="orange">mdi-check-decagram</v-icon>
-                                    <span class="ml-3">Check Queue</span>
-                                    <span class="ml-auto">...</span>
-                                </div>
+                                    <v-list-item @click="openQueueDialog" class="rounded-lg hover-elevation-2">
+                                        <v-list-item-icon>
+                                            <v-icon color="warning">mdi-account-multiple-check</v-icon>
+                                        </v-list-item-icon>
+                                        <v-list-item-content>
+                                            <v-list-item-title>Check Queue</v-list-item-title>
+                                        </v-list-item-content>
+                                        <v-list-item-action>
+                                            <v-icon>mdi-chevron-right</v-icon>
+                                        </v-list-item-action>
+                                    </v-list-item>
+                                </v-list>
                             </v-card-text>
                         </v-card>
                     </v-col>
 
+                    <!-- Agent Information Card -->
                     <v-col cols="12" md="6">
-                        <v-card>
-                            <v-card-text>
+                        <v-card elevation="2" class="rounded-lg">
+                            <v-card-title class="primary white--text d-flex align-center py-3">
+                                <v-icon left color="white">mdi-account-details</v-icon>
+                                Agent Dashboard
+                            </v-card-title>
+
+                            <v-card-text class="py-4">
                                 <div class="d-flex align-center">
-                                    <v-avatar class="mr-3" color="blue" size="40">
-                                        <span>AM</span>
+                                    <v-avatar size="60" color="primary" class="mr-4">
+                                        <span class="white--text text-h5">JM</span>
                                     </v-avatar>
-                                    <div>
-                                        <p class="mb-0">John Mwacharo</p>
-                                        <small>john.boxleo@gmail.com</small>
+                                    <div class="flex-grow-1">
+                                        <div class="d-flex align-center">
+                                            <div>
+                                                <p class="text-h6 mb-0">John Mwacharo</p>
+                                                <p class="text-body-2 mb-0 grey--text">
+                                                    <v-icon small class="mr-1">mdi-email</v-icon>
+                                                    john.boxleo@gmail.com
+                                                </p>
+                                            </div>
+                                            <v-spacer></v-spacer>
+                                            <v-chip color="success" small class="white--text px-2">
+                                                <v-icon left small>mdi-circle</v-icon>
+                                                Online
+                                            </v-chip>
+                                        </div>
                                     </div>
-                                    <v-chip class="ml-auto" color="green" text-color="white">Online</v-chip>
                                 </div>
-                                <div class="mt-4">
-                                    <p>Calls connected: <strong>{{ summary_call_completed }}</strong></p>
-                                    <p>Calls made: <strong>{{summary_outbound_call_completed }}</strong></p>
-                                    <p>Calls Incoming rejected: <strong>{{ rejectedIncomingCalls }}</strong></p>
-                                    <p>Calls Outgoing rejected: <strong>{{ rejectedOutingCalls}}</strong></p>
-                                    <p>Calls Outgoing User Busy: <strong>{{ userBusyOutgoingCalls }}</strong></p>
-                                    <p>Incoming Calls: <strong>{{ summary_inbound_call_completed }}</strong></p>
-                                </div>
+
+                                <v-divider class="my-4"></v-divider>
+
+                                <v-row class="mt-2">
+                                    <v-col cols="12" sm="6">
+                                        <v-card class="rounded-lg pa-3 mb-3" outlined>
+                                            <div class="d-flex align-center">
+                                                <v-icon color="success" left>mdi-phone-check</v-icon>
+                                                <div class="ml-2">
+                                                    <div class="text-caption grey--text">Connected</div>
+                                                    <div class="text-h6">{{ summary_call_completed }}</div>
+                                                </div>
+                                            </div>
+                                        </v-card>
+                                    </v-col>
+
+                                    <v-col cols="12" sm="6">
+                                        <v-card class="rounded-lg pa-3 mb-3" outlined>
+                                            <div class="d-flex align-center">
+                                                <v-icon color="primary" left>mdi-phone-outgoing</v-icon>
+                                                <div class="ml-2">
+                                                    <div class="text-caption grey--text">Outbound</div>
+                                                    <div class="text-h6">{{ summary_outbound_call_completed }}</div>
+                                                </div>
+                                            </div>
+                                        </v-card>
+                                    </v-col>
+
+                                    <v-col cols="12" sm="6">
+                                        <v-card class="rounded-lg pa-3 mb-3" outlined>
+                                            <div class="d-flex align-center">
+                                                <v-icon color="info" left>mdi-phone-incoming</v-icon>
+                                                <div class="ml-2">
+                                                    <div class="text-caption grey--text">Incoming</div>
+                                                    <div class="text-h6">{{ summary_inbound_call_completed }}</div>
+                                                </div>
+                                            </div>
+                                        </v-card>
+                                    </v-col>
+
+                                    <v-col cols="12" sm="6">
+                                        <v-card class="rounded-lg pa-3" outlined>
+                                            <div class="d-flex align-center">
+                                                <v-icon color="error" left>mdi-phone-cancel</v-icon>
+                                                <div class="ml-2">
+                                                    <div class="text-caption grey--text">Rejected</div>
+                                                    <div class="text-h6">{{ rejectedIncomingCalls + rejectedOutingCalls
+                                                        }}</div>
+                                                </div>
+                                            </div>
+                                        </v-card>
+                                    </v-col>
+                                </v-row>
+
+                                <v-btn color="primary" text class="mt-2" @click="showCallDetails = !showCallDetails">
+                                    {{ showCallDetails ? 'Hide' : 'Show' }} detailed stats
+                                    <v-icon right>{{ showCallDetails ? 'mdi-chevron-up' : 'mdi-chevron-down' }}</v-icon>
+                                </v-btn>
+
+                                <v-expand-transition>
+                                    <div v-if="showCallDetails">
+                                        <v-divider class="my-3"></v-divider>
+                                        <v-simple-table dense>
+                                            <template v-slot:default>
+                                                <tbody>
+                                                    <tr>
+                                                        <td>Incoming Rejected</td>
+                                                        <td class="text-right">{{ rejectedIncomingCalls }}</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>Outgoing Rejected</td>
+                                                        <td class="text-right">{{ rejectedOutingCalls }}</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>Outgoing User Busy</td>
+                                                        <td class="text-right">{{ userBusyOutgoingCalls }}</td>
+                                                    </tr>
+                                                </tbody>
+                                            </template>
+                                        </v-simple-table>
+                                    </div>
+                                </v-expand-transition>
                             </v-card-text>
                         </v-card>
                     </v-col>
                 </v-row>
-
-
                 <v-card>
-
                     <!-- Include search area with mdi magnify icon -->
 
                     <v-text-field v-model="search" label="Search" prepend-inner-icon="mdi-magnify" outlined dense
@@ -73,7 +196,7 @@
 
                         <v-tab value="calls">Calls</v-tab>
                         <v-tab value="orders">Orders</v-tab>
-                        <v-tab value="tickets">tickets</v-tab>
+                        <!-- <v-tab value="tickets">tickets</v-tab> -->
 
                     </v-tabs>
 
@@ -590,7 +713,7 @@ export default {
             { title: "Destination Number", value: "destinationNumber" },
             { title: "clientDialed Number", value: "clientDialedNumber" },
             { title: "Duration In Seconds", value: "durationInSeconds" },
-            { title: "Service Type", value: "ivr_option_id"},
+            { title: "Service Type", value: "ivr_option_id" },
             { title: "Caller Carrier", value: "callerCarrierName" },
             { title: "Call Status", value: "status" },
             { title: "HangupCause", value: "lastBridgeHangupCause" },
@@ -641,7 +764,7 @@ export default {
     created() {
 
         // this.fetchOrders();
-  
+
         this.fetchAgentstats();
         this.fetchUsers();
 
@@ -1012,30 +1135,30 @@ export default {
 
 
         async loadItems(options) {
-    this.loading = true;
-    try {
-      const { page, itemsPerPage, sortBy } = options;
-      const params = {
-        page,
-        per_page: itemsPerPage,
-        search: this.search,
-      };
+            this.loading = true;
+            try {
+                const { page, itemsPerPage, sortBy } = options;
+                const params = {
+                    page,
+                    per_page: itemsPerPage,
+                    search: this.search,
+                };
 
-      if (sortBy.length > 0) {
-        params.sort_by = sortBy[0].key;
-        params.sort_desc = sortBy[0].order === 'desc';
-      }
+                if (sortBy.length > 0) {
+                    params.sort_by = sortBy[0].key;
+                    params.sort_desc = sortBy[0].order === 'desc';
+                }
 
-      const response = await axios.get('/api/v1/call-history', { params });
+                const response = await axios.get('/api/v1/call-history', { params });
 
-      this.callHistories = response.data.data; // assuming 'data' contains the items
-      this.totalItems = response.data.total;
-    } catch (error) {
-      console.error('Failed to load call history:', error);
-    } finally {
-      this.loading = false;
-    }
-  },
+                this.callHistories = response.data.data; // assuming 'data' contains the items
+                this.totalItems = response.data.total;
+            } catch (error) {
+                console.error('Failed to load call history:', error);
+            } finally {
+                this.loading = false;
+            }
+        },
 
 
 
