@@ -1,101 +1,164 @@
 <template>
   <AppLayout>
     <v-container fluid>
-      <h1 class="text-left text-h4 mt-6 mb-8 font-weight-bold">Call Center Dashboard</h1>
-
-      <!-- Overview Cards -->
       <v-row>
-        <v-col v-for="card in overviewCards" :key="card.title" cols="12" sm="6" md="3">
-          <v-card class="elevation-3 card-style">
+        <v-col cols="12">
+          <!-- <h1 class="text-h4 font-weight-bold mb-6">Call Center Dashboard</h1> -->
+        </v-col>
+      </v-row>
+
+      <!-- Stats Overview Cards -->
+      <v-row>
+        <v-col cols="12" sm="6" md="3">
+          <v-card class="dashboard-card primary-card">
             <v-card-title class="d-flex justify-space-between">
-              <span>{{ card.title }}</span>
-              <v-icon :icon="card.icon" class="icon-style"></v-icon>
+              <span>Total Calls</span>
+              <v-icon icon="mdi-phone" class="card-icon"></v-icon>
             </v-card-title>
             <v-card-text>
-              <div class="text-h5 font-weight-bold">{{ card.value }}</div>
-              <div class="text-caption">{{ card.subtext }}</div>
+              <div class="text-h3 font-weight-bold">{{ agentStats.summary_call_completed }}</div>
+              <div class="text-caption">
+                <v-chip color="success" size="small" class="mr-1">{{ agentStats.summary_inbound_call_completed }} In</v-chip>
+                <v-chip color="info" size="small">{{ agentStats.summary_outbound_call_completed }} Out</v-chip>
+              </div>
+            </v-card-text>
+          </v-card>
+        </v-col>
+
+        <v-col cols="12" sm="6" md="3">
+          <v-card class="dashboard-card success-card">
+            <v-card-title class="d-flex justify-space-between">
+              <span>Call Duration</span>
+              <v-icon icon="mdi-clock-outline" class="card-icon"></v-icon>
+            </v-card-title>
+            <v-card-text>
+              <div class="text-h3 font-weight-bold">{{ formatMinutes(agentStats.summary_call_duration) }}</div>
+              <div class="text-caption">{{ calculateAvgCallDuration() }} avg. per call</div>
+            </v-card-text>
+          </v-card>
+        </v-col>
+
+        <v-col cols="12" sm="6" md="3">
+          <v-card class="dashboard-card warning-card">
+            <v-card-title class="d-flex justify-space-between">
+              <span>Call Status</span>
+              <v-icon icon="mdi-phone-missed" class="card-icon"></v-icon>
+            </v-card-title>
+            <v-card-text>
+              <div class="text-h3 font-weight-bold">{{ calculateSuccessRate() }}%</div>
+              <div class="text-caption">
+                <v-tooltip bottom>
+                  <template v-slot:activator="{ props }">
+                    <span v-bind="props">Success rate</span>
+                  </template>
+                  <span>{{ agentStats.summary_call_missed }} missed, {{ agentStats.summary_rejected_incoming_calls + agentStats.summary_rejected_outgoing_calls }} rejected</span>
+                </v-tooltip>
+              </div>
+            </v-card-text>
+          </v-card>
+        </v-col>
+
+        <v-col cols="12" sm="6" md="3">
+          <v-card class="dashboard-card info-card">
+            <v-card-title class="d-flex justify-space-between">
+              <span>Agent Status</span>
+              <v-icon :icon="getStatusIcon(agentStats.status)" :color="getStatusColor(agentStats.status)" class="card-icon"></v-icon>
+            </v-card-title>
+            <v-card-text>
+              <div class="text-h5 font-weight-bold text-capitalize">{{ agentStats.status }}</div>
+              <div class="text-caption">{{ agentStats.phone_number }}</div>
             </v-card-text>
           </v-card>
         </v-col>
       </v-row>
 
-      <!-- CSAT and Abandoned Calls -->
+      <!-- Charts Row 1 -->
       <v-row class="mt-6">
         <v-col cols="12" md="6">
-          <v-card class="elevation-3 card-style">
-            <v-card-title>CSAT (Past 7 Days)</v-card-title>
+          <v-card class="dashboard-card chart-card">
+            <v-card-title>
+              <v-icon icon="mdi-phone-in-talk" class="mr-2"></v-icon>
+              Inbound vs Outbound Metrics
+            </v-card-title>
             <v-card-text>
-              <div class="chart-placeholder">CSAT Chart Placeholder</div>
+              <CallTypeChart :data="callTypeData" />
             </v-card-text>
           </v-card>
         </v-col>
+
         <v-col cols="12" md="6">
-          <v-card class="elevation-3 card-style">
-            <v-card-title>Abandoned Today</v-card-title>
+          <v-card class="dashboard-card chart-card">
+            <v-card-title>
+              <v-icon icon="mdi-phone-hangup" class="mr-2"></v-icon>
+              Call Distribution by Hangup Cause
+            </v-card-title>
             <v-card-text>
-              <div class="text-h5 font-weight-bold">{{ abandonedCalls.total }}</div>
-              <div class="text-caption">Abandonment Rate: {{ abandonedCalls.rate }}</div>
+              <CallDistributionChart :data="callDistributionData" />
             </v-card-text>
           </v-card>
         </v-col>
       </v-row>
 
-      <!-- Queue and Agents -->
+      <!-- Charts Row 2 -->
       <v-row class="mt-6">
-        <v-col cols="12" md="4">
-          <v-card class="elevation-3 card-style">
-            <v-card-title>Queue</v-card-title>
-            <v-card-text>
-              <div class="text-h5 font-weight-bold">{{ queue.callsWaiting }}</div>
-              <div class="text-caption text-danger">{{ queue.subtext }}</div>
+        <v-col cols="12" md="6">
+          <v-card class="dashboard-card chart-card">
+            <v-card-title>
+              <v-icon icon="mdi-chart-donut" class="mr-2"></v-icon>
+              IVR Selection Distribution
+            </v-card-title>
+            <v-card-text class="pb-0">
+              <IvrDonutChart :data="agentStats.ivr_analysis" />
             </v-card-text>
           </v-card>
         </v-col>
-        <v-col cols="12" md="4">
-          <!-- Agents available -->
-          <v-card class="elevation-3 card-style">
-            <v-card-title>Agents Available</v-card-title>
-            <v-card-text>
-              <v-list>
-                <v-list-item v-for="agent in agents" :key="agent.name" class="agent-item">
-                  <div>
-                    <strong>{{ agent.name }}</strong>
-                    <span :class="{
-                      'text-success': agent.status === 'available',
-                      'text-warning': agent.status === 'engaged',
-                      'text-grey': agent.status === 'offline'
-                    }">
-                      - {{ agent.status }}
-                    </span>
-                  </div>
-                </v-list-item>
-              </v-list>
-            </v-card-text>
-          </v-card>
-          <!-- end of Agents avialable  -->
-        </v-col>
 
-
-        <v-col cols="12" md="4">
-          <!-- Outbound Call Metrics -->
-          <v-card class="elevation-3 card-style">
-            <v-card-title class="title-style">
-              <v-icon class="icon-style">mdi-phone-forward</v-icon>
-              Outbound Call Metrics
+        <v-col cols="12" md="6">
+          <v-card class="dashboard-card chart-card">
+            <v-card-title>
+              <v-icon icon="mdi-timer-sand" class="mr-2"></v-icon>
+              IVR Average Duration
             </v-card-title>
             <v-card-text>
-              <v-list>
-                <v-list-item v-for="(item, index) in outboundCallMetrics.items" :key="index" class="metric-item">
-                  <v-icon class="metric-icon">
-                    {{ getIcon(index) }}
-                  </v-icon>
-                  <span class="metric-text">{{ item }}</span>
-                </v-list-item>
-              </v-list>
+              <IvrBarChart :data="agentStats.ivr_analysis" />
             </v-card-text>
           </v-card>
+        </v-col>
+      </v-row>
 
-          <!-- Outbound Call Metrics  -->
+      <!-- Call Details Table -->
+      <v-row class="mt-6">
+        <v-col cols="12">
+          <v-card class="dashboard-card">
+            <v-card-title>
+              <v-icon icon="mdi-format-list-bulleted" class="mr-2"></v-icon>
+              IVR Analysis Details
+            </v-card-title>
+            <v-card-text>
+              <v-table density="compact">
+                <thead>
+                  <tr>
+                    <th>IVR Option</th>
+                    <th>Description</th>
+                    <th>Total Selected</th>
+                    <th>Total Duration</th>
+                    <th>Avg Duration</th>
+                    <th>Selection %</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="item in agentStats.ivr_analysis" :key="item.id" :class="{ 'highlighted-row': item.total_selected > 0 }">
+                    <td>{{ item.option_number }}</td>
+                    <td>{{ item.description }}</td>
+                    <td>{{ item.total_selected }}</td>
+                    <td>{{ formatSeconds(item.total_duration) }}</td>
+                    <td>{{ item.average_duration.toFixed(1) }}s</td>
+                    <td>{{ item.selection_percentage }}%</td>
+                  </tr>
+                </tbody>
+              </v-table>
+            </v-card-text>
+          </v-card>
         </v-col>
       </v-row>
     </v-container>
@@ -104,168 +167,213 @@
 
 <script>
 import AppLayout from "@/Layouts/AppLayout.vue";
-import { computed } from 'vue'; 
+import { defineComponent, ref, onMounted, computed } from 'vue';
+// import CallTypeChart from '@/Components/Charts/CallTypeChart.vue';
+// import CallDistributionChart from '@/Components/Charts/CallDistributionChart.vue';
+// import IvrDonutChart from '@/Components/Charts/IvrDonutChart.vue';
+// import IvrBarChart from '@/Components/Charts/IvrBarChart.vue';
 
-
-const userId = computed(() => usePage().props.value.user?.id);
-
-
-export default {
+export default defineComponent({
   components: {
-    AppLayout
-  },
-  data() {
-    return {
-      overviewCards: [
-        { title: "CSAT Today", value: "92%", subtext: "Customer Satisfaction", icon: "mdi-thumb-up" },
-        { title: "Inbound Calls Today", value: "596", subtext: "Avg. wait time: 58 sec", icon: "mdi-phone-incoming" },
-        { title: "Call Metrics", value: "4 min", subtext: "Avg. call time, 75% resolved", icon: "mdi-clock-time-four" },
-        { title: "Queue", value: "26", subtext: "Calls waiting", icon: "mdi-phone-ring" }
-      ],
-      abandonedCalls: {
-        total: 29,
-        rate: "4.9%"
-      },
-      queue: {
-        callsWaiting: 26,
-        subtext: "Urgent attention required!"
-      },
-
-      outboundCallMetrics: {
-        title: "Outbound Call Metrics",
-        items: [
-          "Total Outbound Calls: 342",
-          "Success Rate: 75%",
-          "Average Call Time: 3 min"
-        ]
-      },
-
-      agents: [
-      ],
-
-    };
-
+    AppLayout,
+    // CallTypeChart,
+    // CallDistributionChart,
+    // IvrDonutChart,
+    // IvrBarChart
   },
   props: {
+    userId: {
+      type: String,
+      required: true
+    }
+  },
+  setup(props) {
+    const agentStats = ref({
+      id: 1,
+      phone_number: "BoxleoKenya.Developer",
+      status: "available",
+      sessionId: null,
+      summary_call_completed: 292,
+      summary_inbound_call_completed: 31,
+      summary_outbound_call_completed: 261,
+      summary_call_duration: 1638,
+      summary_call_missed: 1,
+      summary_rejected_incoming_calls: 0,
+      summary_user_busy_outgoing_calls: 10,
+      summary_rejected_outgoing_calls: 5,
+      updated_at: "2025-04-13T11:16:52.000000Z",
+      ivr_analysis: [
+        {id: 1, option_number: 1, description: "Replacement", total_selected: 8, total_duration: 635, average_duration: 79.38, selection_percentage: 24.24},
+        {id: 2, option_number: 2, description: "Order Follow-up", total_selected: 8, total_duration: 144, average_duration: 18, selection_percentage: 24.24},
+        {id: 3, option_number: 3, description: "Refund", total_selected: 0, total_duration: 0, average_duration: 0, selection_percentage: 0},
+        {id: 4, option_number: 4, description: "Business Prospect", total_selected: 0, total_duration: 0, average_duration: 0, selection_percentage: 0},
+        {id: 5, option_number: 5, description: "Speak to an Agent", total_selected: 13, total_duration: 329, average_duration: 25.31, selection_percentage: 39.39}
+      ]
+    });
+
+    const callTypeData = computed(() => {
+      return {
+        inbound: agentStats.value.summary_inbound_call_completed,
+        outbound: agentStats.value.summary_outbound_call_completed
+      };
+    });
+
+    const callDistributionData = computed(() => {
+      return [
+        { label: 'Missed', value: agentStats.value.summary_call_missed },
+        { label: 'Rejected In', value: agentStats.value.summary_rejected_incoming_calls },
+        { label: 'Rejected Out', value: agentStats.value.summary_rejected_outgoing_calls },
+        { label: 'User Busy', value: agentStats.value.summary_user_busy_outgoing_calls }
+      ];
+    });
+
+    const fetchAgentStats = () => {
+      axios.get(`/api/v1/agent-stats/${props.userId}`)
+        .then(response => {
+          agentStats.value = response.data;
+        })
+        .catch(error => {
+          console.error('Error fetching agent stats:', error);
+        });
+    };
+
+    const formatMinutes = (seconds) => {
+      const mins = Math.floor(seconds / 60);
+      const secs = seconds % 60;
+      return `${mins}m ${secs}s`;
+    };
+
+    const formatSeconds = (seconds) => {
+      if (seconds < 60) return `${seconds}s`;
+      const mins = Math.floor(seconds / 60);
+      const secs = seconds % 60;
+      return `${mins}m ${secs}s`;
+    };
+
+    const calculateAvgCallDuration = () => {
+      const totalCalls = agentStats.value.summary_call_completed;
+      if (totalCalls === 0) return '0s';
+      const avgSeconds = Math.round(agentStats.value.summary_call_duration / totalCalls);
+      return formatSeconds(avgSeconds);
+    };
+
+    const calculateSuccessRate = () => {
+      const totalCallAttempts = agentStats.value.summary_call_completed + 
+                               agentStats.value.summary_call_missed + 
+                               agentStats.value.summary_rejected_incoming_calls +
+                               agentStats.value.summary_rejected_outgoing_calls;
+      
+      if (totalCallAttempts === 0) return 0;
+      return Math.round((agentStats.value.summary_call_completed / totalCallAttempts) * 100);
+    };
+
+    const getStatusIcon = (status) => {
+      switch (status?.toLowerCase()) {
+        case 'available': return 'mdi-account-check';
+        case 'busy': return 'mdi-account-clock';
+        case 'offline': return 'mdi-account-off';
+        default: return 'mdi-account-question';
+      }
+    };
     
-        userId: String,
-  },
-  methods: {
-    getIcon(index) {
-      const icons = ["mdi-phone", "mdi-chart-line", "mdi-timer"];
-      return icons[index] || "mdi-information-outline";
-    },
-    fetchUsers() {
-            axios.get('/v1/users')
-                .then(response => {
-                    this.agents = response.data;
-                })
-                .catch(error => {
-                    console.error('Error fetching users:', error);
-                });
-        },
+    const getStatusColor = (status) => {
+      switch (status?.toLowerCase()) {
+        case 'available': return 'success';
+        case 'busy': return 'warning';
+        case 'offline': return 'error';
+        default: return 'grey';
+      }
+    };
 
-    fetchAgentstats() {
-            axios.get('api/v1/agent-stats'/ + this.userId) // Use the userId prop to fetch agent stats
-                .then(response => {
-                    // Assuming response.data contains the agent stats
+    onMounted(() => {
+      fetchAgentStats();
+      // Set up an interval to refresh data every minute
+      const refreshInterval = setInterval(fetchAgentStats, 60000);
+      
+      // Clean up the interval when component is unmounted
+      return () => clearInterval(refreshInterval);
+    });
 
-                    // 
-
-// {"id":1,"phone_number":"BoxleoKenya.Developer","status":"available","sessionId":null,"summary_call_completed":256,"summary_inbound_call_completed":9,"summary_outbound_call_completed":247,"summary_call_duration":1052,"summary_call_missed":1,"updated_at":"2025-04-06T16:44:37.000000Z"}
-                    this.stats = response.data;
-                })
-               
-                .catch(error => {
-                    console.error('Error fetching agent stats:', error);
-                });
-        }
-        
-
-  },
-  created() {
-        // this.fetchCallHistory();
-        this.fetchUsers();
-        this.fetchAgentstats();
-
-    },
-};
+    return {
+      agentStats,
+      callTypeData,
+      callDistributionData,
+      formatMinutes,
+      formatSeconds,
+      calculateAvgCallDuration,
+      calculateSuccessRate,
+      getStatusIcon,
+      getStatusColor
+    };
+  }
+});
 </script>
 
 <style scoped>
-.card-style {
-  padding: 20px;
-  border-radius: 10px;
-  background-color: #f9f9f9;
-}
-
-.icon-style {
-  font-size: 28px;
-  color: #007bff;
-}
-
-.chart-placeholder {
-  height: 250px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  border: 2px dashed #ddd;
-  background-color: #f0f8ff;
-  border-radius: 10px;
-}
-
-.text-danger {
-  color: #ff0000;
-}
-
-.agent-item {
-  border-bottom: 1px solid #e0e0e0;
-  padding: 8px 0;
-}
-
-.card-style {
-  background-color: #e3f2fd;
-  /* Light Blue */
-  color: #0d47a1;
-  /* Dark Blue */
-  padding: 16px;
+.dashboard-card {
   border-radius: 12px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  height: 100%;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
-.title-style {
-  font-weight: bold;
-  font-size: 1.2rem;
-  display: flex;
-  align-items: center;
-  gap: 8px;
+.dashboard-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+}
+
+.card-icon {
+  font-size: 28px;
+}
+
+.primary-card {
+  background-color: #e3f2fd;
   color: #1565c0;
-  /* Blue accent */
 }
 
-.icon-style {
-  color: #1e88e5;
-  /* Medium Blue */
+.success-card {
+  background-color: #e8f5e9;
+  color: #2e7d32;
 }
 
-.metric-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin: 8px 0;
+.warning-card {
+  background-color: #fff8e1;
+  color: #f57f17;
 }
 
-.metric-icon {
-  color: #4caf50;
-  /* Green */
+.info-card {
+  background-color: #e8eaf6;
+  color: #303f9f;
 }
 
-.metric-text {
-  font-size: 1rem;
-  font-weight: 500;
+.chart-card {
+  background-color: #fafafa;
+  min-height: 350px;
+}
+
+.highlighted-row {
+  background-color: rgba(33, 150, 243, 0.1);
+}
+
+.v-card-title {
+  font-size: 1.1rem;
+  font-weight: bold;
+  padding: 16px 20px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.v-card-text {
+  padding: 20px;
+}
+
+.text-caption {
+  opacity: 0.8;
+  margin-top: 4px;
+}
+
+.v-table {
+  border-radius: 8px;
+  overflow: hidden;
 }
 </style>
-
-
-
-
-<!-- {"id":1,"phone_number":"BoxleoKenya.Developer","status":null,"sessionId":null,"summary_call_completed":1,"summary_inbound_call_completed":0,"summary_outbound_call_completed":1,"summary_call_duration":5,"summary_call_missed":0,"updated_at":"2025-04-06T02:30:13.000000Z"} -->
