@@ -15,7 +15,7 @@ class OrderSeeder extends Seeder
     {
         //
 
-        Order::factory()->count(1)->create();
+        Order::factory()->count(100)->create();
 
     }
 }
