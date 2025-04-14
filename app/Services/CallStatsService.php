@@ -152,12 +152,17 @@ class CallStatsService
         $outgoingDuration = (clone $outgoingQuery)->sum('durationInSeconds') ?? 0;
         $totalDuration = $incomingDuration + $outgoingDuration;
 
-        // IVR statistics
-        $ivrOptions = IvrOption::all();
+
+
+
+        // IVR statistics if user is CallCentre Admin
+        // $ivrOptions = IvrOption::all();
         // $ivrStats = CallHistory::whereNotNull('ivr_option_id')->get();
+        // $ivrAnalysis = $this->analyzeIvrStatistics($ivrOptions, $ivrStats, $dateRange, $user->id);
 
 
-        // IVR statistics - correctly filtered by user
+
+        // IVR statistics - correctly filtered by user is CallCentre
         $ivrOptions = IvrOption::all();
         $ivrStats = CallHistory::whereNotNull('ivr_option_id')
             ->where('user_id', $user->id)
@@ -166,7 +171,6 @@ class CallStatsService
             })
             ->get();
         $ivrAnalysis = $this->analyzeIvrStatistics($ivrOptions, $ivrStats);
-        // $ivrAnalysis = $this->analyzeIvrStatistics($ivrOptions, $ivrStats, $dateRange, $user->id);
 
         $result = [
             'id' => $user->id,

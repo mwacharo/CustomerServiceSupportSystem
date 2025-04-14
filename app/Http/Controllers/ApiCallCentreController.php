@@ -993,11 +993,11 @@ class ApiCallCentreController extends Controller
             $dateRange[1] = Carbon::parse(trim($dateRange[1]))->endOfDay();
         } else {
             // Default to today if no date range is provided
-            // $dateRange = [Carbon::today()->startOfDay(), Carbon::today()->endOfDay()];
-            $dateRange = [
-                Carbon::now()->startOfYear(),  // Start of the current year
-                Carbon::now()->endOfYear(),    // End of the current year
-            ];
+            $dateRange = [Carbon::today()->startOfDay(), Carbon::today()->endOfDay()];
+            // $dateRange = [
+            //     Carbon::now()->startOfYear(),  // Start of the current year
+            //     Carbon::now()->endOfYear(),    // End of the current year
+            // ];
         }
         $stats = $this->callStatsService->getAgentStats($user, $dateRange);
 
