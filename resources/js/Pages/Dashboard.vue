@@ -168,25 +168,37 @@
 <script>
 import AppLayout from "@/Layouts/AppLayout.vue";
 import { defineComponent, ref, onMounted, computed } from 'vue';
-// import CallTypeChart from '@/Components/Charts/CallTypeChart.vue';
-// import CallDistributionChart from '@/Components/Charts/CallDistributionChart.vue';
-// import IvrDonutChart from '@/Components/Charts/IvrDonutChart.vue';
-// import IvrBarChart from '@/Components/Charts/IvrBarChart.vue';
+import CallTypeChart from '@/Components/Charts/CallTypeChart.vue';
+import CallDistributionChart from '@/Components/Charts/CallDistributionChart.vue';
+import IvrDonutChart from '@/Components/Charts/IvrDonutChart.vue';
+import IvrBarChart from '@/Components/Charts/IvrBarChart.vue';
+
+import { usePage } from '@inertiajs/inertia-vue3';
+
+
+
+
+const userId = computed(() => usePage().props.value.user?.id);
+
+onMounted(() => {
+
+  console.log("User Id:", userId.value); // Logs the token
+});
 
 export default defineComponent({
   components: {
     AppLayout,
-    // CallTypeChart,
-    // CallDistributionChart,
-    // IvrDonutChart,
-    // IvrBarChart
+    CallTypeChart,
+    CallDistributionChart,
+    IvrDonutChart,
+    IvrBarChart
   },
-  props: {
-    userId: {
-      type: String,
-      required: true
-    }
-  },
+  // props: {
+  //   userId: {
+  //     type: String,
+  //     required: true
+  //   }
+  // },
   setup(props) {
     const agentStats = ref({
       id: 1,
@@ -228,9 +240,12 @@ export default defineComponent({
     });
 
     const fetchAgentStats = () => {
-      axios.get(`/api/v1/agent-stats/${props.userId}`)
+      axios.get(`/api/v1/agent-stats/${userId.value}`)
+
         .then(response => {
           agentStats.value = response.data;
+          console.log('Agent stats:', agentStats.value);
+
         })
         .catch(error => {
           console.error('Error fetching agent stats:', error);

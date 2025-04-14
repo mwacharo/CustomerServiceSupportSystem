@@ -589,7 +589,8 @@ import { usePage } from '@inertiajs/inertia-vue3';
 import { ref } from 'vue';
 
 const userToken = computed(() => usePage().props.value.user?.token);
-const userId = computed(() => usePage().props.value.user?.id);
+const userId = computed(() => usePage().props.value.user.id);
+
 
 
 
@@ -767,6 +768,7 @@ export default {
 
         this.fetchAgentstats();
         this.fetchUsers();
+
 
     },
 
@@ -1181,8 +1183,7 @@ export default {
         // summary_call_missed	
 
         fetchAgentstats() {
-            axios.get('api/v1/agent-stats' / + this.userId) // Use the userId prop to fetch agent stats
-                .then(response => {
+            axios.get(`/api/v1/agent-stats/${userId.value}`)                .then(response => {
                     this.stats = response.data;
                     console.log('Agent stats:', this.stats);
                 })
@@ -1196,6 +1197,7 @@ export default {
             axios.get('/v1/users')
                 .then(response => {
                     this.agents = response.data;
+                    console.log('Agents:',this.agents);
                 })
                 .catch(error => {
                     console.error('Error fetching users:', error);
@@ -1213,6 +1215,8 @@ export default {
 
 
     async mounted() {
+        console.log("User Id:", userId.value); // Logs the token
+
         console.log("User Token:", userToken.value); // Logs the token
 
         if (!userToken.value) {
