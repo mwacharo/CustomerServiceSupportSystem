@@ -37,6 +37,7 @@ class ApiIvrOptionController extends Controller
             'option_number' => 'required|integer',
             'description' => 'required|string|max:255',
             'forward_number' => 'required|string|max:15',
+            'phone_number' => 'required|string',
             'status' => 'required|boolean',
         ]);
 
@@ -46,6 +47,9 @@ class ApiIvrOptionController extends Controller
             $ivrOption->option_number = $validatedData['option_number'];
             $ivrOption->description = $validatedData['description'];
             $ivrOption->forward_number = $validatedData['forward_number'];
+            $ivrOption->phone_number = $validatedData['phone_number'];
+
+
             $ivrOption->status = $validatedData['status'];
             $ivrOption->save();
 
@@ -69,6 +73,7 @@ class ApiIvrOptionController extends Controller
             'option_number' => 'required|integer',
             'description' => 'required|string|max:255',
             'forward_number' => 'nullable|string|max:15',
+            'phone_number' => 'nullable|string',
             'status' => 'required|boolean',
         ]);
 

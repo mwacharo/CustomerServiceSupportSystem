@@ -37,6 +37,10 @@
                                             <v-col cols="12">
                                                 <v-text-field v-model="editedItem.forward_number" label="Forward Number"></v-text-field>
                                             </v-col>
+
+                                            <v-col cols="12">
+                                                <v-text-field v-model="editedItem.phone_number" label="Virtual Number"></v-text-field>
+                                            </v-col>
                                             <v-col cols="12">
                                                 <v-switch v-model="editedItem.status" label="Active"></v-switch>
                                             </v-col>
@@ -89,6 +93,7 @@ export default {
             { title: "Option Number", key: "option_number", align: "start" },
             { title: "Description", key: "description" },
             { title: "Forward Number", key: "forward_number" },
+            { title: "Virtual Number", key: "phone_number" },
             { title: "Status", key: "status" },
             { title: "Actions", key: "actions", sortable: false },
         ],
