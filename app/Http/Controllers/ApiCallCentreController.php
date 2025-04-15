@@ -814,7 +814,9 @@ class ApiCallCentreController extends Controller
         // find ivr_option_id 
         $ivr_option= IvrOption::where('option_number',$dtmfDigits);
 
-        $user_id = User::where('phone_number' ,$ivr_option->phone_number);
+        dd($ivr_option);
+
+        $user = User::where('phone_number' ,$ivr_option->phone_number);
 
         CallHistory::updateOrCreate(
             ['sessionId' => $sessionId],
@@ -823,7 +825,7 @@ class ApiCallCentreController extends Controller
             // note agentId is used to store the selected option in the database
             'ivr_option_id' => $dtmfDigits,
             'isActive' => 1, // Mark as active while handling selection
-            'user_id' =>$user_id
+            'user_id' =>$user->id
             ]
         );
 
