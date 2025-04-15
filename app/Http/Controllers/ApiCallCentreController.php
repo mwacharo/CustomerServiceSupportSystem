@@ -812,7 +812,7 @@ class ApiCallCentreController extends Controller
         ]);
 
         // find ivr_option_id 
-        $ivr_option= IvrOption::where('ivr_option',$dtmfDigits);
+        $ivr_option= IvrOption::where('option_number',$dtmfDigits);
 
         $user_id = User::where('phone_number' ,$ivr_option->phone_number);
 
