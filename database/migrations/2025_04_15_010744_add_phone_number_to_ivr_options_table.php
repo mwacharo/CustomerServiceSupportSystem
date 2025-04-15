@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('ivr_options', function (Blueprint $table) {
-            $table->string('phone_number', 15)->nullable()->after('forward_number');
+            $table->string('phone_number', 255)->nullable()->after('forward_number');
         });
     }
 

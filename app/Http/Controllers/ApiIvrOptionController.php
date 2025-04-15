@@ -36,7 +36,7 @@ class ApiIvrOptionController extends Controller
         $validatedData = $request->validate([
             'option_number' => 'required|integer',
             'description' => 'required|string|max:255',
-            'forward_number' => 'required|string|max:15',
+            'forward_number' => 'required|string',
             'phone_number' => 'required|string',
             'status' => 'required|boolean',
         ]);
@@ -72,7 +72,7 @@ class ApiIvrOptionController extends Controller
         $validatedData = $request->validate([
             'option_number' => 'required|integer',
             'description' => 'required|string|max:255',
-            'forward_number' => 'nullable|string|max:15',
+            'forward_number' => 'nullable|string',
             'phone_number' => 'nullable|string',
             'status' => 'required|boolean',
         ]);
