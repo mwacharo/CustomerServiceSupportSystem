@@ -849,7 +849,7 @@ class ApiCallCentreController extends Controller
             'sessionId' => $sessionId,
             'callerNumber' => $callerNumber,
             'selectedOption' => $dtmfDigits,
-            'user_id' => $user->id
+            'user_id' => $user?->id
 
         ]);
 
