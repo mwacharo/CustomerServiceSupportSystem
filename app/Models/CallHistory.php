@@ -55,7 +55,7 @@ class CallHistory extends Model
 
     public function  ivrOption()
     {
-        return $this->belongsTo(IvrOption::class, 'agentId');
+        return $this->belongsTo(IvrOption::class, 'ivr_option_id');
     }
 
 }
