@@ -813,11 +813,11 @@ class ApiCallCentreController extends Controller
         ]);
 
         // find ivr_option_id 
-        $ivr_option= IvrOption::where('option_number',$dtmfDigits);
+        $ivr_option= IvrOption::where('option_number',$dtmfDigits)->first();
 
         // dd($ivr_option);
 
-        $user = User::where('phone_number' ,$ivr_option->phone_number);
+        $user = User::where('phone_number' ,$ivr_option->phone_number)->first();
 
         CallHistory::updateOrCreate(
             ['sessionId' => $sessionId],
