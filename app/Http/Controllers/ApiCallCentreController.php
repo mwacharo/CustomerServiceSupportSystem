@@ -808,13 +808,14 @@ class ApiCallCentreController extends Controller
         Log::info("Updating call history with IVR selection", [
             'sessionId' => $sessionId,
             'callerNumber' => $callerNumber,
-            'selectedOption' => $dtmfDigits
+            'selectedOption' => $dtmfDigits,
+            // 'user_id' =>$user->id
         ]);
 
         // find ivr_option_id 
         $ivr_option= IvrOption::where('option_number',$dtmfDigits);
 
-        dd($ivr_option);
+        // dd($ivr_option);
 
         $user = User::where('phone_number' ,$ivr_option->phone_number);
 
@@ -832,7 +833,9 @@ class ApiCallCentreController extends Controller
         Log::info("Call history updated successfully", [
             'sessionId' => $sessionId,
             'callerNumber' => $callerNumber,
-            'selectedOption' => $dtmfDigits
+            'selectedOption' => $dtmfDigits,
+             'user_id' =>$user->id
+
         ]);
 
 
