@@ -124,6 +124,7 @@ export default {
             option.option_number.toString().includes(query) ||
             option.description.toLowerCase().includes(query) ||
             option.forward_number.toLowerCase().includes(query) ||
+            option.phone_number.toLowerCase().includes(query) ||
             option.status.toLowerCase().includes(query)
             );
         },

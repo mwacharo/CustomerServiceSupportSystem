@@ -474,39 +474,39 @@ class ApiCallCentreController extends Controller
         // Update call history agentId with the assigned agent
         if ($agent) {
             try {
-            // Log the agent details before updating
-            Log::info("Updating agent status to busy", [
-                'agent_id' => $agent->id,
-                'phone_number' => $agent->phone_number,
-                'sessionId' => $sessionId ?: uniqid()
-            ]);
+                // Log the agent details before updating
+                Log::info("Updating agent status to busy", [
+                    'agent_id' => $agent->id,
+                    'phone_number' => $agent->phone_number,
+                    'sessionId' => $sessionId ?: uniqid()
+                ]);
 
-            // Update the agent's status to busy
-            $agent->update(['status' => 'busy', 'sessionId' => $sessionId ?: uniqid()]);
+                // Update the agent's status to busy
+                $agent->update(['status' => 'busy', 'sessionId' => $sessionId ?: uniqid()]);
 
-            // Log the session ID after updating
-            Log::info("Agent status updated successfully", [
-                'agent_id' => $agent->id,
-                'sessionId' => $sessionId
-            ]);
+                // Log the session ID after updating
+                Log::info("Agent status updated successfully", [
+                    'agent_id' => $agent->id,
+                    'sessionId' => $sessionId
+                ]);
 
-            // Update the call history with the assigned agent
-            $updatedRows = CallHistory::where('sessionId', $sessionId)
-                ->update(['user_id' => $agent->id]);
+                // Update the call history with the assigned agent
+                $updatedRows = CallHistory::where('sessionId', $sessionId)
+                    ->update(['user_id' => $agent->id]);
 
-            // Log the number of rows updated in call history
-            Log::info("Call history updated with assigned agent", [
-                'updated_rows' => $updatedRows,
-                'agent_id' => $agent->id
-            ]);
+                // Log the number of rows updated in call history
+                Log::info("Call history updated with assigned agent", [
+                    'updated_rows' => $updatedRows,
+                    'agent_id' => $agent->id
+                ]);
 
-            Log::info("Updated agent status to busy: {$agent->phone_number}");
+                Log::info("Updated agent status to busy: {$agent->phone_number}");
             } catch (\Exception $e) {
-            // Log any errors that occur during the update process
-            Log::error("Error updating agent status or call history", [
-                'error_message' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
+                // Log any errors that occur during the update process
+                Log::error("Error updating agent status or call history", [
+                    'error_message' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString()
+                ]);
             }
         }
 
@@ -573,26 +573,24 @@ class ApiCallCentreController extends Controller
             $completed = strtolower($payload['callSessionState'] ?? '') === 'completed' || strtolower($payload['status'] ?? '') === 'completed';
 
 
-          if ($completed)
-          {
+            if ($completed) {
 
 
-             $updatedRows = User::where('sessionId', $payload['sessionId'] ?? null)
-                ->update([
-                    'status' => 'available',
-                    'sessionId' => null,
-                    'updated_at' => now()
-                ]);
+                $updatedRows = User::where('sessionId', $payload['sessionId'] ?? null)
+                    ->update([
+                        'status' => 'available',
+                        'sessionId' => null,
+                        'updated_at' => now()
+                    ]);
 
-            if ($updatedRows > 0) {
-                Log::info("User has been reset to available.", [
-                    'sessionId' => $payload['sessionId'] ?? null,
-                    'updated_rows' => $updatedRows
-                ]);
-            } 
-         
-          }
-           
+                if ($updatedRows > 0) {
+                    Log::info("User has been reset to available.", [
+                        'sessionId' => $payload['sessionId'] ?? null,
+                        'updated_rows' => $updatedRows
+                    ]);
+                }
+            }
+
 
             return response()->json(['status' => 'success'], 200);
         } catch (\Exception $e) {
@@ -812,29 +810,46 @@ class ApiCallCentreController extends Controller
             // 'user_id' =>$user->id
         ]);
 
-        // find ivr_option_id 
-        $ivr_option= IvrOption::where('option_number',$dtmfDigits)->first();
+        // $ivr_option= IvrOption::where('option_number',$dtmfDigits)->first();
 
-        // dd($ivr_option);
+        // $user = User::where('phone_number' ,$ivr_option->phone_number)->first();
 
-        $user = User::where('phone_number' ,$ivr_option->phone_number)->first();
+        // CallHistory::updateOrCreate(
+        //     ['sessionId' => $sessionId],
+        //     [
+        //     'callerNumber' => $callerNumber,
+        //     // note agentId is used to store the selected option in the database
+        //     'ivr_option_id' => $dtmfDigits,
+        //     'isActive' => 1, // Mark as active while handling selection
+        //     'user_id' =>$user->id
+        //     ]
+        // );
+
+
+
+        $ivr_option = IvrOption::where('option_number', $dtmfDigits)->first();
+
+        $user = null;
+        if ($ivr_option) {
+            $user = User::where('phone_number', $ivr_option->phone_number)->first();
+        }
 
         CallHistory::updateOrCreate(
             ['sessionId' => $sessionId],
             [
-            'callerNumber' => $callerNumber,
-            // note agentId is used to store the selected option in the database
-            'ivr_option_id' => $dtmfDigits,
-            'isActive' => 1, // Mark as active while handling selection
-            'user_id' =>$user->id
+                'callerNumber'   => $callerNumber,
+                'ivr_option_id'  => $ivr_option?->id, // Save null if not found
+                'isActive'       => 1,
+                'user_id'        => $user?->id        // Save null if no user
             ]
         );
+
 
         Log::info("Call history updated successfully", [
             'sessionId' => $sessionId,
             'callerNumber' => $callerNumber,
             'selectedOption' => $dtmfDigits,
-             'user_id' =>$user->id
+            'user_id' => $user->id
 
         ]);
 
@@ -857,7 +872,7 @@ class ApiCallCentreController extends Controller
             Log::info("✅ User selected: {$option->option_number} - {$option->description}");
 
             // if ($option->option_number == 6) {
-                if ($option->description == 'Speak to an Agent') {
+            if ($option->description == 'Speak to an Agent') {
 
                 $agentNumber = $this->getAvailableAgent($callerNumber, $sessionId);
                 return $agentNumber
@@ -953,34 +968,34 @@ class ApiCallCentreController extends Controller
             $search = $request->get('search');
             $sortBy = $request->get('sort_by');
             $sortDesc = $request->boolean('sort_desc', false);
-    
-            $query = CallHistory::with('agent','ivrOption');
-                // ->whereNotNull('user_id');
-    
+
+            $query = CallHistory::with('agent', 'ivrOption');
+            // ->whereNotNull('user_id');
+
             if ($search) {
                 $query->where(function ($q) use ($search) {
                     $q->where('lastBridgeHangupCause', 'like', "%{$search}%")
-                      ->orWhere('callerNumber', 'like', "%{$search}%")
-                      ->orWhere('clientDialedNumber', 'like', "%{$search}%");
+                        ->orWhere('callerNumber', 'like', "%{$search}%")
+                        ->orWhere('clientDialedNumber', 'like', "%{$search}%");
                 });
             }
-    
+
             // 🔃 Use client-side sort if provided, otherwise sort by latest
             if ($sortBy) {
                 $query->orderBy($sortBy, $sortDesc ? 'desc' : 'asc');
             } else {
                 $query->orderBy('created_at', 'desc'); // 👈 default sort
             }
-    
+
             $callHistories = $query->paginate($perPage, ['*'], 'page', $page);
-    
+
             return response()->json($callHistories, 200);
         } catch (Exception $e) {
             Log::error("Error fetching call history: " . $e->getMessage());
             return response()->json(['error' => 'Failed to fetch call history'], 500);
         }
     }
-    
+
 
 
 
@@ -1070,11 +1085,11 @@ class ApiCallCentreController extends Controller
     public function callSummaryReport(Request $request)
     {
 
-       
+
         Log::info('Call Summary Report Request:', $request->all());
 
 
-        $filters = $request->only(['startDate', 'endDate', 'status','user_id', 'ivrOptions', 'reportType']);
+        $filters = $request->only(['startDate', 'endDate', 'status', 'user_id', 'ivrOptions', 'reportType']);
 
         Log::info('Call Summary Report Filters:', $filters);
 
@@ -1083,7 +1098,6 @@ class ApiCallCentreController extends Controller
 
         return response()->json($reportData);
     }
-
 }
 
 
