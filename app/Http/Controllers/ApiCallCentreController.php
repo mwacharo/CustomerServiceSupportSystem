@@ -829,11 +829,14 @@ class ApiCallCentreController extends Controller
 
         $ivr_option = IvrOption::where('option_number', $dtmfDigits)->first();
 
-        $user = null;
         if ($ivr_option) {
             $user = User::where('phone_number', $ivr_option->phone_number)->first();
-        }
-
+        
+            // If not found, try with `phone` and `forward_number`
+            if (!$user) {
+                $user = User::where('phone', $ivr_option->forward_number)->first();
+            }
+        
         CallHistory::updateOrCreate(
             ['sessionId' => $sessionId],
             [
