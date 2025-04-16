@@ -836,6 +836,8 @@ class ApiCallCentreController extends Controller
             if (!$user) {
                 $user = User::where('phone', $ivr_option->forward_number)->first();
             }
+
+        }
         
         CallHistory::updateOrCreate(
             ['sessionId' => $sessionId],
