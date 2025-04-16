@@ -19,6 +19,9 @@ class ApiUserController extends Controller
     public function updateStatus(Request $request){
 
 
+        // Log the incoming request
+        Log::info('Update Agent Status Request:', $request->all());
+
         $request->validate([
             'user_id' => 'required|exists:users,id',
             'status' => 'required|string|in:ready,notready,offline,closed',
@@ -27,6 +30,9 @@ class ApiUserController extends Controller
         $user = User::findOrFail($request->user_id);
         $user->status = $request->status;
         $user->save();
+    
+        // Log the updated user
+        Log::info('Updated User:', $user->toArray());
     
         return response()->json([
             'message' => 'Agent status updated successfully',
