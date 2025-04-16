@@ -102,7 +102,7 @@
                       <v-col cols="12" sm="6">
                         <v-select
                           v-model="editedItem.status"
-                          :items="['available', 'engaged', 'offline']"
+                          :items="['ready', 'engaged', 'offline']"
                           label="Status"
                           clearable
                         ></v-select>
@@ -276,7 +276,7 @@ export default {
         phone_number: "",
         branch_id: null,
         country_id: null,
-        status: ["available", "engaged"],
+        status: ["ready", "engaged"],
        
       },
       defaultItem: {
@@ -288,7 +288,7 @@ export default {
         phone_number: "",
         branch_id: null,
         country_id: null,
-        status: ["available", "engaged"],
+        status: ["ready", "engaged"],
       },
     };
   },

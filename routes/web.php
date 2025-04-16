@@ -93,9 +93,9 @@ Route::middleware([
 
         
         // Route::get('v1/users', [ApiUserController::class, 'index']);
-        Route::post('v1/user', [ApiUserController::class, 'store']);
-        Route::put('v1/user/{id}', [ApiUserController::class, 'update'])->name('user.update');
-        Route::delete('v1/user/{id}', [ApiUserController::class, 'destroy'])->name('user.destroy');
+        // Route::post('v1/user', [ApiUserController::class, 'store']);
+        // Route::put('v1/user/{id}', [ApiUserController::class, 'update'])->name('user.update');
+        // Route::delete('v1/user/{id}', [ApiUserController::class, 'destroy'])->name('user.destroy');
         Route::get('/permissions', function () {
             return Inertia::render('UserPermissions');
         })->name('permissions');

@@ -466,7 +466,7 @@ class ApiCallCentreController extends Controller
         // }
 
         // 4. Default fallback: assign to any available agent
-        $agent = User::where('status', 'available')->first();
+        $agent = User::where('status', 'ready')->first();
 
 
         Log::info($agent ? "Assigned agent: {$agent->phone_number}" : 'No available agents.');

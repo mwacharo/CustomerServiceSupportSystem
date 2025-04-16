@@ -15,6 +15,25 @@ use Spatie\Permission\Models\Role;
 class ApiUserController extends Controller
 {
   
+
+    public function updateStatus(Request $request){
+
+
+        $request->validate([
+            'user_id' => 'required|exists:users,id',
+            'status' => 'required|string|in:ready,notready,offline,closed',
+        ]);
+    
+        $user = User::findOrFail($request->user_id);
+        $user->status = $request->status;
+        $user->save();
+    
+        return response()->json([
+            'message' => 'Agent status updated successfully',
+            'user' => $user
+        ]);
+
+    }
     public function index()
     {
         

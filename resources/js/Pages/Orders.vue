@@ -91,10 +91,23 @@
                                                 </p>
                                             </div>
                                             <v-spacer></v-spacer>
-                                            <v-chip color="success" small class="white--text px-2">
+
+
+                                            <v-chip
+  v-if="agent"
+  :color="getStatusColor(agent.status)"
+  small
+  class="white--text px-2"
+>
+  <v-icon left small>mdi-circle</v-icon>
+  {{ getStatusText(agent.status) }}
+</v-chip>
+
+
+                                            <!-- <v-chip color="success" small class="white--text px-2">
                                                 <v-icon left small>mdi-circle</v-icon>
                                                 Online
-                                            </v-chip>
+                                            </v-chip> -->
                                         </div>
                                     </div>
                                 </div>
@@ -667,6 +680,9 @@ export default {
 
     components: { AppLayout },
     data: () => ({
+        agent: null, // or {}
+
+        currentUserId: userId,
         search: '',
         stats: [],
         loading: false, // this is used by :loading binding
@@ -774,6 +790,52 @@ export default {
 
     methods: {
 
+
+
+        getStatusColor(status) {
+    switch (status) {
+      case 'ready':
+        return 'green';
+      case 'notready':
+        return 'orange';
+      case 'offline':
+      case 'closed':
+        return 'red';
+      default:
+        return 'grey';
+    }
+  },
+  getStatusText(status) {
+    switch (status) {
+      case 'ready':
+        return 'Online';
+      case 'notready':
+        return 'Not Ready';
+      case 'offline':
+      case 'closed':
+        return 'Offline';
+      default:
+        return 'Unknown';
+    }
+  },
+  updateAgentStatus(status) {
+    const userId = this.currentUserId; // Make sure this is set when user logs in
+
+    axios.post(`/api/v1/user/status`, {
+        user_id: userId,
+        status: status
+    })
+    .then(response => {
+        const user = response.data.user;
+        this.agent = user; // ✅ 
+        console.log('Agent status updated:', user.status);
+    })
+    .catch(error => {
+        console.error('Error updating agent status:', error);
+    });
+}
+,
+
         sendWhatsApp(phone) {
 
             //   window.open(`https://wa.me/${phone}`, "_blank");
@@ -821,6 +883,8 @@ export default {
                     this.connection_active = true;
                     console.log("Africastalking WebRTC client is ready.");
                     this.$toastr.success("WebRTC client is ready.");
+                    this.updateAgentStatus('ready');
+
                 });
 
                 client.on('error', (err) => {
@@ -831,6 +895,8 @@ export default {
                 client.on('closed', (err) => {
                     console.warn("Africastalking Client Connection Closed:", err);
                     this.$toastr.warning("Connection closed.");
+                    this.updateAgentStatus('closed');
+
                 });
 
                 client.on('incomingcall', (event) => {
@@ -1196,7 +1262,7 @@ export default {
         fetchUsers() {
             axios.get('/v1/users')
                 .then(response => {
-                    this.agents = response.data;
+                    this.agents = response.data;    
                     console.log('Agents:',this.agents);
                 })
                 .catch(error => {
@@ -1207,7 +1273,7 @@ export default {
 
     },
     watch: {
-        // Watch for any change in the agents and filter again if needed
+        // Watch for agents status
         availableAgents(newAgents) {
             this.availableAgents = newAgents.filter(agent => !agent.isInCall);
         }

@@ -44,6 +44,13 @@ Route::get('/v1/roles/{roleId}/permissions', [ApiPermissionsController::class, '
 Route::put('v1/roles/{roleId}/permissions', [ApiPermissionsController::class, 'updateRolePermissions']);
 
 
+// user
+
+Route::post('v1/user', [ApiUserController::class, 'store']);
+Route::put('v1/user/{id}', [ApiUserController::class, 'update'])->name('user.update');
+Route::delete('v1/user/{id}', [ApiUserController::class, 'destroy'])->name('user.destroy');
+Route::post('v1/user/status', [ApiUserController::class, 'updateStatus'])->name('user.updateStatus');
+
 
 Route::post('/v1/permissions', [ApiPermissionsController::class, 'storePermission']);
 
