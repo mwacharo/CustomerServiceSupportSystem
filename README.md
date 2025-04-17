@@ -7,60 +7,86 @@
 <a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
 </p>
 
-## About Laravel
+---
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## 📞 Call Centre Solution – Powered by Laravel
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+This is a modern, full-featured **Call Centre Solution** built using Laravel. It demonstrates my capabilities as a **Full Stack Developer**, with end-to-end implementation across:
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+- ✅ REST API consumption
+- ✅ Frontend + Backend integration
+- ✅ Database design and queries
+- ✅ Server setup on **Linux**
+- ✅ User requirements gathering & execution
+- ✅ Deployment & live hosting
 
-## Learning Laravel
+---
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+### 🧑‍💻 Purpose of the Project
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+This system was built to showcase my technical expertise and practical experience across the full development stack. From collecting user needs to implementation and deployment, every aspect of the solution has been handled by me — including hosting it on **DigitalOcean**.
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains over 2000 video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+It serves as a live portfolio project demonstrating:
 
-## Laravel Sponsors
+- RESTful API integration (e.g., Africa's Talking)
+- Real-time call handling with WebRTC
+- Custom backend logic with Laravel
+- Frontend using Vue.js
+- Secure user management
+- Hosting and deployment on a Linux-based production server
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+---
 
-### Premium Partners
+### ✨ Core Features
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[WebReinvent](https://webreinvent.com/)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Jump24](https://jump24.co.uk)**
-- **[Redberry](https://redberry.international/laravel/)**
-- **[Active Logic](https://activelogic.com)**
-- **[byte5](https://byte5.de)**
-- **[OP.GG](https://op.gg)**
+- **Agent Dashboard**: Real-time views of calls, tasks, and customer records.
+- **Customer Profiles**: Centralized information with full interaction history.
+- **In-Browser Calls via WebRTC**: No external dialers needed.
+- **SMS/Voice through Africa’s Talking API**: Send/receive messages, trigger calls, log events.
+- **Omnichannel Support**: WhatsApp, Email, Facebook integrations.
+- **Call Analytics & Reporting**: Monitor agent activity and performance.
+- **User Roles & Permissions**: Admin, Supervisor, Agent, Support Staff.
+- **Queue Routing**: Smart call routing logic based on agent status.
+- **Use Case Ready**: Ideal for courier firms, insurance companies, support teams, and Kenyan businesses looking to optimize communication.
 
-## Contributing
+---
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+### 🌍 Live Demo
 
-## Code of Conduct
+Try it out live on DigitalOcean:
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+🔗 **Login URL:** [https://support.solssa.com/login](https://support.solssa.com/login)  
+📧 **Email:** `support@solssa.com`  
+🔐 **Password:** `12345678`
 
-## Security Vulnerabilities
+---
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+### ⚙️ Tech Stack
 
-## License
+- **Backend**: Laravel 10
+- **Frontend**: Vue.js
+- **Real-Time**: WebRTC
+- **Telecom API**: Africa’s Talking
+- **Database**: MySQL
+- **Server**: Ubuntu on DigitalOcean
+- **Queue & Jobs**: Redis / Supervisor
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+---
+
+## 📚 About Laravel
+
+Laravel is a web application framework with expressive, elegant syntax. It simplifies common tasks like routing, database management, background jobs, and authentication.
+
+Explore more at the [Laravel documentation](https://laravel.com/docs).
+
+---
+
+## 🛡️ Security Vulnerabilities
+
+If you discover a security issue in Laravel, please email [taylor@laravel.com](mailto:taylor@laravel.com).
+
+---
+
+## ⚖️ License
+
+This project is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
