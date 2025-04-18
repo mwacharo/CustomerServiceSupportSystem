@@ -3,169 +3,116 @@
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Log;
 use App\Models\User;
+use Illuminate\Support\Facades\Log;
+use Exception;
 
-class GenerateDailyToken extends Command
+class GenerateAfricasTalkingTokens extends Command
 {
-    protected $signature = 'token:generate-daily';
-    protected $description = 'Generate AfricaTalking tokens for users daily at midnight';
+    protected $signature = 'generate:tokens';
+
+    protected $description = 'Generate Africa\'s Talking WebRTC capability tokens for all users';
 
     public function handle()
     {
-        Log::info('🚀 Starting token generation process');
+        $apiKey = config('services.africastalking.api_key');
+        $username = config('services.africastalking.username');
+        $phoneNumber = config('services.africastalking.phone');
+
+        if (!$username || !$apiKey) {
+            $this->error('Africa’s Talking credentials are missing.');
+            Log::error('Africa’s Talking credentials are missing.', [
+                'username' => $username,
+                'apiKey'   => $apiKey
+            ]);
+            return Command::FAILURE;
+        }
 
         $users = User::all();
+        $updatedTokens = [];
+        $failedUpdates = [];
 
         foreach ($users as $user) {
-            Log::info("🔍 Processing User ID {$user->id} ({$user->name})");
+            try {
+                if (empty($user->client_name)) {
+                    $user->client_name = 'client_' . $user->id . '_' . substr(md5(uniqid()), 0, 6);
+                    $user->save();
+                }
 
-            $response = $this->generateAfricaTalkingToken($user);
+                $clientName = str_replace(' ', '', $user->client_name);
 
-            if (isset($response['token'])) {
-                $this->info("✅ Token generated for User ID {$user->id}");
-                Log::info("✅ Token generated", [
+                // Use Spatie permissions
+                $incoming = $user->hasPermissionTo('receive calls');
+                $outgoing = $user->hasPermissionTo('make calls');
+
+                Log::info('Generating token for user', [
                     'user_id' => $user->id,
-                    'token' => $response['token']
+                    'clientName' => $clientName,
+                    'phoneNumber' => $phoneNumber
                 ]);
-            } else {
-                $this->error("❌ Failed to generate token for User ID {$user->id}");
-                Log::error("❌ Token generation failed", [
+
+                $payload = [
+                    'username'    => $username,
+                    'clientName'  => $clientName,
+                    'phoneNumber' => $phoneNumber,
+                    'incoming'    => $incoming ? "true" : "false",
+                    'outgoing'    => $outgoing ? "true" : "false",
+                    'lifeTimeSec' => "86400"
+                ];
+
+                $url = 'https://webrtc.africastalking.com/capability-token/request';
+                $ch = curl_init($url);
+                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                curl_setopt($ch, CURLOPT_POST, true);
+                curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
+                curl_setopt($ch, CURLOPT_HTTPHEADER, [
+                    'apiKey: ' . $apiKey,
+                    'Accept: application/json',
+                    'Content-Type: application/json'
+                ]);
+
+                $response = curl_exec($ch);
+                if (curl_errno($ch)) {
+                    throw new Exception('cURL Error: ' . curl_error($ch));
+                }
+
+                curl_close($ch);
+                $responseData = json_decode($response, true);
+
+                if (!isset($responseData['token'])) {
+                    throw new Exception($responseData['message'] ?? 'Unknown API error');
+                }
+
+                $user->updateOrFail(['token' => $responseData['token']]);
+
+                Log::info("Token updated successfully for user {$user->id}", [
+                    'token' => $responseData['token']
+                ]);
+
+                $updatedTokens[] = [
                     'user_id' => $user->id,
-                    'error' => $response['error'] ?? 'Unknown error',
-                    'response' => $response['response'] ?? null
-                ]);
+                    'token' => $responseData['token'],
+                    'clientName' => $responseData['clientName'] ?? $clientName,
+                    'incoming' => $responseData['incoming'] ?? null,
+                    'outgoing' => $responseData['outgoing'] ?? null,
+                    'lifeTimeSec' => $responseData['lifeTimeSec'] ?? null,
+                    'message' => $responseData['message'] ?? null,
+                    'success' => $responseData['success'] ?? false
+                ];
+            } catch (Exception $e) {
+                Log::error("Token generation failed for user {$user->id}: " . $e->getMessage());
+
+                $failedUpdates[] = [
+                    'user_id' => $user->id,
+                    'error'   => $e->getMessage()
+                ];
             }
         }
 
-        Log::info('🏁 Token generation process completed');
+        $this->info("Token generation complete.");
+        $this->info("Success: " . count($updatedTokens));
+        $this->info("Failed: " . count($failedUpdates));
+
+        return Command::SUCCESS;
     }
-
-
-
-    private function generateAfricaTalkingToken(User $user)
-{
-    $apiKey     = config('services.africastalking.api_key');
-    $username   = config('services.africastalking.username');
-    $phoneNumber = config('services.africastalking.phone'); // e.g. +2547XXXXXXX
-
-    Log::debug('API credentials and phone number fetched.', [
-        'apiKey'     => $apiKey ? '✅ Provided' : '❌ Missing',
-        'username'   => $username ? '✅ Provided' : '❌ Missing',
-        'phoneNumber'=> $phoneNumber
-    ]);
-
-    if (!$apiKey || !$username) {
-        return ['error' => 'Missing API credentials'];
-    }
-
-    $clientName = $user->client_name ?: 'client-' . uniqid();
-
-    // Convert permissions to explicit boolean values
-    $canCall = $user->hasPermissionTo('can_call') ? true : false;
-    $canReceiveCalls = $user->hasPermissionTo('can_receive_calls') ? true : false;
-
-    if (!$canCall && !$canReceiveCalls) {
-        $roles = $user->getRoleNames()->implode(', ');
-        $permissions = $user->getAllPermissions()->pluck('name')->implode(', ');
-        Log::warning("User ID {$user->id} lacks both call permissions.", [
-            'user_id'     => $user->id,
-            'name'        => $user->name,
-            'roles'       => $roles,
-            'permissions' => $permissions,
-        ]);
-
-        return ['error' => 'User does not have permission to make or receive calls'];
-    }
-
-    $url = 'https://webrtc.africastalking.com/capability-token/request';
-
-    $payload = [
-        'username'    => $username,
-        'clientName'  => $clientName,
-        'phoneNumber' => $phoneNumber,
-        'outgoing'    => $canCall,
-        'incoming'    => $canReceiveCalls,
-        'expire'      => 86400
-    ];
-
-    Log::info("Sending token generation request for User ID {$user->id}", [
-        'user_id'  => $user->id,
-        'payload'  => $payload
-    ]);
-
-    $response = Http::withHeaders([
-        'apiKey' => $apiKey,
-        'Content-Type' => 'application/json'
-    ])->post($url, $payload);
-
-    if ($response->successful()) {
-        $data = $response->json();
-        Log::info("✅ Token generation successful for User ID {$user->id}", ['token' => $data['token'] ?? null]);
-        $user->update(['token' => $data['token'], 'client_name' => $clientName]);
-        return $data;
-    }
-
-    $errorResponse = $response->json() ?? ['error' => 'No response body'];
-    Log::error("❌ Token generation failed for User ID {$user->id}", ['response' => $errorResponse]);
-    return ['error' => 'Failed to generate token', 'response' => $errorResponse];
-}
-
-
-    // private function generateAfricaTalkingToken(User $user)
-    // {
-    //     $apiKey     = config('services.africastalking.api_key');
-    //     $username   = config('services.africastalking.username');
-    //     $phoneNumber = config('services.africastalking.phone');
-    //     $clientName = $user->client_name ?: 'client-' . uniqid();
-    //     $canCall = $user->hasPermissionTo('can_call');
-    //     $canReceiveCalls = $user->hasPermissionTo('can_receive_calls');
-
-    //     Log::debug('🔐 Fetched AfricaTalking config', [
-    //         'apiKey' => $apiKey ? '✅ Provided' : '❌ Missing',
-    //         'username' => $username ? '✅ Provided' : '❌ Missing',
-    //         'phoneNumber' => $phoneNumber
-    //     ]);
-
-    //     if (!$apiKey || !$username) {
-    //         return ['error' => 'Missing API credentials'];
-    //     }
-
-    //     if (!$canCall && !$canReceiveCalls) {
-    //         Log::warning("🚫 User ID {$user->id} lacks call permissions", [
-    //             'name' => $user->name,
-    //             'roles' => $user->getRoleNames()->implode(', '),
-    //             'permissions' => $user->getAllPermissions()->pluck('name')->implode(', ')
-    //         ]);
-    //         return ['error' => 'User does not have permission to make or receive calls'];
-    //     }
-
-    //     $payload = [
-    //         'username'    => $username,
-    //         'clientName'  => $clientName,
-    //         'phoneNumber' => $phoneNumber,
-    //         'outgoing'    => $canCall,
-    //         'incoming'    => $canReceiveCalls,
-    //         'expire'      => 86400
-    //     ];
-
-    //     Log::info("📤 Sending token request", array_merge(['user_id' => $user->id], $payload));
-
-    //     $response = Http::withHeaders([
-    //         'apiKey' => $apiKey,
-    //         'Content-Type' => 'application/json'
-    //     ])->post('https://webrtc.africastalking.com/capability-token/request', $payload);
-
-    //     if ($response->successful()) {
-    //         $data = $response->json();
-    //         Log::info("✅ Token received from Africa's Talking", ['user_id' => $user->id]);
-    //         $user->update(['token' => $data['token'], 'client_name' => $clientName]);
-    //         return $data;
-    //     }
-
-    //     $errorResponse = $response->json();
-    //     Log::error("❌ API call failed", ['user_id' => $user->id, 'response' => $errorResponse]);
-    //     return ['error' => 'Failed to generate token', 'response' => $errorResponse];
-    // }
 }
