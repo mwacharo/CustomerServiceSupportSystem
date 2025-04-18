@@ -466,7 +466,17 @@ class ApiCallCentreController extends Controller
         // }
 
         // 4. Default fallback: assign to any available agent
-        $agent = User::where('status', 'ready')->first();
+        // $agent = User::where('status', 'ready')->first();
+        // and has permission to receive call 
+        //  $user->can_receive_calls
+
+
+        $agent = User::where('status', 'ready')
+             ->get()
+             ->first(function ($user) {
+                 return $user->hasPermissionTo('can_receive_calls');
+             });
+
 
 
         Log::info($agent ? "Assigned agent: {$agent->phone_number}" : 'No available agents.');
