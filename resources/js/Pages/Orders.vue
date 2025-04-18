@@ -93,15 +93,11 @@
                                             <v-spacer></v-spacer>
 
 
-                                            <v-chip
-  v-if="agent"
-  :color="getStatusColor(agent.status)"
-  small
-  class="white--text px-2"
->
-  <v-icon left small>mdi-circle</v-icon>
-  {{ getStatusText(agent.status) }}
-</v-chip>
+                                            <v-chip v-if="agent" :color="getStatusColor(agent.status)" small
+                                                class="white--text px-2">
+                                                <v-icon left small>mdi-circle</v-icon>
+                                                {{ getStatusText(agent.status) }}
+                                            </v-chip>
 
 
                                             <!-- <v-chip color="success" small class="white--text px-2">
@@ -158,7 +154,7 @@
                                                 <div class="ml-2">
                                                     <div class="text-caption grey--text">Rejected</div>
                                                     <div class="text-h6">{{ rejectedIncomingCalls + rejectedOutingCalls
-                                                        }}</div>
+                                                    }}</div>
                                                 </div>
                                             </div>
                                         </v-card>
@@ -224,9 +220,15 @@
                                 <!-- Example of a custom slot for an actions column -->
                                 <template #item.actions="{ item }">
 
+
                                     <v-btn color="blue" @click="playRecording(item)" rounded="lg" block>
                                         <v-icon>mdi-play</v-icon> Play
                                     </v-btn>
+
+
+                                    <!-- <v-btn color="blue" @click="playRecording(item)" rounded="lg" block>
+                                        <v-icon>mdi-play</v-icon> Play
+                                    </v-btn> -->
                                     <!-- <v-btn color="green" @click="downloadRecording(item)" rounded="lg" block>
                                         <v-icon>mdi-download</v-icon> Download
                                     </v-btn> -->
@@ -790,51 +792,59 @@ export default {
 
     methods: {
 
+        playRecording(item) {
+    if (item.recordingUrl) {
+      window.open(item.recordingUrl, '_blank');
+    } else {
+      this.$toast.error('Recording not available');
+    }
+  },
+
 
 
         getStatusColor(status) {
-    switch (status) {
-      case 'ready':
-        return 'green';
-      case 'notready':
-        return 'orange';
-      case 'offline':
-      case 'closed':
-        return 'red';
-      default:
-        return 'grey';
-    }
-  },
-  getStatusText(status) {
-    switch (status) {
-      case 'ready':
-        return 'Online';
-      case 'notready':
-        return 'Not Ready';
-      case 'offline':
-      case 'closed':
-        return 'Offline';
-      default:
-        return 'Unknown';
-    }
-  },
-  updateAgentStatus(status) {
-    const userId = this.currentUserId; // Make sure this is set when user logs in
+            switch (status) {
+                case 'ready':
+                    return 'green';
+                case 'notready':
+                    return 'orange';
+                case 'offline':
+                case 'closed':
+                    return 'red';
+                default:
+                    return 'grey';
+            }
+        },
+        getStatusText(status) {
+            switch (status) {
+                case 'ready':
+                    return 'Online';
+                case 'notready':
+                    return 'Not Ready';
+                case 'offline':
+                case 'closed':
+                    return 'Offline';
+                default:
+                    return 'Unknown';
+            }
+        },
+        updateAgentStatus(status) {
+            const userId = this.currentUserId; // Make sure this is set when user logs in
 
-    axios.post(`/api/v1/user/status`, {
-        user_id: userId,
-        status: status
-    })
-    .then(response => {
-        const user = response.data.user;
-        this.agent = user; // ✅ 
-        console.log('Agent status updated:', user.status);
-    })
-    .catch(error => {
-        console.error('Error updating agent status:', error);
-    });
-}
-,
+            axios.post(`/api/v1/user/status`, {
+                user_id: userId,
+                status: status
+            })
+                .then(response => {
+                    const user = response.data.user;
+                    this.agent = user; // ✅ 
+                    console.log('Agent status updated:', user.status);
+                })
+                .catch(error => {
+                    console.error('Error updating agent status:', error);
+                });
+        }
+        ,
 
         sendWhatsApp(phone) {
 
@@ -1249,10 +1259,10 @@ export default {
         // summary_call_missed	
 
         fetchAgentstats() {
-            axios.get(`/api/v1/agent-stats/${userId.value}`)                .then(response => {
-                    this.stats = response.data;
-                    console.log('Agent stats:', this.stats);
-                })
+            axios.get(`/api/v1/agent-stats/${userId.value}`).then(response => {
+                this.stats = response.data;
+                console.log('Agent stats:', this.stats);
+            })
 
                 .catch(error => {
                     console.error('Error fetching agent stats:', error);
@@ -1262,8 +1272,8 @@ export default {
         fetchUsers() {
             axios.get('/v1/users')
                 .then(response => {
-                    this.agents = response.data;    
-                    console.log('Agents:',this.agents);
+                    this.agents = response.data;
+                    console.log('Agents:', this.agents);
                 })
                 .catch(error => {
                     console.error('Error fetching users:', error);
