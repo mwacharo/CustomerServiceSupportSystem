@@ -60,7 +60,19 @@ class GenerateDailyToken extends Command
 
 
         if (!$user->can_call && !$user->can_receive_calls) {
+            $roles = $user->getRoleNames()->implode(', ');
+            $permissions = $user->getAllPermissions()->pluck('name')->implode(', ');
             Log::warning("User ID {$user->id} does not have permission to make or receive calls.");
+            Log::warning("🚫 Call Access Denied", [
+                'user_id' => $user->id,
+                'name' => $user->name,
+                'can_call' => $user->can_call,
+                'can_receive_calls' => $user->can_receive_calls,
+                'roles' => $roles,
+                'permissions' => $permissions,
+                'reason' => 'User does not have permission to make or receive calls',
+            ]);
+        
             return ['error' => 'User does not have permission to make or receive calls'];
         }
 
@@ -75,6 +87,7 @@ class GenerateDailyToken extends Command
             // 'outgoing' => $user->can_call,
             'can_call' => $user->hasPermissionTo('can_call'),
             'can_receive_calls' => $user->hasPermissionTo('can_receive_calls'),
+            
             'expire' => 86400
         ]);
 
@@ -85,8 +98,10 @@ class GenerateDailyToken extends Command
             'username'    => $username,
             'clientName'  => $clientName,
             'phoneNumber' => $phoneNumber,
-            'incoming'    => $user->can_receive_calls,
-            'outgoing'    => $user->can_call,
+            // 'incoming'    => $user->can_receive_calls,
+            // 'outgoing'    => $user->can_call,
+            'can_call' => $user->hasPermissionTo('can_call'),
+            'can_receive_calls' => $user->hasPermissionTo('can_receive_calls'),
             'expire'      => 86400
         ]);
 
