@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Models\CallHistory;
+use Carbon\Carbon;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -25,7 +26,16 @@ class DownloadCallRecordingsJob implements ShouldQueue
         Log::info('📥 Starting Call Recordings Download Job');
 
         // Fetch all call histories with a valid recording URL
-        $callHistories = CallHistory::whereNotNull('recordingUrl')->where('download_status', '!=', 'downloaded')->get();
+        // $callHistories = CallHistory::whereNotNull('recordingUrl')->where('download_status', '!=', 'downloaded')->get();
+
+
+
+        $threeDaysAgo = Carbon::now()->subDays(3);
+
+$callHistories = CallHistory::whereNotNull('recordingUrl')
+    ->where('download_status', '!=', 'downloaded')
+    ->where('created_at', '>=', $threeDaysAgo)
+    ->get();
 
         foreach ($callHistories as $call) {
             try {
