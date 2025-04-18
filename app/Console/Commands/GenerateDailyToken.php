@@ -37,8 +37,10 @@ class GenerateDailyToken extends Command
 
     private function generateAfricaTalkingToken(User $user)
     {
-        $apiKey = env('AFRICASTALKING_API_KEY'); 
-        $username = env('AFRICASTALKING_USERNAME');
+        // $apiKey = env('AFRICASTALKING_API_KEY'); 
+        // $username = env('AFRICASTALKING_USERNAME');
+        $apiKey    = config('services.africastalking.api_key');
+        $username  = config('services.africastalking.username');
         $phoneNumber = config('services.africastalking.phone'); // e.g. +2547XXXXXXX
 
         Log::debug('API credentials and phone number fetched.', [
