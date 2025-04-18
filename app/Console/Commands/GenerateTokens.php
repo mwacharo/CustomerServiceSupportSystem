@@ -52,7 +52,7 @@ class GenerateTokens extends Command
                     'phoneNumber' => config('services.africastalking.phone'),
                     'incoming'    => $incoming,
                     'outgoing'    => $outgoing,
-                    'expire'      => "86400"
+                    'lifeTimeSec'      => "86400"
                 ];
 
                 // Africa's Talking API request URL
