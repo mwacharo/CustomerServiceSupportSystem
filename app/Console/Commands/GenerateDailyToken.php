@@ -55,6 +55,10 @@ class GenerateDailyToken extends Command
 
         $clientName = $user->client_name ?: 'client-' . uniqid();
 
+        // log user permissions 
+        //  if (!$user->can_call && !$user->can_receive_calls) {
+
+
         if (!$user->can_call && !$user->can_receive_calls) {
             Log::warning("User ID {$user->id} does not have permission to make or receive calls.");
             return ['error' => 'User does not have permission to make or receive calls'];
@@ -67,8 +71,10 @@ class GenerateDailyToken extends Command
             'username' => $username,
             'clientName' => $clientName,
             'phoneNumber' => $phoneNumber,
-            'incoming' => $user->can_receive_calls,
-            'outgoing' => $user->can_call,
+            // 'incoming' => $user->can_receive_calls,
+            // 'outgoing' => $user->can_call,
+            'can_call' => $user->hasPermissionTo('can_call'),
+            'can_receive_calls' => $user->hasPermissionTo('can_receive_calls'),
             'expire' => 86400
         ]);
 
