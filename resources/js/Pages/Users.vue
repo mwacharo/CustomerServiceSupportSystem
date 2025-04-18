@@ -360,7 +360,7 @@ export default {
     },
     deleteItemConfirm() {
       axios
-        .delete(`v1/user/${this.editedItem.id}`)
+        .delete(`/api/v1/user/${this.editedItem.id}`)
         .then(() => {
           this.users.splice(this.editedIndex, 1);
           this.$toastr.success("User deleted successfully");
