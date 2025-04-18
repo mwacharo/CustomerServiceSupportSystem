@@ -49,7 +49,7 @@ Route::put('v1/roles/{roleId}/permissions', [ApiPermissionsController::class, 'u
 Route::post('v1/user', [ApiUserController::class, 'store']);
 Route::put('v1/user/{id}', [ApiUserController::class, 'update'])->name('user.update');
 Route::delete('v1/user/{id}', [ApiUserController::class, 'destroy'])->name('user.destroy');
-Route::post('v1/user/status', [ApiUserController::class, 'updateStatus'])->name('user.updateStatus');
+Route::post('rfere', [ApiUserController::class, 'updateStatus'])->name('user.updateStatus');
 
 
 Route::post('/v1/permissions', [ApiPermissionsController::class, 'storePermission']);
