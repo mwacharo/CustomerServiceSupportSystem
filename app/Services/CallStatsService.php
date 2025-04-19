@@ -421,14 +421,14 @@ class CallStatsService
         $totalDuration = (clone $baseQuery)->sum('durationInSeconds') ?? 0;
     
         // IVR stats delegation
-        $ivrStats = CallHistory::where('call_source', 'IVR')
+        $ivrStats = CallHistory::whereNotNull('ivr_option_id')
             ->whereBetween('created_at', [$startDate, $endDate])
             ->whereNull('deleted_at')
             ->get();
     
-        $ivrOptions = IVROption::all(); // assuming you have an IVROption model
+        $ivrOptions = IVROption::all(); 
     
-        $ivrBreakdown = $this->analyzeIvrStatistics($ivrOptions, $ivrStats, [$startDate, $endDate]);
+        $ivrBreakdown = $this->analyzeOverallIvrStatistics($ivrOptions, $ivrStats, [$startDate, $endDate]);
     
         return [
             'summary_from' => $startDate->toDateTimeString(),
@@ -444,6 +444,42 @@ class CallStatsService
             'ivr_breakdown' => $ivrBreakdown,
         ];
     }
+
+
+
+    public function analyzeOverallIvrStatistics(Collection $ivrOptions, Collection $ivrStats, ?array $dateRange = null): Collection
+{
+    if ($dateRange !== null) {
+        $ivrStats = $ivrStats->filter(function ($stat) use ($dateRange) {
+            $createdAt = Carbon::parse($stat->created_at);
+            return $createdAt->between($dateRange[0], $dateRange[1]);
+        });
+
+        Log::info('Filtered IVR stats for overall report', [
+            'dateRange' => $dateRange,
+            'filtered_count' => $ivrStats->count(),
+        ]);
+    }
+
+    $totalSelections = $ivrStats->count();
+
+    return $ivrOptions->map(function ($ivrOption) use ($ivrStats, $totalSelections) {
+        $matchedStats = $ivrStats->where('ivr_option_id', $ivrOption->id);
+
+        $totalSelected = $matchedStats->count();
+        $totalDuration = $matchedStats->sum('durationInSeconds') ?? 0;
+
+        return [
+            'id' => $ivrOption->id,
+            'option_number' => $ivrOption->option_number,
+            'description' => $ivrOption->description,
+            'total_selected' => $totalSelected,
+            'total_duration' => $totalDuration,
+            'average_duration' => $totalSelected ? round($totalDuration / $totalSelected, 2) : 0,
+            'selection_percentage' => $totalSelections ? round(($totalSelected / $totalSelections) * 100, 2) : 0,
+        ];
+    });
+}
 
 
 
