@@ -153,15 +153,6 @@ class CallStatsService
         $totalDuration = $incomingDuration + $outgoingDuration;
 
 
-
-
-        // IVR statistics if user is CallCentre Admin
-        // $ivrOptions = IvrOption::all();
-        // $ivrStats = CallHistory::whereNotNull('ivr_option_id')->get();
-        // $ivrAnalysis = $this->analyzeIvrStatistics($ivrOptions, $ivrStats, $dateRange, $user->id);
-
-
-
         // IVR statistics - correctly filtered by user is CallCentre
         $ivrOptions = IvrOption::all();
         $ivrStats = CallHistory::whereNotNull('ivr_option_id')
@@ -285,87 +276,176 @@ class CallStatsService
 
 
 
-    
+
 
 
     public function analyzeIvrStatistics(Collection $ivrOptions, Collection $ivrStats, ?array $dateRange = null, int $userId = null): Collection
-{
-    if ($userId !== null) {
-        $ivrStats = $ivrStats->where('user_id', $userId);
-        Log::info('After filtering by user_id', ['user_id' => $userId, 'ivrStats' => $ivrStats->pluck('ivr_option_id')]);
-    }
+    {
+        if ($userId !== null) {
+            $ivrStats = $ivrStats->where('user_id', $userId);
+            Log::info('After filtering by user_id', ['user_id' => $userId, 'ivrStats' => $ivrStats->pluck('ivr_option_id')]);
+        }
 
-    if ($dateRange !== null) {
-        $ivrStats = $ivrStats->filter(function($stat) use ($dateRange) {
-            $createdAt = Carbon::parse($stat->created_at);
-            return $createdAt->between($dateRange[0], $dateRange[1]);
+        if ($dateRange !== null) {
+            $ivrStats = $ivrStats->filter(function ($stat) use ($dateRange) {
+                $createdAt = Carbon::parse($stat->created_at);
+                return $createdAt->between($dateRange[0], $dateRange[1]);
+            });
+            Log::info('After filtering by date range', ['dateRange' => $dateRange, 'ivrStats' => $ivrStats->pluck('ivr_option_id')]);
+        }
+
+        $totalSelections = $ivrStats->count();
+        Log::info('Total selections after all filters', ['total' => $totalSelections]);
+
+        return $ivrOptions->map(function ($ivrOption) use ($ivrStats, $totalSelections) {
+            $matchedStats = $ivrStats->where('ivr_option_id', $ivrOption->id);
+
+            Log::info('Stats for IVR Option', [
+                'option_id' => $ivrOption->id,
+                'description' => $ivrOption->description,
+                'matched_count' => $matchedStats->count()
+            ]);
+
+            $totalSelected = $matchedStats->count();
+            $totalDuration = $matchedStats->sum('durationInSeconds') ?? 0;
+
+            return [
+                'id' => $ivrOption->id,
+                'option_number' => $ivrOption->option_number,
+                'description' => $ivrOption->description,
+                'total_selected' => $totalSelected,
+                'total_duration' => $totalDuration,
+                'average_duration' => $totalSelected ? round($totalDuration / $totalSelected, 2) : 0,
+                'selection_percentage' => $totalSelections ? round(($totalSelected / $totalSelections) * 100, 2) : 0,
+            ];
         });
-        Log::info('After filtering by date range', ['dateRange' => $dateRange, 'ivrStats' => $ivrStats->pluck('ivr_option_id')]);
     }
 
-    $totalSelections = $ivrStats->count();
-    Log::info('Total selections after all filters', ['total' => $totalSelections]);
 
-    return $ivrOptions->map(function ($ivrOption) use ($ivrStats, $totalSelections) {
-        $matchedStats = $ivrStats->where('ivr_option_id', $ivrOption->id);
+    //  Top Calling Countries
+    public function topCallerCountries(array $filters = []): Collection
+    {
+        $query = CallHistory::query()
+            ->whereNull('deleted_at')
+            ->whereNotNull('callerCountryCode');
 
-        Log::info('Stats for IVR Option', [
-            'option_id' => $ivrOption->id,
-            'description' => $ivrOption->description,
-            'matched_count' => $matchedStats->count()
-        ]);
+        if (!empty($filters['startDate']) && !empty($filters['endDate'])) {
+            $query->whereBetween('created_at', [$filters['startDate'], $filters['endDate']]);
+        }
 
-        $totalSelected = $matchedStats->count();
-        $totalDuration = $matchedStats->sum('durationInSeconds') ?? 0;
+        return $query->selectRaw('callerCountryCode, COUNT(*) as total')
+            ->groupBy('callerCountryCode')
+            ->orderByDesc('total')
+            ->get();
+    }
+    // . Frequent Callers
 
-        return [
-            'id' => $ivrOption->id,
-            'option_number' => $ivrOption->option_number,
-            'description' => $ivrOption->description,
-            'total_selected' => $totalSelected,
-            'total_duration' => $totalDuration,
-            'average_duration' => $totalSelected ? round($totalDuration / $totalSelected, 2) : 0,
-            'selection_percentage' => $totalSelections ? round(($totalSelected / $totalSelections) * 100, 2) : 0,
-        ];
-    });
-}
 
+    public function frequentCallers(array $filters = [], int $limit = 10): Collection
+    {
+        $query = CallHistory::query()
+            ->whereNull('deleted_at');
+
+        if (!empty($filters['startDate']) && !empty($filters['endDate'])) {
+            $query->whereBetween('created_at', [$filters['startDate'], $filters['endDate']]);
+        }
+
+        return $query->selectRaw('callerNumber, COUNT(*) as call_count')
+            ->groupBy('callerNumber')
+            ->orderByDesc('call_count')
+            ->limit($limit)
+            ->get();
+    }
+    // Agent Comparison Report
+
+
+    public function agentPerformanceComparison(array $filters = []): Collection
+    {
+        $query = CallHistory::query()
+            ->whereNull('deleted_at')
+            ->whereNotNull('user_id');
+
+        if (!empty($filters['startDate']) && !empty($filters['endDate'])) {
+            $query->whereBetween('created_at', [$filters['startDate'], $filters['endDate']]);
+        }
+
+        return $query->with('agent')
+            ->get()
+            ->groupBy('user_id')
+            ->map(function ($calls) {
+                return [
+                    'agent' => optional($calls->first()->agent)->name ?? 'Unknown',
+                    'total_calls' => $calls->count(),
+                    'average_duration' => round($calls->avg('durationInSeconds'), 2),
+                    'answered_calls' => $calls->where('status', 'Answered')->count(),
+                    'missed_calls' => $calls->where('status', 'Missed')->count(),
+                ];
+            })->values();
+    }
+
+
+    public function getOverallCallStats(array $filters = []): array
+    {
+        $startDate = isset($filters['start_date']) 
+            ? Carbon::parse($filters['start_date'])->startOfDay() 
+            : Carbon::today()->startOfDay();
     
+        $endDate = isset($filters['end_date']) 
+            ? Carbon::parse($filters['end_date'])->endOfDay() 
+            : Carbon::today()->endOfDay();
+    
+        $baseQuery = CallHistory::whereBetween('created_at', [$startDate, $endDate])
+            ->whereNull('deleted_at');
+    
+        // Call summaries
+        $totalCalls = (clone $baseQuery)->count();
+        $inboundCalls = (clone $baseQuery)->whereNotNull('user_id')->count();
+        $outboundCalls = (clone $baseQuery)->whereNull('user_id')->count();
+    
+        $missedCalls = (clone $baseQuery)->whereIn('lastBridgeHangupCause', ['NO_ANSWER', 'SERVICE_UNAVAILABLE'])->count();
+        $rejectedIncomingCalls = (clone $baseQuery)
+            ->whereNotNull('user_id')
+            ->whereIn('lastBridgeHangupCause', ['CALL_REJECTED', 'NORMAL_CLEARING'])
+            ->count();
+    
+        $userBusyOutgoingCalls = (clone $baseQuery)
+            ->whereNull('user_id')
+            ->where('lastBridgeHangupCause', 'USER_BUSY')
+            ->count();
+    
+        $rejectedOutgoingCalls = (clone $baseQuery)
+            ->whereNull('user_id')
+            ->where('lastBridgeHangupCause', 'CALL_REJECTED')
+            ->count();
+    
+        $totalDuration = (clone $baseQuery)->sum('durationInSeconds') ?? 0;
+    
+        // IVR stats delegation
+        $ivrStats = CallHistory::where('call_source', 'IVR')
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->whereNull('deleted_at')
+            ->get();
+    
+        $ivrOptions = IVROption::all(); // assuming you have an IVROption model
+    
+        $ivrBreakdown = $this->analyzeIvrStatistics($ivrOptions, $ivrStats, [$startDate, $endDate]);
+    
+        return [
+            'summary_from' => $startDate->toDateTimeString(),
+            'summary_to' => $endDate->toDateTimeString(),
+            'summary_call_completed' => $totalCalls,
+            'summary_inbound_call_completed' => $inboundCalls,
+            'summary_outbound_call_completed' => $outboundCalls,
+            'summary_call_duration' => $totalDuration,
+            'summary_call_missed' => $missedCalls,
+            'summary_rejected_incoming_calls' => $rejectedIncomingCalls,
+            'summary_user_busy_outgoing_calls' => $userBusyOutgoingCalls,
+            'summary_rejected_outgoing_calls' => $rejectedOutgoingCalls,
+            'ivr_breakdown' => $ivrBreakdown,
+        ];
+    }
 
-    // public function analyzeIvrStatistics(Collection $ivrOptions, Collection $ivrStats, ?array $dateRange = null, int $userId = null): Collection
-    // {
-    //     // Filter stats by user ID if provided
-    //     if ($userId !== null) {
-    //         $ivrStats = $ivrStats->where('user_id', $userId);
-    //     }
-        
-    //     // Filter by date range if provided
-    //     if ($dateRange !== null) {
-    //         $ivrStats = $ivrStats->filter(function($stat) use ($dateRange) {
-    //             $createdAt = Carbon::parse($stat->created_at);
-    //             return $createdAt->between($dateRange[0], $dateRange[1]);
-    //         });
-    //     }
-        
-    //     $totalSelections = $ivrStats->count();
-        
-    //     return $ivrOptions->map(function ($ivrOption) use ($ivrStats, $totalSelections) {
-    //         $matchedStats = $ivrStats->where('ivr_option_id', $ivrOption->id);
-            
-    //         $totalSelected = $matchedStats->count();
-    //         $totalDuration = $matchedStats->sum('durationInSeconds') ?? 0;
-            
-    //         return [
-    //             'id' => $ivrOption->id,
-    //             'option_number' => $ivrOption->option_number,
-    //             'description' => $ivrOption->description,
-    //             'total_selected' => $totalSelected,
-    //             'total_duration' => $totalDuration,
-    //             'average_duration' => $totalSelected ? round($totalDuration / $totalSelected, 2) : 0,
-    //             'selection_percentage' => $totalSelections ? round(($totalSelected / $totalSelections) * 100, 2) : 0,
-    //         ];
-    //     });
-    // }
+
 
 
     // IVR Trends Over Time
@@ -434,66 +514,6 @@ class CallStatsService
             'daily_distribution' => $daily,
         ];
     }
+    
 
-
-    //  Top Calling Countries
-    public function topCallerCountries(array $filters = []): Collection
-    {
-        $query = CallHistory::query()
-            ->whereNull('deleted_at')
-            ->whereNotNull('callerCountryCode');
-
-        if (!empty($filters['startDate']) && !empty($filters['endDate'])) {
-            $query->whereBetween('created_at', [$filters['startDate'], $filters['endDate']]);
-        }
-
-        return $query->selectRaw('callerCountryCode, COUNT(*) as total')
-            ->groupBy('callerCountryCode')
-            ->orderByDesc('total')
-            ->get();
-    }
-    // . Frequent Callers
-
-
-    public function frequentCallers(array $filters = [], int $limit = 10): Collection
-    {
-        $query = CallHistory::query()
-            ->whereNull('deleted_at');
-
-        if (!empty($filters['startDate']) && !empty($filters['endDate'])) {
-            $query->whereBetween('created_at', [$filters['startDate'], $filters['endDate']]);
-        }
-
-        return $query->selectRaw('callerNumber, COUNT(*) as call_count')
-            ->groupBy('callerNumber')
-            ->orderByDesc('call_count')
-            ->limit($limit)
-            ->get();
-    }
-    // Agent Comparison Report
-
-
-    public function agentPerformanceComparison(array $filters = []): Collection
-    {
-        $query = CallHistory::query()
-            ->whereNull('deleted_at')
-            ->whereNotNull('user_id');
-
-        if (!empty($filters['startDate']) && !empty($filters['endDate'])) {
-            $query->whereBetween('created_at', [$filters['startDate'], $filters['endDate']]);
-        }
-
-        return $query->with('agent')
-            ->get()
-            ->groupBy('user_id')
-            ->map(function ($calls) {
-                return [
-                    'agent' => optional($calls->first()->agent)->name ?? 'Unknown',
-                    'total_calls' => $calls->count(),
-                    'average_duration' => round($calls->avg('durationInSeconds'), 2),
-                    'answered_calls' => $calls->where('status', 'Answered')->count(),
-                    'missed_calls' => $calls->where('status', 'Missed')->count(),
-                ];
-            })->values();
-    }
 }
