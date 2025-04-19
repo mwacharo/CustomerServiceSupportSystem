@@ -155,13 +155,39 @@ class CallStatsService
 
         // IVR statistics - correctly filtered by user is CallCentre
         $ivrOptions = IvrOption::all();
-        $ivrStats = CallHistory::whereNotNull('ivr_option_id')
-            ->where('user_id', $user->id)
-            ->when($dateRange, function ($query) use ($dateRange) {
-                return $query->whereBetween('created_at', $dateRange);
-            })
-            ->get();
-        $ivrAnalysis = $this->analyzeIvrStatistics($ivrOptions, $ivrStats);
+
+
+
+        // $ivrStats = CallHistory::whereNotNull('ivr_option_id')
+        //     ->where('user_id', $user->id)
+        //     ->when($dateRange, function ($query) use ($dateRange) {
+        //         return $query->whereBetween('created_at', $dateRange);
+        //     })
+        //     ->get();
+        // $ivrAnalysis = $this->analyzeIvrStatistics($ivrOptions, $ivrStats);
+
+
+
+        if ($user->hasRole('call_centre_admin') || $user->hasRole('super_admin')) {
+            // Get IVR stats for ALL users (overall)
+            $ivrStats = CallHistory::whereNotNull('ivr_option_id')
+                ->when($dateRange, fn($q) => $q->whereBetween('created_at', $dateRange))
+                ->get();
+    
+            $ivrAnalysis = $this->analyzeOverallIvrStatistics($ivrOptions, $ivrStats, $dateRange);
+    
+            Log::info('Returning IVR stats for admin/super_admin', ['user_id' => $user->id]);
+        } else {
+            // Agent-specific IVR stats
+            $ivrStats = CallHistory::whereNotNull('ivr_option_id')
+                ->where('user_id', $user->id)
+                ->when($dateRange, fn($q) => $q->whereBetween('created_at', $dateRange))
+                ->get();
+    
+            $ivrAnalysis = $this->analyzeIvrStatistics($ivrOptions, $ivrStats, $dateRange, $user->id);
+    
+            Log::info('Returning IVR stats for agent', ['user_id' => $user->id]);
+        }
 
         $result = [
             'id' => $user->id,
