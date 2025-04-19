@@ -84,11 +84,13 @@
                                     <div class="flex-grow-1">
                                         <div class="d-flex align-center">
                                             <div>
-                                                <p class="text-h6 mb-0">John Mwacharo</p>
+                                                <p class="text-h6 mb-0"> {{ $page.props.auth.user.name }}</p>
                                                 <p class="text-body-2 mb-0 grey--text">
                                                     <v-icon small class="mr-1">mdi-email</v-icon>
-                                                    john.boxleo@gmail.com
+                                               {{ $page.props.auth.user.email }}
                                                 </p>
+
+
                                             </div>
                                             <v-spacer></v-spacer>
 

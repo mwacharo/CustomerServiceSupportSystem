@@ -391,9 +391,9 @@ export default {
       };
 
       if (this.editedIndex > -1) {
-        request = axios.put(`v1/user/${this.editedItem.id}`, payload);
+        request = axios.put(`/api/v1/user/${this.editedItem.id}`, payload);
       } else {
-        request = axios.post("v1/user", payload);
+        request = axios.post("/api/v1/user", payload);
       }
 
       request

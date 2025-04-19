@@ -32,10 +32,10 @@ class DownloadCallRecordingsJob implements ShouldQueue
 
         $threeDaysAgo = Carbon::now()->subDays(3);
 
-$callHistories = CallHistory::whereNotNull('recordingUrl')
-    ->where('download_status', '!=', 'downloaded')
-    ->where('created_at', '>=', $threeDaysAgo)
-    ->get();
+        $callHistories = CallHistory::whereNotNull('recordingUrl')
+            ->where('download_status', '!=', 'downloaded')
+            ->where('created_at', '>=', $threeDaysAgo)
+            ->get();
 
         foreach ($callHistories as $call) {
             try {
