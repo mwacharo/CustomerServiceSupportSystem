@@ -348,42 +348,87 @@ class CallStatsService
     //         ];
     //     });
     // }
-    
+
+
 
     public function analyzeIvrStatistics(Collection $ivrOptions, Collection $ivrStats, ?array $dateRange = null, int $userId = null): Collection
-    {
-        // Filter stats by user ID if provided
-        if ($userId !== null) {
-            $ivrStats = $ivrStats->where('user_id', $userId);
-        }
-        
-        // Filter by date range if provided
-        if ($dateRange !== null) {
-            $ivrStats = $ivrStats->filter(function($stat) use ($dateRange) {
-                $createdAt = Carbon::parse($stat->created_at);
-                return $createdAt->between($dateRange[0], $dateRange[1]);
-            });
-        }
-        
-        $totalSelections = $ivrStats->count();
-        
-        return $ivrOptions->map(function ($ivrOption) use ($ivrStats, $totalSelections) {
-            $matchedStats = $ivrStats->where('ivr_option_id', $ivrOption->id);
-            
-            $totalSelected = $matchedStats->count();
-            $totalDuration = $matchedStats->sum('durationInSeconds') ?? 0;
-            
-            return [
-                'id' => $ivrOption->id,
-                'option_number' => $ivrOption->option_number,
-                'description' => $ivrOption->description,
-                'total_selected' => $totalSelected,
-                'total_duration' => $totalDuration,
-                'average_duration' => $totalSelected ? round($totalDuration / $totalSelected, 2) : 0,
-                'selection_percentage' => $totalSelections ? round(($totalSelected / $totalSelections) * 100, 2) : 0,
-            ];
-        });
+{
+    if ($userId !== null) {
+        $ivrStats = $ivrStats->where('user_id', $userId);
+        Log::info('After filtering by user_id', ['user_id' => $userId, 'ivrStats' => $ivrStats->pluck('ivr_option_id')]);
     }
+
+    if ($dateRange !== null) {
+        $ivrStats = $ivrStats->filter(function($stat) use ($dateRange) {
+            $createdAt = Carbon::parse($stat->created_at);
+            return $createdAt->between($dateRange[0], $dateRange[1]);
+        });
+        Log::info('After filtering by date range', ['dateRange' => $dateRange, 'ivrStats' => $ivrStats->pluck('ivr_option_id')]);
+    }
+
+    $totalSelections = $ivrStats->count();
+    Log::info('Total selections after all filters', ['total' => $totalSelections]);
+
+    return $ivrOptions->map(function ($ivrOption) use ($ivrStats, $totalSelections) {
+        $matchedStats = $ivrStats->where('ivr_option_id', $ivrOption->id);
+
+        Log::info('Stats for IVR Option', [
+            'option_id' => $ivrOption->id,
+            'description' => $ivrOption->description,
+            'matched_count' => $matchedStats->count()
+        ]);
+
+        $totalSelected = $matchedStats->count();
+        $totalDuration = $matchedStats->sum('durationInSeconds') ?? 0;
+
+        return [
+            'id' => $ivrOption->id,
+            'option_number' => $ivrOption->option_number,
+            'description' => $ivrOption->description,
+            'total_selected' => $totalSelected,
+            'total_duration' => $totalDuration,
+            'average_duration' => $totalSelected ? round($totalDuration / $totalSelected, 2) : 0,
+            'selection_percentage' => $totalSelections ? round(($totalSelected / $totalSelections) * 100, 2) : 0,
+        ];
+    });
+}
+
+    
+
+    // public function analyzeIvrStatistics(Collection $ivrOptions, Collection $ivrStats, ?array $dateRange = null, int $userId = null): Collection
+    // {
+    //     // Filter stats by user ID if provided
+    //     if ($userId !== null) {
+    //         $ivrStats = $ivrStats->where('user_id', $userId);
+    //     }
+        
+    //     // Filter by date range if provided
+    //     if ($dateRange !== null) {
+    //         $ivrStats = $ivrStats->filter(function($stat) use ($dateRange) {
+    //             $createdAt = Carbon::parse($stat->created_at);
+    //             return $createdAt->between($dateRange[0], $dateRange[1]);
+    //         });
+    //     }
+        
+    //     $totalSelections = $ivrStats->count();
+        
+    //     return $ivrOptions->map(function ($ivrOption) use ($ivrStats, $totalSelections) {
+    //         $matchedStats = $ivrStats->where('ivr_option_id', $ivrOption->id);
+            
+    //         $totalSelected = $matchedStats->count();
+    //         $totalDuration = $matchedStats->sum('durationInSeconds') ?? 0;
+            
+    //         return [
+    //             'id' => $ivrOption->id,
+    //             'option_number' => $ivrOption->option_number,
+    //             'description' => $ivrOption->description,
+    //             'total_selected' => $totalSelected,
+    //             'total_duration' => $totalDuration,
+    //             'average_duration' => $totalSelected ? round($totalDuration / $totalSelected, 2) : 0,
+    //             'selection_percentage' => $totalSelections ? round(($totalSelected / $totalSelections) * 100, 2) : 0,
+    //         ];
+    //     });
+    // }
 
 
     // IVR Trends Over Time
