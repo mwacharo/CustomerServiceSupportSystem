@@ -317,72 +317,150 @@ class CallStatsService
 
 
 
-
-
     protected function getAirtimeStatistics(User $user, bool $isAdmin, ?array $dateRange = null): array
     {
         $incomingQuery = CallHistory::query()->whereNull('deleted_at');
         $outgoingQuery = CallHistory::query()->whereNull('deleted_at');
-
+    
         if (!$isAdmin) {
             $incomingQuery->where('user_id', $user->id);
             $outgoingQuery->where('callerNumber', $user->phone_number);
         }
-
+    
         if ($dateRange) {
             $incomingQuery->whereBetween('created_at', $dateRange);
             $outgoingQuery->whereBetween('created_at', $dateRange);
+    
+            $incomingAmount = $incomingQuery->sum('amount');
+            $outgoingAmount = $outgoingQuery->sum('amount');
+    
+            $incomingDuration = $incomingQuery->sum('durationInSeconds');
+            $outgoingDuration = $outgoingQuery->sum('durationInSeconds');
+    
+            return [
+                // Airtime (Amount)
+                'total_airtime_spent' => round($incomingAmount + $outgoingAmount, 2),
+                'incoming_airtime_spent' => round($incomingAmount, 2),
+                'outgoing_airtime_spent' => round($outgoingAmount, 2),
+    
+                // Duration
+                'total_airtime_seconds' => $incomingDuration + $outgoingDuration,
+                'incoming_airtime_seconds' => $incomingDuration,
+                'outgoing_airtime_seconds' => $outgoingDuration,
+                'total_airtime_minutes' => round(($incomingDuration + $outgoingDuration) / 60, 2),
+            ];
         }
-
-        $incomingSeconds = $incomingQuery->sum('durationInSeconds');
-        $outgoingSeconds = $outgoingQuery->sum('durationInSeconds');
-
-        return [
-            'total_airtime_seconds' => $incomingSeconds + $outgoingSeconds,
-            'incoming_airtime_seconds' => $incomingSeconds,
-            'outgoing_airtime_seconds' => $outgoingSeconds,
-            'total_airtime_minutes' => round(($incomingSeconds + $outgoingSeconds) / 60, 2),
-        ];
+    
+        // Group by day when no date range provided
+        $incoming = $incomingQuery->selectRaw('DATE(created_at) as date, SUM(amount) as total_amount, SUM(durationInSeconds) as total_duration')
+            ->groupByRaw('DATE(created_at)')
+            ->orderBy('date')
+            ->get();
+    
+        $outgoing = $outgoingQuery->selectRaw('DATE(created_at) as date, SUM(amount) as total_amount, SUM(durationInSeconds) as total_duration')
+            ->groupByRaw('DATE(created_at)')
+            ->orderBy('date')
+            ->get();
+    
+        $dailyStats = [];
+    
+        foreach ($incoming as $in) {
+            $dailyStats[$in->date]['incoming_amount'] = $in->total_amount;
+            $dailyStats[$in->date]['incoming_duration'] = $in->total_duration;
+        }
+    
+        foreach ($outgoing as $out) {
+            $dailyStats[$out->date]['outgoing_amount'] = $out->total_amount;
+            $dailyStats[$out->date]['outgoing_duration'] = $out->total_duration;
+        }
+    
+        $results = [];
+        foreach ($dailyStats as $date => $values) {
+            $inAmount = $values['incoming_amount'] ?? 0;
+            $outAmount = $values['outgoing_amount'] ?? 0;
+            $inDuration = $values['incoming_duration'] ?? 0;
+            $outDuration = $values['outgoing_duration'] ?? 0;
+    
+            $results[$date] = [
+                // Airtime (Amount)
+                'incoming_airtime_spent' => round($inAmount, 2),
+                'outgoing_airtime_spent' => round($outAmount, 2),
+                'total_airtime_spent' => round($inAmount + $outAmount, 2),
+    
+                // Duration
+                'incoming_airtime_seconds' => $inDuration,
+                'outgoing_airtime_seconds' => $outDuration,
+                'total_airtime_seconds' => $inDuration + $outDuration,
+                'total_airtime_minutes' => round(($inDuration + $outDuration) / 60, 2),
+            ];
+        }
+    
+        return $results;
     }
-
+    
 
 
     protected function getPeakHourStatistics(User $user, bool $isAdmin, ?array $dateRange = null): array
-    {
-        $query = CallHistory::query()
-            ->selectRaw('HOUR(created_at) as hour, COUNT(*) as total')
-            ->whereNull('deleted_at')
-            ->groupByRaw('HOUR(created_at)')
-            ->orderBy('total', 'desc');
+{
+    $incomingQuery = CallHistory::query()
+        ->selectRaw('HOUR(created_at) as hour, COUNT(*) as total')
+        ->whereNull('deleted_at')
+        ->groupByRaw('HOUR(created_at)')
+        ->orderBy('hour');
 
-        if (!$isAdmin) {
-            $query->where(function ($q) use ($user) {
-                $q->where('user_id', $user->id)
-                    ->orWhere('callerNumber', $user->phone_number);
-            });
-        }
+    $outgoingQuery = CallHistory::query()
+        ->selectRaw('HOUR(created_at) as hour, COUNT(*) as total')
+        ->whereNull('deleted_at')
+        ->groupByRaw('HOUR(created_at)')
+        ->orderBy('hour');
 
-        if ($dateRange) {
-            $query->whereBetween('created_at', $dateRange);
-        }
-
-        $data = $query->get();
-
-        // Format to a nicer structure like ['13:00' => 24 calls, ...]
-        $formatted = $data->mapWithKeys(function ($item) {
-            $label = str_pad($item->hour, 2, '0', STR_PAD_LEFT) . ':00';
-            return [$label => $item->total];
-        });
-
-        return [
-            'peak_hour_data' => $formatted,
-            'busiest_hour' => $formatted->keys()->first(),
-            'call_count' => $formatted->values()->first(),
-        ];
+    if (!$isAdmin) {
+        $incomingQuery->where('user_id', $user->id);
+        $outgoingQuery->where('callerNumber', $user->phone_number);
     }
 
+    if ($dateRange) {
+        $incomingQuery->whereBetween('created_at', $dateRange);
+        $outgoingQuery->whereBetween('created_at', $dateRange);
+    }
 
+    $incoming = $incomingQuery->get();
+    $outgoing = $outgoingQuery->get();
 
+    // Combine into a neat structure
+    $peakStats = [];
+
+    foreach ($incoming as $row) {
+        $hour = str_pad($row->hour, 2, '0', STR_PAD_LEFT) . ':00';
+        $peakStats[$hour]['incoming'] = $row->total;
+    }
+
+    foreach ($outgoing as $row) {
+        $hour = str_pad($row->hour, 2, '0', STR_PAD_LEFT) . ':00';
+        $peakStats[$hour]['outgoing'] = $row->total;
+    }
+
+    // Add total + identify peak
+    $busiestHour = null;
+    $maxCalls = 0;
+
+    foreach ($peakStats as $hour => &$stats) {
+        $stats['incoming'] = $stats['incoming'] ?? 0;
+        $stats['outgoing'] = $stats['outgoing'] ?? 0;
+        $stats['total'] = $stats['incoming'] + $stats['outgoing'];
+
+        if ($stats['total'] > $maxCalls) {
+            $maxCalls = $stats['total'];
+            $busiestHour = $hour;
+        }
+    }
+
+    return [
+        'peak_hour_data' => $peakStats,
+        'busiest_hour' => $busiestHour,
+        'call_count' => $maxCalls,
+    ];
+}
 
 
     public function analyzeIvrStatistics(Collection $ivrOptions, Collection $ivrStats, ?array $dateRange = null, int $userId = null): Collection
