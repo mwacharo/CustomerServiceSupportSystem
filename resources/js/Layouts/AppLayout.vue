@@ -117,6 +117,8 @@
       icon: 'mdi-cog-outline',
       items: [
         { route: 'ivr-options', icon: 'mdi-cog-outline', title: 'IvrOptions' },
+        { route: 'integrations', icon: 'mdi-puzzle', title: 'Third-Party Integrations' }
+
         // { route: 'sms', icon: 'mdi-message-text-outline', title: 'SmsOptions' },
         // { route: 'whatsapp', icon: 'mdi-whatsapp', title: 'WhatsappOptions' },
         // { route: 'telegram', icon: 'mdi-telegram', title: 'TelegramOptions' },
