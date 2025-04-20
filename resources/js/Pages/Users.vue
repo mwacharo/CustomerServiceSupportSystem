@@ -316,7 +316,7 @@ export default {
     getStatusColor(status) {
       if (!status) return 'grey';
       switch (status.toLowerCase()) {
-        case 'available': return 'green';
+        case 'ready': return 'green';
         case 'engaged': return 'orange';
         default: return 'grey';
       }
