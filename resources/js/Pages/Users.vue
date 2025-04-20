@@ -276,7 +276,7 @@ export default {
         phone_number: "",
         branch_id: null,
         country_id: null,
-        status: ["ready", "engaged"],
+        status: ["ready", "engaged","closed"],
        
       },
       defaultItem: {
@@ -288,7 +288,7 @@ export default {
         phone_number: "",
         branch_id: null,
         country_id: null,
-        status: ["ready", "engaged"],
+        status: ["ready", "engaged","closed"],
       },
     };
   },

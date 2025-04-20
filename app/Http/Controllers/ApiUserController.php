@@ -24,7 +24,7 @@ class ApiUserController extends Controller
 
         $request->validate([
             'user_id' => 'required|exists:users,id',
-            'status' => 'required|string|in:ready,notready,offline,closed',
+            'status' => 'required|string|in:ready,engaged,offline,closed',
         ]);
     
         $user = User::findOrFail($request->user_id);

@@ -79,7 +79,9 @@
                             <v-card-text class="py-4">
                                 <div class="d-flex align-center">
                                     <v-avatar size="60" color="primary" class="mr-4">
-                                        <span class="white--text text-h5">JM</span>
+                                        <!-- <span class="white--text text-h5">JM</span> -->
+                                        <span class="white--text text-h5">{{ userInitials }}</span>
+
                                     </v-avatar>
                                     <div class="flex-grow-1">
                                         <div class="d-flex align-center">
@@ -1290,6 +1292,18 @@ export default {
             this.availableAgents = newAgents.filter(agent => !agent.isInCall);
         }
     },
+
+    computed: {
+  userInitials() {
+    const name = this.$page.props.auth.user.name;
+    if (!name) return '';
+    const parts = name.trim().split(' ');
+    const first = parts[0]?.charAt(0) || '';
+    const second = parts[1]?.charAt(0) || '';
+    return (first + second).toUpperCase();
+  }
+}
+,
 
 
     async mounted() {
