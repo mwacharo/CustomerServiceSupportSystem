@@ -109,16 +109,107 @@ class CallStatsService
 
 
 
+
+
+
+
+
+    /**
+     * Generate a call summary report using Eloquent collections.
+     *
+     * @param  array  $filters
+     * @return \Illuminate\Support\Collection
+     */
+    // public function generateCallSummaryReport(array $filters)
+    // {
+    //     // Enable query log
+    //     DB::enableQueryLog();
+
+    //     $query = CallHistory::with('agent')
+    //         ->whereNull('deleted_at')
+    //         ->where('user_id', '!=', null);
+
+    //     // Apply filters
+    //     if (!empty($filters['startDate']) && !empty($filters['endDate'])) {
+    //         $query->whereBetween('created_at', [$filters['startDate'], $filters['endDate']]);
+    //     }
+    //     // if (!empty($filters['status'])) {
+    //     //     if (is_array($filters['status'])) {
+    //     //         $query->whereIn('status', $filters['status']);
+    //     //     } else {
+    //     //         $query->where('status', $filters['status']);
+    //     //     }
+    //     // }
+
+
+    //     if (!empty($filters['status'])) {
+
+    //         if (is_array($filters['status'])) {
+    //             $query->whereIn('lastBridgeHangupCause', $filters['status']);
+    //         } else {
+    //             $query->where('lastBridgeHangupCause', $filters['status']);
+    //         }
+    //     }
+
+    //     // Apply agent filter
+    //     if (!empty($filters['user_id'])) {
+    //         if (is_array($filters['user_id'])) {
+    //             $query->whereIn('user_id', $filters['user_id']);
+    //         } else {
+    //             $query->where('user_id', $filters['user_id']);
+    //         }
+    //     }
+
+    //     // Execute query
+    //     $callHistories = $query->get();
+
+    //     // Log the executed SQL query
+    //     Log::info('Executed Query:', DB::getQueryLog());
+
+
+    //     Log::info("Bindings: ", $query->getBindings());
+
+
+    //     $ivrOptions = IvrOption::all();
+    //     $ivrStats = CallHistory::all();
+    //     // pass user_id or user_id array also 
+    //     // $ivrAnalysis = $this->analyzeIvrStatistics($ivrOptions, $ivrStats, $filters,$user_id = null);
+
+
+    //     Log::info('Call summary report generated', ['call_histories' => $callHistories]);
+    //     // $callHistory is null log warning  no data 
+
+    //     if ($callHistories->isEmpty()) {
+    //         Log::warning('No call history found for the given filters.', $filters);
+    //     }
+    //     // return $callHistories;
+
+
+    //     return $callHistories->groupBy('user_id')->map(function ($calls, $user_) {
+    //         return [
+    //             'agent' => optional($calls->first()->agent)->name ?? 'N/A',
+    //             'total_calls' => $calls->count(),
+    //             'total_airtime' => $calls->sum('amount') ?? 0,
+    //             'answered' => $calls->where('status', 'Answered')->count(),
+    //             // 'missed' => $calls->where('status', 'Missed')->count(),
+    //             'escalated' => $calls->where('status', 'Escalated')->count(),
+    //             'total_duration' => $calls->sum('durationInSeconds') ?? 0,
+    //         ];
+    //     })->values();
+    // }
+
+
+
+
+
     public function getAgentStats(User $user, ?array $dateRange = null): array
     {
         Log::info('Fetching agent stats', ['user_id' => $user->id, 'date_range' => $dateRange]);
 
         $isAdmin = $user->hasRole('CallCentreAdmin') || $user->hasRole('SuperAdmin');
-
         $ivrOptions = IvrOption::all();
 
         if ($isAdmin) {
-            // Admin: fetch overall stats
             $query = CallHistory::query()->whereNull('deleted_at');
 
             if ($dateRange) {
@@ -127,7 +218,8 @@ class CallStatsService
 
             $incomingCalls = (clone $query)->whereNotNull('user_id')->count();
             $outgoingCalls = (clone $query)->whereNotNull('callerNumber')->count();
-            $totalCalls = $incomingCalls + $outgoingCalls;
+            $incomingDuration = (clone $query)->whereNotNull('user_id')->sum('durationInSeconds');
+            $outgoingDuration = (clone $query)->whereNotNull('callerNumber')->sum('durationInSeconds');
 
             $missedCalls = (clone $query)
                 ->whereIn('lastBridgeHangupCause', ['NO_ANSWER', 'SERVICE_UNAVAILABLE'])
@@ -141,42 +233,27 @@ class CallStatsService
                 ->where('lastBridgeHangupCause', 'USER_BUSY')
                 ->count();
 
-            $rejectedOutingCalls = (clone $query)
+            $rejectedOutgoingCalls = (clone $query)
                 ->where('lastBridgeHangupCause', 'CALL_REJECTED')
                 ->count();
-
-            $incomingDuration = (clone $query)->sum('durationInSeconds') ?? 0;
-            $totalDuration = $incomingDuration; // Since no outgoing specific separation here
-
-
-
-
-
 
             $ivrStats = CallHistory::whereNotNull('ivr_option_id')
                 ->when($dateRange, fn($q) => $q->whereBetween('created_at', $dateRange))
                 ->get();
 
-
             $ivrAnalysis = $this->analyzeOverallIvrStatistics($ivrOptions, $ivrStats, $dateRange);
+            $airtimeStats = $this->getAirtimeStatistics($user, true, $dateRange);
+            $peakHourStats = $this->getPeakHourStatistics($user, true, $dateRange);
 
-
-            // Additional Statistics: Airtime and Peak Hour Calls
-            $airtimeStats = $this->getAirtimeStatistics($user, $isAdmin, $dateRange);
-            $peakHourStats = $this->getPeakHourStatistics($user, $isAdmin, $dateRange);
-
-
-            Log::info('Returning overall stats for admin/super_admin', ['user_id' => $user->id]);
+            Log::info('Returning stats for admin', ['user_id' => $user->id]);
         } else {
-            // Agent: fetch personal stats
-            $phone_number = $user->phone_number;
-
-            $outgoingQuery = CallHistory::query()
-                ->where('callerNumber', $phone_number)
-                ->whereNull('deleted_at');
-
+            // Agent-specific
             $incomingQuery = CallHistory::query()
                 ->where('user_id', $user->id)
+                ->whereNull('deleted_at');
+
+            $outgoingQuery = CallHistory::query()
+                ->where('callerNumber', $user->phone_number)
                 ->whereNull('deleted_at');
 
             if ($dateRange) {
@@ -184,9 +261,10 @@ class CallStatsService
                 $outgoingQuery->whereBetween('created_at', $dateRange);
             }
 
-            $incomingCalls = (clone $incomingQuery)->count();
-            $outgoingCalls = (clone $outgoingQuery)->count();
-            $totalCalls = $incomingCalls + $outgoingCalls;
+            $incomingCalls = $incomingQuery->count();
+            $outgoingCalls = $outgoingQuery->count();
+            $incomingDuration = $incomingQuery->sum('durationInSeconds');
+            $outgoingDuration = $outgoingQuery->sum('durationInSeconds');
 
             $missedCalls = (clone $incomingQuery)
                 ->whereIn('lastBridgeHangupCause', ['NO_ANSWER', 'SERVICE_UNAVAILABLE'])
@@ -200,13 +278,9 @@ class CallStatsService
                 ->where('lastBridgeHangupCause', 'USER_BUSY')
                 ->count();
 
-            $rejectedOutingCalls = (clone $outgoingQuery)
+            $rejectedOutgoingCalls = (clone $outgoingQuery)
                 ->where('lastBridgeHangupCause', 'CALL_REJECTED')
                 ->count();
-
-            $incomingDuration = (clone $incomingQuery)->sum('durationInSeconds') ?? 0;
-            $outgoingDuration = (clone $outgoingQuery)->sum('durationInSeconds') ?? 0;
-            $totalDuration = $incomingDuration + $outgoingDuration;
 
             $ivrStats = CallHistory::whereNotNull('ivr_option_id')
                 ->where('user_id', $user->id)
@@ -214,8 +288,10 @@ class CallStatsService
                 ->get();
 
             $ivrAnalysis = $this->analyzeIvrStatistics($ivrOptions, $ivrStats, $dateRange, $user->id);
+            $airtimeStats = $this->getAirtimeStatistics($user, false, $dateRange);
+            $peakHourStats = $this->getPeakHourStatistics($user, false, $dateRange);
 
-            Log::info('Returning personal stats for agent', ['user_id' => $user->id]);
+            Log::info('Returning stats for agent', ['user_id' => $user->id]);
         }
 
         return [
@@ -223,15 +299,14 @@ class CallStatsService
             'phone_number' => $user->phone_number,
             'status' => $user->status,
             'sessionId' => $user->sessionId,
-            'summary_call_completed' => $totalCalls,
+            'summary_call_completed' => $incomingCalls + $outgoingCalls,
             'summary_inbound_call_completed' => $incomingCalls,
             'summary_outbound_call_completed' => $outgoingCalls,
-            'summary_call_duration' => $totalDuration,
+            'summary_call_duration' => $incomingDuration + $outgoingDuration,
             'summary_call_missed' => $missedCalls,
             'summary_rejected_incoming_calls' => $rejectedIncomingCalls,
             'summary_user_busy_outgoing_calls' => $userBusyOutgoingCalls,
-            'summary_rejected_outgoing_calls' => $rejectedOutingCalls,
-            'updated_at' => $user->updated_at,
+            'summary_rejected_outgoing_calls' => $rejectedOutgoingCalls,
             'ivr_analysis' => $ivrAnalysis,
             'airtime_statistics' => $airtimeStats,
             'peak_hours' => $peakHourStats,
@@ -244,131 +319,67 @@ class CallStatsService
 
 
 
-
-    private function getAirtimeStatistics(User $user, bool $isAdmin, ?array $dateRange): \Illuminate\Support\Collection
+    protected function getAirtimeStatistics(User $user, bool $isAdmin, ?array $dateRange = null): array
     {
-        return CallHistory::query()
-            ->selectRaw('DATE(created_at) as date, SUM(airtime_cost) as total_airtime')
-            ->when(!$isAdmin, fn($q) => $q->where('callerNumber', $user->phone_number))
-            ->where('call_type', 'outgoing')
-            ->when($dateRange, fn($q) => $q->whereBetween('created_at', $dateRange))
-            ->groupByRaw('DATE(created_at)')
-            ->orderBy('date')
-            ->get();
-    }
+        $incomingQuery = CallHistory::query()->whereNull('deleted_at');
+        $outgoingQuery = CallHistory::query()->whereNull('deleted_at');
 
-    private function getPeakHourStatistics(User $user, bool $isAdmin, ?array $dateRange): array
-    {
-        $incomingQuery = CallHistory::query()
-            ->selectRaw('HOUR(created_at) as hour, COUNT(*) as count')
-            ->where('call_type', 'incoming')
-            ->when(!$isAdmin, fn($q) => $q->where('user_id', $user->id))
-            ->when($dateRange, fn($q) => $q->whereBetween('created_at', $dateRange))
-            ->groupByRaw('HOUR(created_at)')
-            ->orderBy('hour');
+        if (!$isAdmin) {
+            $incomingQuery->where('user_id', $user->id);
+            $outgoingQuery->where('callerNumber', $user->phone_number);
+        }
 
-        $outgoingQuery = CallHistory::query()
-            ->selectRaw('HOUR(created_at) as hour, COUNT(*) as count')
-            ->where('call_type', 'outgoing')
-            ->when(!$isAdmin, fn($q) => $q->where('callerNumber', $user->phone_number))
-            ->when($dateRange, fn($q) => $q->whereBetween('created_at', $dateRange))
-            ->groupByRaw('HOUR(created_at)')
-            ->orderBy('hour');
+        if ($dateRange) {
+            $incomingQuery->whereBetween('created_at', $dateRange);
+            $outgoingQuery->whereBetween('created_at', $dateRange);
+        }
+
+        $incomingSeconds = $incomingQuery->sum('durationInSeconds');
+        $outgoingSeconds = $outgoingQuery->sum('durationInSeconds');
 
         return [
-            'incoming' => $incomingQuery->get(),
-            'outgoing' => $outgoingQuery->get(),
+            'total_airtime_seconds' => $incomingSeconds + $outgoingSeconds,
+            'incoming_airtime_seconds' => $incomingSeconds,
+            'outgoing_airtime_seconds' => $outgoingSeconds,
+            'total_airtime_minutes' => round(($incomingSeconds + $outgoingSeconds) / 60, 2),
         ];
     }
 
 
 
-
-    /**
-     * Generate a call summary report using Eloquent collections.
-     *
-     * @param  array  $filters
-     * @return \Illuminate\Support\Collection
-     */
-    public function generateCallSummaryReport(array $filters)
+    protected function getPeakHourStatistics(User $user, bool $isAdmin, ?array $dateRange = null): array
     {
-        // Enable query log
-        DB::enableQueryLog();
-
-        $query = CallHistory::with('agent')
+        $query = CallHistory::query()
+            ->selectRaw('HOUR(created_at) as hour, COUNT(*) as total')
             ->whereNull('deleted_at')
-            ->where('user_id', '!=', null);
+            ->groupByRaw('HOUR(created_at)')
+            ->orderBy('total', 'desc');
 
-        // Apply filters
-        if (!empty($filters['startDate']) && !empty($filters['endDate'])) {
-            $query->whereBetween('created_at', [$filters['startDate'], $filters['endDate']]);
-        }
-        // if (!empty($filters['status'])) {
-        //     if (is_array($filters['status'])) {
-        //         $query->whereIn('status', $filters['status']);
-        //     } else {
-        //         $query->where('status', $filters['status']);
-        //     }
-        // }
-
-
-        if (!empty($filters['status'])) {
-
-            if (is_array($filters['status'])) {
-                $query->whereIn('lastBridgeHangupCause', $filters['status']);
-            } else {
-                $query->where('lastBridgeHangupCause', $filters['status']);
-            }
+        if (!$isAdmin) {
+            $query->where(function ($q) use ($user) {
+                $q->where('user_id', $user->id)
+                    ->orWhere('callerNumber', $user->phone_number);
+            });
         }
 
-        // Apply agent filter
-        if (!empty($filters['user_id'])) {
-            if (is_array($filters['user_id'])) {
-                $query->whereIn('user_id', $filters['user_id']);
-            } else {
-                $query->where('user_id', $filters['user_id']);
-            }
+        if ($dateRange) {
+            $query->whereBetween('created_at', $dateRange);
         }
 
-        // Execute query
-        $callHistories = $query->get();
+        $data = $query->get();
 
-        // Log the executed SQL query
-        Log::info('Executed Query:', DB::getQueryLog());
+        // Format to a nicer structure like ['13:00' => 24 calls, ...]
+        $formatted = $data->mapWithKeys(function ($item) {
+            $label = str_pad($item->hour, 2, '0', STR_PAD_LEFT) . ':00';
+            return [$label => $item->total];
+        });
 
-
-        Log::info("Bindings: ", $query->getBindings());
-
-
-        $ivrOptions = IvrOption::all();
-        $ivrStats = CallHistory::all();
-        // pass user_id or user_id array also 
-        // $ivrAnalysis = $this->analyzeIvrStatistics($ivrOptions, $ivrStats, $filters,$user_id = null);
-
-
-        Log::info('Call summary report generated', ['call_histories' => $callHistories]);
-        // $callHistory is null log warning  no data 
-
-        if ($callHistories->isEmpty()) {
-            Log::warning('No call history found for the given filters.', $filters);
-        }
-        // return $callHistories;
-
-
-        return $callHistories->groupBy('user_id')->map(function ($calls, $user_) {
-            return [
-                'agent' => optional($calls->first()->agent)->name ?? 'N/A',
-                'total_calls' => $calls->count(),
-                'total_airtime' => $calls->sum('amount') ?? 0,
-                'answered' => $calls->where('status', 'Answered')->count(),
-                // 'missed' => $calls->where('status', 'Missed')->count(),
-                'escalated' => $calls->where('status', 'Escalated')->count(),
-                'total_duration' => $calls->sum('durationInSeconds') ?? 0,
-            ];
-        })->values();
+        return [
+            'peak_hour_data' => $formatted,
+            'busiest_hour' => $formatted->keys()->first(),
+            'call_count' => $formatted->values()->first(),
+        ];
     }
-
-
 
 
 
