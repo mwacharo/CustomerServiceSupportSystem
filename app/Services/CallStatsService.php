@@ -16,7 +16,7 @@ class CallStatsService
 
 
 
-  
+
 
     // public function getAgentStats(User $user, ?array $dateRange = null): array
     // {
@@ -110,121 +110,176 @@ class CallStatsService
 
 
     public function getAgentStats(User $user, ?array $dateRange = null): array
-{
-    Log::info('Fetching agent stats', ['user_id' => $user->id, 'date_range' => $dateRange]);
+    {
+        Log::info('Fetching agent stats', ['user_id' => $user->id, 'date_range' => $dateRange]);
 
-    $isAdmin = $user->hasRole('CallCentreAdmin') || $user->hasRole('SuperAdmin');
+        $isAdmin = $user->hasRole('CallCentreAdmin') || $user->hasRole('SuperAdmin');
 
-    $ivrOptions = IvrOption::all();
+        $ivrOptions = IvrOption::all();
 
-    if ($isAdmin) {
-        // Admin: fetch overall stats
-        $query = CallHistory::query()->whereNull('deleted_at');
+        if ($isAdmin) {
+            // Admin: fetch overall stats
+            $query = CallHistory::query()->whereNull('deleted_at');
 
-        if ($dateRange) {
-            $query->whereBetween('created_at', $dateRange);
+            if ($dateRange) {
+                $query->whereBetween('created_at', $dateRange);
+            }
+
+            $incomingCalls = (clone $query)->whereNotNull('user_id')->count();
+            $outgoingCalls = (clone $query)->whereNotNull('callerNumber')->count();
+            $totalCalls = $incomingCalls + $outgoingCalls;
+
+            $missedCalls = (clone $query)
+                ->whereIn('lastBridgeHangupCause', ['NO_ANSWER', 'SERVICE_UNAVAILABLE'])
+                ->count();
+
+            $rejectedIncomingCalls = (clone $query)
+                ->whereIn('lastBridgeHangupCause', ['CALL_REJECTED', 'NORMAL_CLEARING'])
+                ->count();
+
+            $userBusyOutgoingCalls = (clone $query)
+                ->where('lastBridgeHangupCause', 'USER_BUSY')
+                ->count();
+
+            $rejectedOutingCalls = (clone $query)
+                ->where('lastBridgeHangupCause', 'CALL_REJECTED')
+                ->count();
+
+            $incomingDuration = (clone $query)->sum('durationInSeconds') ?? 0;
+            $totalDuration = $incomingDuration; // Since no outgoing specific separation here
+
+
+
+
+
+
+            $ivrStats = CallHistory::whereNotNull('ivr_option_id')
+                ->when($dateRange, fn($q) => $q->whereBetween('created_at', $dateRange))
+                ->get();
+
+
+            $ivrAnalysis = $this->analyzeOverallIvrStatistics($ivrOptions, $ivrStats, $dateRange);
+
+
+            // Additional Statistics: Airtime and Peak Hour Calls
+            $airtimeStats = $this->getAirtimeStatistics($user, $isAdmin, $dateRange);
+            $peakHourStats = $this->getPeakHourStatistics($user, $isAdmin, $dateRange);
+
+
+            Log::info('Returning overall stats for admin/super_admin', ['user_id' => $user->id]);
+        } else {
+            // Agent: fetch personal stats
+            $phone_number = $user->phone_number;
+
+            $outgoingQuery = CallHistory::query()
+                ->where('callerNumber', $phone_number)
+                ->whereNull('deleted_at');
+
+            $incomingQuery = CallHistory::query()
+                ->where('user_id', $user->id)
+                ->whereNull('deleted_at');
+
+            if ($dateRange) {
+                $incomingQuery->whereBetween('created_at', $dateRange);
+                $outgoingQuery->whereBetween('created_at', $dateRange);
+            }
+
+            $incomingCalls = (clone $incomingQuery)->count();
+            $outgoingCalls = (clone $outgoingQuery)->count();
+            $totalCalls = $incomingCalls + $outgoingCalls;
+
+            $missedCalls = (clone $incomingQuery)
+                ->whereIn('lastBridgeHangupCause', ['NO_ANSWER', 'SERVICE_UNAVAILABLE'])
+                ->count();
+
+            $rejectedIncomingCalls = (clone $incomingQuery)
+                ->whereIn('lastBridgeHangupCause', ['CALL_REJECTED', 'NORMAL_CLEARING'])
+                ->count();
+
+            $userBusyOutgoingCalls = (clone $outgoingQuery)
+                ->where('lastBridgeHangupCause', 'USER_BUSY')
+                ->count();
+
+            $rejectedOutingCalls = (clone $outgoingQuery)
+                ->where('lastBridgeHangupCause', 'CALL_REJECTED')
+                ->count();
+
+            $incomingDuration = (clone $incomingQuery)->sum('durationInSeconds') ?? 0;
+            $outgoingDuration = (clone $outgoingQuery)->sum('durationInSeconds') ?? 0;
+            $totalDuration = $incomingDuration + $outgoingDuration;
+
+            $ivrStats = CallHistory::whereNotNull('ivr_option_id')
+                ->where('user_id', $user->id)
+                ->when($dateRange, fn($q) => $q->whereBetween('created_at', $dateRange))
+                ->get();
+
+            $ivrAnalysis = $this->analyzeIvrStatistics($ivrOptions, $ivrStats, $dateRange, $user->id);
+
+            Log::info('Returning personal stats for agent', ['user_id' => $user->id]);
         }
 
-        $incomingCalls = (clone $query)->whereNotNull('user_id')->count();
-        $outgoingCalls = (clone $query)->whereNotNull('callerNumber')->count();
-        $totalCalls = $incomingCalls + $outgoingCalls;
-
-        $missedCalls = (clone $query)
-            ->whereIn('lastBridgeHangupCause', ['NO_ANSWER', 'SERVICE_UNAVAILABLE'])
-            ->count();
-
-        $rejectedIncomingCalls = (clone $query)
-            ->whereIn('lastBridgeHangupCause', ['CALL_REJECTED', 'NORMAL_CLEARING'])
-            ->count();
-
-        $userBusyOutgoingCalls = (clone $query)
-            ->where('lastBridgeHangupCause', 'USER_BUSY')
-            ->count();
-
-        $rejectedOutingCalls = (clone $query)
-            ->where('lastBridgeHangupCause', 'CALL_REJECTED')
-            ->count();
-
-        $incomingDuration = (clone $query)->sum('durationInSeconds') ?? 0;
-        $totalDuration = $incomingDuration; // Since no outgoing specific separation here
-
-        $ivrStats = CallHistory::whereNotNull('ivr_option_id')
-            ->when($dateRange, fn($q) => $q->whereBetween('created_at', $dateRange))
-            ->get();
-
-        $ivrAnalysis = $this->analyzeOverallIvrStatistics($ivrOptions, $ivrStats, $dateRange);
-
-        Log::info('Returning overall stats for admin/super_admin', ['user_id' => $user->id]);
-    } else {
-        // Agent: fetch personal stats
-        $phone_number = $user->phone_number;
-
-        $outgoingQuery = CallHistory::query()
-            ->where('callerNumber', $phone_number)
-            ->whereNull('deleted_at');
-
-        $incomingQuery = CallHistory::query()
-            ->where('user_id', $user->id)
-            ->whereNull('deleted_at');
-
-        if ($dateRange) {
-            $incomingQuery->whereBetween('created_at', $dateRange);
-            $outgoingQuery->whereBetween('created_at', $dateRange);
-        }
-
-        $incomingCalls = (clone $incomingQuery)->count();
-        $outgoingCalls = (clone $outgoingQuery)->count();
-        $totalCalls = $incomingCalls + $outgoingCalls;
-
-        $missedCalls = (clone $incomingQuery)
-            ->whereIn('lastBridgeHangupCause', ['NO_ANSWER', 'SERVICE_UNAVAILABLE'])
-            ->count();
-
-        $rejectedIncomingCalls = (clone $incomingQuery)
-            ->whereIn('lastBridgeHangupCause', ['CALL_REJECTED', 'NORMAL_CLEARING'])
-            ->count();
-
-        $userBusyOutgoingCalls = (clone $outgoingQuery)
-            ->where('lastBridgeHangupCause', 'USER_BUSY')
-            ->count();
-
-        $rejectedOutingCalls = (clone $outgoingQuery)
-            ->where('lastBridgeHangupCause', 'CALL_REJECTED')
-            ->count();
-
-        $incomingDuration = (clone $incomingQuery)->sum('durationInSeconds') ?? 0;
-        $outgoingDuration = (clone $outgoingQuery)->sum('durationInSeconds') ?? 0;
-        $totalDuration = $incomingDuration + $outgoingDuration;
-
-        $ivrStats = CallHistory::whereNotNull('ivr_option_id')
-            ->where('user_id', $user->id)
-            ->when($dateRange, fn($q) => $q->whereBetween('created_at', $dateRange))
-            ->get();
-
-        $ivrAnalysis = $this->analyzeIvrStatistics($ivrOptions, $ivrStats, $dateRange, $user->id);
-
-        Log::info('Returning personal stats for agent', ['user_id' => $user->id]);
+        return [
+            'id' => $user->id,
+            'phone_number' => $user->phone_number,
+            'status' => $user->status,
+            'sessionId' => $user->sessionId,
+            'summary_call_completed' => $totalCalls,
+            'summary_inbound_call_completed' => $incomingCalls,
+            'summary_outbound_call_completed' => $outgoingCalls,
+            'summary_call_duration' => $totalDuration,
+            'summary_call_missed' => $missedCalls,
+            'summary_rejected_incoming_calls' => $rejectedIncomingCalls,
+            'summary_user_busy_outgoing_calls' => $userBusyOutgoingCalls,
+            'summary_rejected_outgoing_calls' => $rejectedOutingCalls,
+            'updated_at' => $user->updated_at,
+            'ivr_analysis' => $ivrAnalysis,
+            'airtime_statistics' => $airtimeStats,
+            'peak_hours' => $peakHourStats,
+            'updated_at' => $user->updated_at,
+        ];
     }
 
-    return [
-        'id' => $user->id,
-        'phone_number' => $user->phone_number,
-        'status' => $user->status,
-        'sessionId' => $user->sessionId,
-        'summary_call_completed' => $totalCalls,
-        'summary_inbound_call_completed' => $incomingCalls,
-        'summary_outbound_call_completed' => $outgoingCalls,
-        'summary_call_duration' => $totalDuration,
-        'summary_call_missed' => $missedCalls,
-        'summary_rejected_incoming_calls' => $rejectedIncomingCalls,
-        'summary_user_busy_outgoing_calls' => $userBusyOutgoingCalls,
-        'summary_rejected_outgoing_calls' => $rejectedOutingCalls,
-        'updated_at' => $user->updated_at,
-        'ivr_analysis' => $ivrAnalysis,
-    ];
-}
 
 
+
+
+
+
+    private function getAirtimeStatistics(User $user, bool $isAdmin, ?array $dateRange): \Illuminate\Support\Collection
+    {
+        return CallHistory::query()
+            ->selectRaw('DATE(created_at) as date, SUM(airtime_cost) as total_airtime')
+            ->when(!$isAdmin, fn($q) => $q->where('callerNumber', $user->phone_number))
+            ->where('call_type', 'outgoing')
+            ->when($dateRange, fn($q) => $q->whereBetween('created_at', $dateRange))
+            ->groupByRaw('DATE(created_at)')
+            ->orderBy('date')
+            ->get();
+    }
+
+    private function getPeakHourStatistics(User $user, bool $isAdmin, ?array $dateRange): array
+    {
+        $incomingQuery = CallHistory::query()
+            ->selectRaw('HOUR(created_at) as hour, COUNT(*) as count')
+            ->where('call_type', 'incoming')
+            ->when(!$isAdmin, fn($q) => $q->where('user_id', $user->id))
+            ->when($dateRange, fn($q) => $q->whereBetween('created_at', $dateRange))
+            ->groupByRaw('HOUR(created_at)')
+            ->orderBy('hour');
+
+        $outgoingQuery = CallHistory::query()
+            ->selectRaw('HOUR(created_at) as hour, COUNT(*) as count')
+            ->where('call_type', 'outgoing')
+            ->when(!$isAdmin, fn($q) => $q->where('callerNumber', $user->phone_number))
+            ->when($dateRange, fn($q) => $q->whereBetween('created_at', $dateRange))
+            ->groupByRaw('HOUR(created_at)')
+            ->orderBy('hour');
+
+        return [
+            'incoming' => $incomingQuery->get(),
+            'outgoing' => $outgoingQuery->get(),
+        ];
+    }
 
 
 
@@ -426,50 +481,50 @@ class CallStatsService
 
     public function getOverallCallStats(array $filters = []): array
     {
-        $startDate = isset($filters['start_date']) 
-            ? Carbon::parse($filters['start_date'])->startOfDay() 
+        $startDate = isset($filters['start_date'])
+            ? Carbon::parse($filters['start_date'])->startOfDay()
             : Carbon::today()->startOfDay();
-    
-        $endDate = isset($filters['end_date']) 
-            ? Carbon::parse($filters['end_date'])->endOfDay() 
+
+        $endDate = isset($filters['end_date'])
+            ? Carbon::parse($filters['end_date'])->endOfDay()
             : Carbon::today()->endOfDay();
-    
+
         $baseQuery = CallHistory::whereBetween('created_at', [$startDate, $endDate])
             ->whereNull('deleted_at');
-    
+
         // Call summaries
         $totalCalls = (clone $baseQuery)->count();
         $inboundCalls = (clone $baseQuery)->whereNotNull('user_id')->count();
         $outboundCalls = (clone $baseQuery)->whereNull('user_id')->count();
-    
+
         $missedCalls = (clone $baseQuery)->whereIn('lastBridgeHangupCause', ['NO_ANSWER', 'SERVICE_UNAVAILABLE'])->count();
         $rejectedIncomingCalls = (clone $baseQuery)
             ->whereNotNull('user_id')
             ->whereIn('lastBridgeHangupCause', ['CALL_REJECTED', 'NORMAL_CLEARING'])
             ->count();
-    
+
         $userBusyOutgoingCalls = (clone $baseQuery)
             ->whereNull('user_id')
             ->where('lastBridgeHangupCause', 'USER_BUSY')
             ->count();
-    
+
         $rejectedOutgoingCalls = (clone $baseQuery)
             ->whereNull('user_id')
             ->where('lastBridgeHangupCause', 'CALL_REJECTED')
             ->count();
-    
+
         $totalDuration = (clone $baseQuery)->sum('durationInSeconds') ?? 0;
-    
+
         // IVR stats delegation
         $ivrStats = CallHistory::whereNotNull('ivr_option_id')
             ->whereBetween('created_at', [$startDate, $endDate])
             ->whereNull('deleted_at')
             ->get();
-    
-        $ivrOptions = IVROption::all(); 
-    
+
+        $ivrOptions = IVROption::all();
+
         $ivrBreakdown = $this->analyzeOverallIvrStatistics($ivrOptions, $ivrStats, [$startDate, $endDate]);
-    
+
         return [
             'summary_from' => $startDate->toDateTimeString(),
             'summary_to' => $endDate->toDateTimeString(),
@@ -488,38 +543,38 @@ class CallStatsService
 
 
     public function analyzeOverallIvrStatistics(Collection $ivrOptions, Collection $ivrStats, ?array $dateRange = null): Collection
-{
-    if ($dateRange !== null) {
-        $ivrStats = $ivrStats->filter(function ($stat) use ($dateRange) {
-            $createdAt = Carbon::parse($stat->created_at);
-            return $createdAt->between($dateRange[0], $dateRange[1]);
+    {
+        if ($dateRange !== null) {
+            $ivrStats = $ivrStats->filter(function ($stat) use ($dateRange) {
+                $createdAt = Carbon::parse($stat->created_at);
+                return $createdAt->between($dateRange[0], $dateRange[1]);
+            });
+
+            Log::info('Filtered IVR stats for overall report', [
+                'dateRange' => $dateRange,
+                'filtered_count' => $ivrStats->count(),
+            ]);
+        }
+
+        $totalSelections = $ivrStats->count();
+
+        return $ivrOptions->map(function ($ivrOption) use ($ivrStats, $totalSelections) {
+            $matchedStats = $ivrStats->where('ivr_option_id', $ivrOption->id);
+
+            $totalSelected = $matchedStats->count();
+            $totalDuration = $matchedStats->sum('durationInSeconds') ?? 0;
+
+            return [
+                'id' => $ivrOption->id,
+                'option_number' => $ivrOption->option_number,
+                'description' => $ivrOption->description,
+                'total_selected' => $totalSelected,
+                'total_duration' => $totalDuration,
+                'average_duration' => $totalSelected ? round($totalDuration / $totalSelected, 2) : 0,
+                'selection_percentage' => $totalSelections ? round(($totalSelected / $totalSelections) * 100, 2) : 0,
+            ];
         });
-
-        Log::info('Filtered IVR stats for overall report', [
-            'dateRange' => $dateRange,
-            'filtered_count' => $ivrStats->count(),
-        ]);
     }
-
-    $totalSelections = $ivrStats->count();
-
-    return $ivrOptions->map(function ($ivrOption) use ($ivrStats, $totalSelections) {
-        $matchedStats = $ivrStats->where('ivr_option_id', $ivrOption->id);
-
-        $totalSelected = $matchedStats->count();
-        $totalDuration = $matchedStats->sum('durationInSeconds') ?? 0;
-
-        return [
-            'id' => $ivrOption->id,
-            'option_number' => $ivrOption->option_number,
-            'description' => $ivrOption->description,
-            'total_selected' => $totalSelected,
-            'total_duration' => $totalDuration,
-            'average_duration' => $totalSelected ? round($totalDuration / $totalSelected, 2) : 0,
-            'selection_percentage' => $totalSelections ? round(($totalSelected / $totalSelections) * 100, 2) : 0,
-        ];
-    });
-}
 
 
 
@@ -590,6 +645,4 @@ class CallStatsService
             'daily_distribution' => $daily,
         ];
     }
-    
-
 }

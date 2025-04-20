@@ -18,7 +18,8 @@
             <v-card-text>
               <div class="text-h3 font-weight-bold">{{ agentStats.summary_call_completed }}</div>
               <div class="text-caption">
-                <v-chip color="success" size="small" class="mr-1">{{ agentStats.summary_inbound_call_completed }} In</v-chip>
+                <v-chip color="success" size="small" class="mr-1">{{ agentStats.summary_inbound_call_completed }}
+                  In</v-chip>
                 <v-chip color="info" size="small">{{ agentStats.summary_outbound_call_completed }} Out</v-chip>
               </div>
             </v-card-text>
@@ -51,7 +52,8 @@
                   <template v-slot:activator="{ props }">
                     <span v-bind="props">Success rate</span>
                   </template>
-                  <span>{{ agentStats.summary_call_missed }} missed, {{ agentStats.summary_rejected_incoming_calls + agentStats.summary_rejected_outgoing_calls }} rejected</span>
+                  <span>{{ agentStats.summary_call_missed }} missed, {{ agentStats.summary_rejected_incoming_calls +
+                    agentStats.summary_rejected_outgoing_calls }} rejected</span>
                 </v-tooltip>
               </div>
             </v-card-text>
@@ -62,7 +64,8 @@
           <v-card class="dashboard-card info-card">
             <v-card-title class="d-flex justify-space-between">
               <span>Agent Status</span>
-              <v-icon :icon="getStatusIcon(agentStats.status)" :color="getStatusColor(agentStats.status)" class="card-icon"></v-icon>
+              <v-icon :icon="getStatusIcon(agentStats.status)" :color="getStatusColor(agentStats.status)"
+                class="card-icon"></v-icon>
             </v-card-title>
             <v-card-text>
               <div class="text-h5 font-weight-bold text-capitalize">{{ agentStats.status }}</div>
@@ -126,6 +129,43 @@
         </v-col>
       </v-row>
 
+
+      <!-- airtime -->
+
+      <v-row class="mt-6">
+
+        <v-col cols="12" md="6">
+          <v-card class="dashboard-card chart-card">
+            <v-card-title>
+              <v-icon icon="mdi-cash" class="mr-2"></v-icon>
+              Airtime Consumption
+            </v-card-title>
+            <v-card-text>
+              <AirtimeChart :data="airtimeData" />
+            </v-card-text>
+          </v-card>
+        </v-col>
+
+
+
+        <v-col cols="12" md="6">
+          <v-card class="dashboard-card chart-card">
+            <v-card-title>
+              <v-icon icon="mdi-chart-timeline-variant-shimmer" class="mr-2"></v-icon>
+              Peak Hours (Inbound Calls)
+            </v-card-title>
+            <v-card-text>
+              <PeakHoursChart :data="peakHoursData" />
+            </v-card-text>
+          </v-card>
+        </v-col>
+
+
+
+      </v-row>
+
+
+
       <!-- Call Details Table -->
       <v-row class="mt-6">
         <v-col cols="12">
@@ -147,7 +187,8 @@
                   </tr>
                 </thead>
                 <tbody>
-                  <tr v-for="item in agentStats.ivr_analysis" :key="item.id" :class="{ 'highlighted-row': item.total_selected > 0 }">
+                  <tr v-for="item in agentStats.ivr_analysis" :key="item.id"
+                    :class="{ 'highlighted-row': item.total_selected > 0 }">
                     <td>{{ item.option_number }}</td>
                     <td>{{ item.description }}</td>
                     <td>{{ item.total_selected }}</td>
@@ -161,6 +202,13 @@
           </v-card>
         </v-col>
       </v-row>
+
+
+
+
+
+
+
     </v-container>
   </AppLayout>
 </template>
@@ -215,11 +263,11 @@ export default defineComponent({
       summary_rejected_outgoing_calls: 5,
       updated_at: "2025-04-13T11:16:52.000000Z",
       ivr_analysis: [
-        {id: 1, option_number: 1, description: "Replacement", total_selected: 8, total_duration: 635, average_duration: 79.38, selection_percentage: 24.24},
-        {id: 2, option_number: 2, description: "Order Follow-up", total_selected: 8, total_duration: 144, average_duration: 18, selection_percentage: 24.24},
-        {id: 3, option_number: 3, description: "Refund", total_selected: 0, total_duration: 0, average_duration: 0, selection_percentage: 0},
-        {id: 4, option_number: 4, description: "Business Prospect", total_selected: 0, total_duration: 0, average_duration: 0, selection_percentage: 0},
-        {id: 5, option_number: 5, description: "Speak to an Agent", total_selected: 13, total_duration: 329, average_duration: 25.31, selection_percentage: 39.39}
+        { id: 1, option_number: 1, description: "Replacement", total_selected: 8, total_duration: 635, average_duration: 79.38, selection_percentage: 24.24 },
+        { id: 2, option_number: 2, description: "Order Follow-up", total_selected: 8, total_duration: 144, average_duration: 18, selection_percentage: 24.24 },
+        { id: 3, option_number: 3, description: "Refund", total_selected: 0, total_duration: 0, average_duration: 0, selection_percentage: 0 },
+        { id: 4, option_number: 4, description: "Business Prospect", total_selected: 0, total_duration: 0, average_duration: 0, selection_percentage: 0 },
+        { id: 5, option_number: 5, description: "Speak to an Agent", total_selected: 13, total_duration: 329, average_duration: 25.31, selection_percentage: 39.39 }
       ]
     });
 
@@ -273,11 +321,11 @@ export default defineComponent({
     };
 
     const calculateSuccessRate = () => {
-      const totalCallAttempts = agentStats.value.summary_call_completed + 
-                               agentStats.value.summary_call_missed + 
-                               agentStats.value.summary_rejected_incoming_calls +
-                               agentStats.value.summary_rejected_outgoing_calls;
-      
+      const totalCallAttempts = agentStats.value.summary_call_completed +
+        agentStats.value.summary_call_missed +
+        agentStats.value.summary_rejected_incoming_calls +
+        agentStats.value.summary_rejected_outgoing_calls;
+
       if (totalCallAttempts === 0) return 0;
       return Math.round((agentStats.value.summary_call_completed / totalCallAttempts) * 100);
     };
@@ -290,7 +338,7 @@ export default defineComponent({
         default: return 'mdi-account-question';
       }
     };
-    
+
     const getStatusColor = (status) => {
       switch (status?.toLowerCase()) {
         case 'available': return 'success';
@@ -304,7 +352,7 @@ export default defineComponent({
       fetchAgentStats();
       // Set up an interval to refresh data every minute
       const refreshInterval = setInterval(fetchAgentStats, 60000);
-      
+
       // Clean up the interval when component is unmounted
       return () => clearInterval(refreshInterval);
     });
