@@ -104,10 +104,7 @@
                                             </v-chip>
 
 
-                                            <!-- <v-chip color="success" small class="white--text px-2">
-                                                <v-icon left small>mdi-circle</v-icon>
-                                                Online
-                                            </v-chip> -->
+                        
                                         </div>
                                     </div>
                                 </div>
@@ -121,7 +118,7 @@
                                                 <v-icon color="success" left>mdi-phone-check</v-icon>
                                                 <div class="ml-2">
                                                     <div class="text-caption grey--text">Connected</div>
-                                                    <div class="text-h6">{{ summary_call_completed }}</div>
+                                                    <div class="text-h6">{{ stats.summary_call_completed }}</div>
                                                 </div>
                                             </div>
                                         </v-card>
@@ -133,7 +130,7 @@
                                                 <v-icon color="primary" left>mdi-phone-outgoing</v-icon>
                                                 <div class="ml-2">
                                                     <div class="text-caption grey--text">Outbound</div>
-                                                    <div class="text-h6">{{ summary_outbound_call_completed }}</div>
+                                                    <div class="text-h6">{{ stats.summary_outbound_call_completed }}</div>
                                                 </div>
                                             </div>
                                         </v-card>
@@ -145,7 +142,7 @@
                                                 <v-icon color="info" left>mdi-phone-incoming</v-icon>
                                                 <div class="ml-2">
                                                     <div class="text-caption grey--text">Incoming</div>
-                                                    <div class="text-h6">{{ summary_inbound_call_completed }}</div>
+                                                    <div class="text-h6">{{ stats.summary_inbound_call_completed }}</div>
                                                 </div>
                                             </div>
                                         </v-card>
@@ -157,8 +154,8 @@
                                                 <v-icon color="error" left>mdi-phone-cancel</v-icon>
                                                 <div class="ml-2">
                                                     <div class="text-caption grey--text">Rejected</div>
-                                                    <div class="text-h6">{{ rejectedIncomingCalls + rejectedOutingCalls
-                                                    }}</div>
+                                                    <div class="text-h6">{{ stats.summary_rejected_incoming_calls + stats.summary_rejected_outgoing_calls
+                                                        }}</div>
                                                 </div>
                                             </div>
                                         </v-card>
@@ -282,7 +279,7 @@
                                                     </template>
                                                 </v-tooltip>
 
-                                                <!-- <v-tooltip text="Mark as Fulfilled">
+                                                <v-tooltip text="Mark as Fulfilled">
                                                     <template #activator="{ props }">
                                                         <v-btn icon v-bind="props" @click="markAsFulfilled(item)">
                                                             <v-icon>mdi-check-circle</v-icon>
@@ -312,7 +309,7 @@
                                                             <v-icon>mdi-printer</v-icon>
                                                         </v-btn>
                                                     </template>
-                                                </v-tooltip> -->
+                                                </v-tooltip>
                                             </div>
                                         </td>
 
