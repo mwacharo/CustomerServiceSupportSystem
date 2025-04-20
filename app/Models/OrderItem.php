@@ -10,7 +10,7 @@ class OrderItem extends Model
 {
     use HasFactory, SoftDeletes;
 
-    protected $table = 'product_sale';
+    protected $table = 'order_items';
 
     protected $fillable = [
         'price',
@@ -52,7 +52,7 @@ class OrderItem extends Model
     //     return $this->belongsTo(Sku::class);
     // }
 
-    public function sale()
+    public function order()
     {
         return $this->belongsTo(Order::class);
     }

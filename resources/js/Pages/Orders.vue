@@ -89,7 +89,7 @@
                                                 <p class="text-h6 mb-0"> {{ $page.props.auth.user.name }}</p>
                                                 <p class="text-body-2 mb-0 grey--text">
                                                     <v-icon small class="mr-1">mdi-email</v-icon>
-                                               {{ $page.props.auth.user.email }}
+                                                    {{ $page.props.auth.user.email }}
                                                 </p>
 
 
@@ -244,27 +244,109 @@
 
                         <!-- Orders Tab -->
                         <v-window-item value="orders">
-                            <v-data-table :headers="headers" :items="serverItems" show-select v-model="selected"
+
+
+
+                            <v-data-table :headers="headers" :items="orders" show-select v-model="selected"
                                 class="elevation-1 mt-4">
-                                <!-- Example of customizing the table body -->
                                 <template #body="{ items }">
-                                    <tr v-for="item in items" :key="item.product">
-                                        <td>{{ item.product }}</td>
+                                    <tr v-for="item in items" :key="item.id">
+                                        <td>
+                                            <ul>
+                                                <li v-for="product in item.orderItems" :key="product.id">
+                                                    {{ product.name }} (x{{ product.quantity }})
+                                                </li>
+                                            </ul>
+                                        </td>
+                                        <td>{{ item.order_no }}</td>
                                         <td>
                                             <span class="clickable" @click="openStatusModal(item)">
                                                 {{ item.status }}
                                             </span>
                                         </td>
-                                        <td>{{ item.COD }}</td>
-                                        <td>{{ item.client }}</td>
+                                        <td>{{ item.total_price }}</td>
+                                        <td>{{ item.client?.name }}</td>
                                         <td>
                                             <span class="clickable" @click="openPhonePopup(item)">
-                                                {{ item.phone }}
+                                                {{ item.client?.phone_number }}
+                                            </span>
+                                        </td>
+                                        <!-- Actions column -->
+                                        <td>
+                                            <div class="d-flex flex-wrap gap-2">
+                                                <v-tooltip text="View Details">
+                                                    <template #activator="{ props }">
+                                                        <v-btn icon v-bind="props" @click="viewDetails(item)">
+                                                            <v-icon>mdi-eye</v-icon>
+                                                        </v-btn>
+                                                    </template>
+                                                </v-tooltip>
+
+                                                <!-- <v-tooltip text="Mark as Fulfilled">
+                                                    <template #activator="{ props }">
+                                                        <v-btn icon v-bind="props" @click="markAsFulfilled(item)">
+                                                            <v-icon>mdi-check-circle</v-icon>
+                                                        </v-btn>
+                                                    </template>
+                                                </v-tooltip>
+
+                                                <v-tooltip text="Assign Driver">
+                                                    <template #activator="{ props }">
+                                                        <v-btn icon v-bind="props" @click="assignDriver(item)">
+                                                            <v-icon>mdi-truck-delivery</v-icon>
+                                                        </v-btn>
+                                                    </template>
+                                                </v-tooltip>
+
+                                                <v-tooltip text="Track Order">
+                                                    <template #activator="{ props }">
+                                                        <v-btn icon v-bind="props" @click="trackOrder(item)">
+                                                            <v-icon>mdi-map-marker-path</v-icon>
+                                                        </v-btn>
+                                                    </template>
+                                                </v-tooltip>
+
+                                                <v-tooltip text="Print Waybill">
+                                                    <template #activator="{ props }">
+                                                        <v-btn icon v-bind="props" @click="printWaybill(item)">
+                                                            <v-icon>mdi-printer</v-icon>
+                                                        </v-btn>
+                                                    </template>
+                                                </v-tooltip> -->
+                                            </div>
+                                        </td>
+
+                                    </tr>
+                                </template>
+                            </v-data-table>
+
+                            <!-- <v-data-table :headers="headers" :items="orders" show-select v-model="selected"
+                                class="elevation-1 mt-4">
+                                <template #body="{ items }">
+
+                                    <tr v-for="item in items" :key="item.product">
+                                        <td>{{ item.orderItems }}</td>
+
+                                        <td>
+                                          
+                                                {{ item.order_no }}
+                                         
+                                        </td>
+                                        <td>
+                                            <span class="clickable" @click="openStatusModal(item)">
+                                                {{ item.status }}
+                                            </span>
+                                        </td>
+                                        <td>{{ item.total_price }}</td>
+                                        <td>{{ item.client.name }}</td>
+                                        <td>
+                                            <span class="clickable" @click="openPhonePopup(item)">
+                                                {{ item.client.phone_number }}
                                             </span>
                                         </td>
                                     </tr>
                                 </template>
-                            </v-data-table>
+                            </v-data-table> -->
                         </v-window-item>
 
                     </v-window>
@@ -512,23 +594,24 @@
                                     <v-card-text>
                                         <div class="d-flex align-center mb-2">
                                             <v-icon color="primary" class="mr-2">mdi-account</v-icon>
-                                            <strong>Name:</strong> {{ selectedItem?.client }}
+                                            <strong>Name:</strong> {{ selectedItem?.client.name }}
                                         </div>
                                         <div class="d-flex align-center mb-2">
                                             <v-icon color="primary" class="mr-2">mdi-email</v-icon>
-                                            <strong>Email:</strong> {{ selectedItem?.email }}
+                                            <strong>Email:</strong> {{ selectedItem?.client.email }}
                                         </div>
                                         <div class="d-flex align-center mb-2">
                                             <v-icon color="primary" class="mr-2">mdi-phone</v-icon>
-                                            <strong>Phone:</strong> {{ selectedItem?.phone }}
+                                            <strong>Phone:</strong> {{ selectedItem?.client.phone_number }}
                                         </div>
                                         <div class="d-flex align-center mb-2">
                                             <v-icon color="primary" class="mr-2">mdi-phone-classic</v-icon>
-                                            <strong>Alternative Phone:</strong> {{ selectedItem?.altPhone || 'N/A' }}
+                                            <strong>Alternative Phone:</strong> {{ selectedItem?.client.alt_phone_number
+                                                || 'N/A' }}
                                         </div>
                                         <div class="d-flex align-center">
                                             <v-icon color="primary" class="mr-2">mdi-map-marker</v-icon>
-                                            <strong>Address:</strong> {{ selectedItem?.location || 'N/A' }}
+                                            <strong>Address:</strong> {{ selectedItem?.client.address || 'N/A' }}
                                         </div>
                                     </v-card-text>
 
@@ -641,20 +724,20 @@ const userId = computed(() => usePage().props.value.user.id);
 
 
 const orders = [
-    {
-        product: "Phone",
-        status: "Shipped",
-        COD: 500,
-        client: "John Doe",
-        phone: "123-456-7890",
-        email: "john@example.com",
-        altPhone: "111-222-3333",
-        location: "Portland, Oregon",
-        orders: [
-            { product: "Tablet", status: "Delivered" },
-            { product: "Laptop", status: "Pending" },
-        ],
-    },
+    // {
+    //     product: "Phone",
+    //     status: "Shipped",
+    //     COD: 500,
+    //     client: "John Doe",
+    //     phone: "123-456-7890",
+    //     email: "john@example.com",
+    //     altPhone: "111-222-3333",
+    //     location: "Portland, Oregon",
+    //     orders: [
+    //         { product: "Tablet", status: "Delivered" },
+    //         { product: "Laptop", status: "Pending" },
+    //     ],
+    // },
 ];
 
 const FakeAPI = {
@@ -724,11 +807,15 @@ export default {
         ],
 
         headers: [
-            { title: "Product", align: "start", key: "product" },
+            { title: "Order NO", align: "start", key: "order_no" },
             { title: "Status", key: "status", align: "start" },
             { title: "COD", key: "COD", align: "end" },
             { title: "Client", key: "client", align: "start" },
             { title: "Phone", key: "phone", align: "start" },
+            { text: 'Actions', value: 'actions', sortable: false }
+
+            // { title: "Product", align: "start", key: "orderItems" },
+
         ],
         callsheaders: [
             { title: "Date", value: "created_at" },
@@ -745,20 +832,20 @@ export default {
         ],
 
         serverItems: [
-            {
-                product: "Phone",
-                status: "Shipped",
-                COD: 500,
-                client: "John Doe",
-                phone: "741821113",
-            },
-            {
-                product: "Tablet",
-                status: "Pending",
-                COD: 700,
-                client: "Jane Doe",
-                phone: "751458911",
-            },
+            // {
+            //     product: "Phone",
+            //     status: "Shipped",
+            //     COD: 500,
+            //     client: "John Doe",
+            //     phone: "741821113",
+            // },
+            // {
+            //     product: "Tablet",
+            //     status: "Pending",
+            //     COD: 700,
+            //     client: "Jane Doe",
+            //     phone: "751458911",
+            // },
         ],
         totalItems: 2,
         statuses: ["Pending", "Shipped", "Delivered", "Cancelled"],
@@ -786,8 +873,7 @@ export default {
 
     created() {
 
-        // this.fetchOrders();
-
+        this.fetchOrders();
         this.fetchAgentstats();
         this.fetchUsers();
 
@@ -797,12 +883,12 @@ export default {
     methods: {
 
         playRecording(item) {
-    if (item.recordingUrl) {
-      window.open(item.recordingUrl, '_blank');
-    } else {
-      this.$toast.error('Recording not available');
-    }
-  },
+            if (item.recordingUrl) {
+                window.open(item.recordingUrl, '_blank');
+            } else {
+                this.$toast.error('Recording not available');
+            }
+        },
 
 
 
@@ -1244,15 +1330,15 @@ export default {
 
 
 
-        // async fetchOrders() {
-        //     axios.get('/api/v1/orders')
-        //         .then(response => {
-        //             this.orders = response.data.orders;
-        //         })
-        //         .catch(error => {
-        //             console.error('Error fetching orders:', error);
-        //         });
-        // },
+        async fetchOrders() {
+            axios.get('/api/v1/orders')
+                .then(response => {
+                    this.orders = response.data.orders;
+                })
+                .catch(error => {
+                    console.error('Error fetching orders:', error);
+                });
+        },
 
 
 
@@ -1294,16 +1380,16 @@ export default {
     },
 
     computed: {
-  userInitials() {
-    const name = this.$page.props.auth.user.name;
-    if (!name) return '';
-    const parts = name.trim().split(' ');
-    const first = parts[0]?.charAt(0) || '';
-    const second = parts[1]?.charAt(0) || '';
-    return (first + second).toUpperCase();
-  }
-}
-,
+        userInitials() {
+            const name = this.$page.props.auth.user.name;
+            if (!name) return '';
+            const parts = name.trim().split(' ');
+            const first = parts[0]?.charAt(0) || '';
+            const second = parts[1]?.charAt(0) || '';
+            return (first + second).toUpperCase();
+        }
+    }
+    ,
 
 
     async mounted() {

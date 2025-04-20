@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ApiUserController;
 use App\Http\Controllers\ApiCallCentreController;
 use App\Http\Controllers\ApiIvrOptionController;
+use App\Http\Controllers\ApiOrderController;
 
 /*
 |--------------------------------------------------------------------------
@@ -150,6 +151,14 @@ Route::post('v1/ivr-options', [ApiIvrOptionController::class, 'store']);
 Route::get('v1/ivr-options/{id}', [ApiIvrOptionController::class, 'show']); 
 Route::put('v1/ivr-options/{id}', [ApiIvrOptionController::class, 'update']); 
 Route::delete('v1/ivr-options/{id}', [ApiIvrOptionController::class, 'destroy']); 
+
+
+Route::get('v1/orders', [ApiOrderController::class, 'index']); 
+
+
+
+
+
 
 // Route::get('v1/delete-records', [ApiController::class, 'deleteRecords']);
 // https://support.solssa.com/api/v1/africastalking-handle-callback
