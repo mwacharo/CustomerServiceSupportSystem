@@ -42,7 +42,7 @@
                                             <v-icon color="error">mdi-phone-missed</v-icon>
                                         </v-list-item-icon>
                                         <v-list-item-content>
-                                            <v-list-item-title>Missed Calls</v-list-item-title>
+                                            <v-list-item-title>Missed  {{ stats.summary_call_missed }}</v-list-item-title>
                                         </v-list-item-content>
                                         <v-list-item-action>
                                             <v-badge :content="summary_call_missed" :value="summary_call_missed > 0"
