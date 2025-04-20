@@ -141,8 +141,7 @@
               Airtime Consumption
             </v-card-title>
             <v-card-text>
-              <!-- <AirtimeChart :data="airtimeData" /> -->
-              <AirtimeChart :data="airtime_statistics" />
+              <AirtimeChart :data="agentStats.airtime_statistics" />
 
             </v-card-text>
           </v-card>
@@ -157,7 +156,9 @@
               Peak Hours (Inbound Calls And Outbound)
             </v-card-title>
             <v-card-text>
-              <PeakHoursChart :data="peak_hour_data" />
+
+              <PeakHoursChart :data="agentStats.peak_hours.peak_hour_data" />
+
             </v-card-text>
           </v-card>
         </v-col>
@@ -269,13 +270,55 @@ export default defineComponent({
       summary_user_busy_outgoing_calls: 10,
       summary_rejected_outgoing_calls: 5,
       updated_at: "2025-04-13T11:16:52.000000Z",
+
       ivr_analysis: [
         { id: 1, option_number: 1, description: "Replacement", total_selected: 8, total_duration: 635, average_duration: 79.38, selection_percentage: 24.24 },
         { id: 2, option_number: 2, description: "Order Follow-up", total_selected: 8, total_duration: 144, average_duration: 18, selection_percentage: 24.24 },
         { id: 3, option_number: 3, description: "Refund", total_selected: 0, total_duration: 0, average_duration: 0, selection_percentage: 0 },
         { id: 4, option_number: 4, description: "Business Prospect", total_selected: 0, total_duration: 0, average_duration: 0, selection_percentage: 0 },
         { id: 5, option_number: 5, description: "Speak to an Agent", total_selected: 13, total_duration: 329, average_duration: 25.31, selection_percentage: 39.39 }
-      ]
+      ] ,
+
+
+      airtime_statistics: {
+    total_airtime_spent: 28.44,
+    incoming_airtime_spent: 4.25,
+    outgoing_airtime_spent: 24.19,
+    total_airtime_seconds: 2983,
+    incoming_airtime_seconds: 2370,
+    outgoing_airtime_seconds: 613,
+    total_airtime_minutes: 49.72
+  },
+  
+  peak_hours: {
+    peak_hour_data: {
+      "00:00": {"incoming": 1, "outgoing": 17, "total": 18},
+      "01:00": {"incoming": 2, "outgoing": 23, "total": 25},
+      "02:00": {"incoming": 2, "outgoing": 8, "total": 10},
+      "03:00": {"incoming": 15, "outgoing": 19, "total": 34},
+      "04:00": {"incoming": 3, "outgoing": 23, "total": 26},
+      "05:00": {"incoming": 3, "outgoing": 31, "total": 34},
+      "06:00": {"incoming": 6, "outgoing": 30, "total": 36},
+      "07:00": {"incoming": 1, "outgoing": 15, "total": 16},
+      "08:00": {"incoming": 3, "outgoing": 19, "total": 22},
+      "09:00": {"incoming": 3, "outgoing": 20, "total": 23},
+      "10:00": {"incoming": 1, "outgoing": 12, "total": 13},
+      "11:00": {"incoming": 4, "outgoing": 6, "total": 10},
+      "12:00": {"outgoing": 6, "incoming": 0, "total": 6},
+      "13:00": {"incoming": 9, "outgoing": 10, "total": 19},
+      "14:00": {"incoming": 8, "outgoing": 14, "total": 22},
+      "15:00": {"incoming": 4, "outgoing": 1, "total": 5},
+      "16:00": {"outgoing": 4, "incoming": 0, "total": 4},
+      "17:00": {"outgoing": 5, "incoming": 0, "total": 5},
+      "18:00": {"incoming": 1, "outgoing": 5, "total": 6},
+      "19:00": {"outgoing": 6, "incoming": 0, "total": 6},
+      "20:00": {"outgoing": 1, "incoming": 0, "total": 1},
+      "22:00": {"outgoing": 1, "incoming": 0, "total": 1},
+      "23:00": {"outgoing": 5, "incoming": 0, "total": 5}
+    },
+    busiest_hour: "06:00",
+    call_count: 36
+  },
     });
 
     const callTypeData = computed(() => {

@@ -23,7 +23,7 @@ class DownloadCallRecordingsJob implements ShouldQueue
      */
     public function handle(): void
     {
-        Log::info('📥 Starting Call Recordings Download Job');
+        // Log::info('📥 Starting Call Recordings Download Job');
 
         // Fetch all call histories with a valid recording URL
         // $callHistories = CallHistory::whereNotNull('recordingUrl')->where('download_status', '!=', 'downloaded')->get();
@@ -55,15 +55,15 @@ class DownloadCallRecordingsJob implements ShouldQueue
                         'recordingUrl' => asset("storage/{$filePath}"),
                     ]);
 
-                    Log::info("✅ Successfully downloaded call recording: {$fileName}");
+                    // Log::info("✅ Successfully downloaded call recording: {$fileName}");
                 } else {
                     Log::error("❌ Failed to download recording for call ID: {$call->id}");
                 }
             } catch (\Exception $e) {
-                Log::error("🚨 Error downloading recording for call ID: {$call->id} - " . $e->getMessage());
+                // Log::error("🚨 Error downloading recording for call ID: {$call->id} - " . $e->getMessage());
             }
         }
 
-        Log::info('📥 Call Recordings Download Job Completed');
+        // Log::info('📥 Call Recordings Download Job Completed');
     }
 }
