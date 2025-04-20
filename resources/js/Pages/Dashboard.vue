@@ -141,7 +141,9 @@
               Airtime Consumption
             </v-card-title>
             <v-card-text>
-              <AirtimeChart :data="airtimeData" />
+              <!-- <AirtimeChart :data="airtimeData" /> -->
+              <AirtimeChart :data="airtime_statistics" />
+
             </v-card-text>
           </v-card>
         </v-col>
@@ -152,10 +154,10 @@
           <v-card class="dashboard-card chart-card">
             <v-card-title>
               <v-icon icon="mdi-chart-timeline-variant-shimmer" class="mr-2"></v-icon>
-              Peak Hours (Inbound Calls)
+              Peak Hours (Inbound Calls And Outbound)
             </v-card-title>
             <v-card-text>
-              <PeakHoursChart :data="peakHoursData" />
+              <PeakHoursChart :data="peak_hour_data" />
             </v-card-text>
           </v-card>
         </v-col>
@@ -220,6 +222,8 @@ import CallTypeChart from '@/Components/Charts/CallTypeChart.vue';
 import CallDistributionChart from '@/Components/Charts/CallDistributionChart.vue';
 import IvrDonutChart from '@/Components/Charts/IvrDonutChart.vue';
 import IvrBarChart from '@/Components/Charts/IvrBarChart.vue';
+import AirtimeChart from "@/Components/Charts/AirtimeChart.vue";
+import PeakHoursChart from "@/Components/Charts/PeakHoursChart.vue";
 
 import { usePage } from '@inertiajs/inertia-vue3';
 
@@ -239,7 +243,10 @@ export default defineComponent({
     CallTypeChart,
     CallDistributionChart,
     IvrDonutChart,
-    IvrBarChart
+    IvrBarChart,
+    AirtimeChart,
+    PeakHoursChart
+
   },
   // props: {
   //   userId: {
