@@ -3,7 +3,7 @@
   import { Link } from '@inertiajs/inertia-vue3';
   import { usePage } from '@inertiajs/inertia-vue3';
   import Logout from '@/Components/Logout.vue';
-  import ChatBox  from '@/Components/ChatBox.vue';
+  import ChatBox from '@/Components/ChatBox.vue';
 
   // State management
   const drawer = ref(true);
@@ -28,16 +28,16 @@
 
 
   // Log user roles, permissions, and token
-onMounted(() => {
-  console.log("User Roles:", userRoles.value); // Logs the roles
-  console.log("User Permissions:", userPermissions.value); // Logs the permissions
-  console.log("User Token:", userToken.value); // Logs the token
-  console.log("User Id:", userId.value); // Logs the token
-});
+  onMounted(() => {
+    console.log("User Roles:", userRoles.value); // Logs the roles
+    console.log("User Permissions:", userPermissions.value); // Logs the permissions
+    console.log("User Token:", userToken.value); // Logs the token
+    console.log("User Id:", userId.value); // Logs the token
+  });
 
 
 
-  
+
   // Navigation drawer functions
   const toggleGroup = (groupName) => {
     const index = expandedGroups.value.indexOf(groupName);
@@ -62,9 +62,23 @@ onMounted(() => {
     {
       title: 'Call Center',
       icon: 'mdi-file-document-outline',
+
+
       items: [
-        { route: 'orders', icon: 'mdi-file-document-multiple-outline', title: 'Orders' },
-      ],
+        { route: 'call-centre', icon: 'mdi-headset', title: 'Call Centre' }, // More intuitive than document icon
+        { route: 'tickets', icon: 'mdi-ticket-outline', title: 'Tickets' },
+        { route: 'messages', icon: 'mdi-message-text-outline', title: 'Messages' },
+        { route: 'whatsapp', icon: 'mdi-whatsapp', title: 'WhatsApp' },
+        { route: 'emails', icon: 'mdi-email-outline', title: 'Emails' },
+        { route: 'clients', icon: 'mdi-account-multiple-outline', title: 'Clients' },
+        { route: 'contacts', icon: 'mdi-phone-outline', title: 'Contacts' },
+        { route: 'telegram', icon: 'mdi-telegram', title: 'Telegram' },
+        { route: 'notes', icon: 'mdi-note-text-outline', title: 'Notes' }
+      ]
+      // items: [
+      //   { route: 'orders', icon: 'mdi-file-document-multiple-outline', title: 'call centre' },
+      //   // include  tickets , messages ,whatsapp ,emails , clients ,contacts ,telegram , notes 
+      // ],
     },
     {
       title: 'Users',
@@ -110,7 +124,7 @@ onMounted(() => {
         // { route: 'twitter', icon: 'mdi-twitter', title: 'TwitterOptions' },
         // { route: 'email', icon: 'mdi-email-outline', title: 'EmailOptions' },
         // { route: 'settings', icon: 'mdi-cog-outline', title: 'Settings' }, 
-         ],
+      ],
     },
   ]);
 
@@ -129,15 +143,15 @@ onMounted(() => {
 
   <template>
     <v-app>
-      <v-navigation-drawer v-model="drawer" app color="white" width="300" >
+      <v-navigation-drawer v-model="drawer" app color="white" width="300">
         <!-- Logo -->
 
-       
+
         <v-list-item>
-           
+
           <img src="/assets/img/logo.png" alt="Boxleo Logo" class="sidebar-logo" width="150">
-          
-      
+
+
         </v-list-item>
 
         <!-- Navigation Menu -->
@@ -181,7 +195,7 @@ onMounted(() => {
         <!-- Include dark and light mode toggle -->
         <v-btn icon @click="$vuetify.theme.dark = !$vuetify.theme.dark">
           <v-icon>{{ $vuetify.theme.dark ? 'mdi-weather-night' : 'mdi-white-balance-sunny' }}</v-icon>
-        </v-btn>  
+        </v-btn>
 
         <!-- Notifications -->
         <v-btn icon="mdi-bell">
@@ -196,14 +210,14 @@ onMounted(() => {
         <v-overlay v-model="isLoading" class="align-center justify-center">
           <v-progress-circular indeterminate></v-progress-circular>
         </v-overlay>
-        
+
         <slot />
         <ChatBox />
 
         <!-- Pass userRoles, userPermissions, and userToken to Order.vue -->
-      <!-- <Order :="userRoles" :userPermissions="userPermissions" :userToken="userToken" /> -->
+        <!-- <Order :="userRoles" :userPermissions="userPermissions" :userToken="userToken" /> -->
       </v-main>
-      
+
     </v-app>
   </template>
 

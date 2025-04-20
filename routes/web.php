@@ -59,9 +59,9 @@ Route::middleware([
 
 
       // acessible by everyone 
-      Route::get('/orders', function () {
+      Route::get('/call-centre', function () {
         return Inertia::render('Orders');
-    })->name('orders');
+    })->name('call-centre');
     
 
     Route::get('/contacts', function () {
@@ -118,6 +118,46 @@ Route::middleware([
         Route::get('/ivr-options', function () {
             return Inertia::render('IvrOptions');
         })->name('ivr-options');
+
+
+
+
+
+        Route::get('/orders', function () {
+            return Inertia::render('Orders');
+        })->name('orders');
+        
+        Route::get('/tickets', function () {
+            return Inertia::render('Tickets');
+        })->name('tickets');
+        
+        Route::get('/messages', function () {
+            return Inertia::render('Messages');
+        })->name('messages');
+        
+        Route::get('/whatsapp', function () {
+            return Inertia::render('WhatsApp');
+        })->name('whatsapp');
+        
+        Route::get('/emails', function () {
+            return Inertia::render('Emails');
+        })->name('emails');
+        
+        Route::get('/clients', function () {
+            return Inertia::render('Clients');
+        })->name('clients');
+        
+        Route::get('/contacts', function () {
+            return Inertia::render('Contacts');
+        })->name('contacts');
+        
+        Route::get('/telegram', function () {
+            return Inertia::render('Telegram');
+        })->name('telegram');
+        
+        Route::get('/notes', function () {
+            return Inertia::render('Notes');
+        })->name('notes');
 
         // Route::get('/sms', function () {
         //     return Inertia::render('Sm');
