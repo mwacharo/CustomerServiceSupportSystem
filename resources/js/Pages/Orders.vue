@@ -175,15 +175,15 @@
                                                 <tbody>
                                                     <tr>
                                                         <td>Incoming Rejected</td>
-                                                        <td class="text-right">{{ rejectedIncomingCalls }}</td>
+                                                        <td class="text-right">{{ stats.summary_rejected_incoming_calls }}</td>
                                                     </tr>
                                                     <tr>
                                                         <td>Outgoing Rejected</td>
-                                                        <td class="text-right">{{ rejectedOutingCalls }}</td>
+                                                        <td class="text-right">{{ stats.summary_rejected_outgoing_calls }}</td>
                                                     </tr>
                                                     <tr>
                                                         <td>Outgoing User Busy</td>
-                                                        <td class="text-right">{{ userBusyOutgoingCalls }}</td>
+                                                        <td class="text-right">{{ stats.summary_user_busy_outgoing_calls }}</td>
                                                     </tr>
                                                 </tbody>
                                             </template>
