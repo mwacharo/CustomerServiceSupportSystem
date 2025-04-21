@@ -2,6 +2,11 @@
 import { ref, onMounted } from 'vue';
 import { Head } from '@inertiajs/vue3';
 import AppLayout from "@/Layouts/AppLayout.vue";
+import { defineComponent, computed } from 'vue';
+import { usePage } from '@inertiajs/inertia-vue3';
+
+const userId = computed(() => usePage().props.value.user?.id);
+
 
 const search = ref('');
 const emails = ref([]);
@@ -30,8 +35,8 @@ const stats = ref({
 const loadContacts = () => {
   // Mock data - would be replaced with API call
   contacts.value = [
-    { id: 1, name: 'John Doe', email: 'john.doe@example.com', status: 'Active' },
-    { id: 2, name: 'Jane Smith', email: 'jane.smith@example.com', status: 'Active' },
+    { id: 1, name: 'John Doe', email: 'john.boxleo@gmail.com', status: 'Active' },
+    { id: 2, name: 'Jane Smith', email: 'mwacharomwayolo@gmail.com', status: 'Active' },
     { id: 3, name: 'Robert Brown', email: 'robert.brown@example.com', status: 'Inactive' },
     { id: 4, name: 'Sarah Wilson', email: 'sarah.wilson@example.com', status: 'Active' },
   ];
@@ -40,23 +45,23 @@ const loadContacts = () => {
 const loadTemplates = () => {
   // Mock templates
   templates.value = [
-    { 
-      id: 1, 
-      name: 'Welcome Email', 
+    {
+      id: 1,
+      name: 'Welcome Email',
       subject: 'Welcome to Our Service',
-      content: 'Hello {{name}},\n\nWelcome to our service! We are excited to have you on board.\n\nBest regards,\nThe Team' 
+      content: 'Hello {{name}},\n\nWelcome to our service! We are excited to have you on board.\n\nBest regards,\nThe Team'
     },
-    { 
-      id: 2, 
-      name: 'Payment Reminder', 
+    {
+      id: 2,
+      name: 'Payment Reminder',
       subject: 'Payment Reminder: Invoice #{{invoice_number}}',
-      content: 'Dear {{name}},\n\nThis is a friendly reminder about your payment of KES {{amount}} due on {{date}}.\n\nRegards,\nFinance Department' 
+      content: 'Dear {{name}},\n\nThis is a friendly reminder about your payment of KES {{amount}} due on {{date}}.\n\nRegards,\nFinance Department'
     },
-    { 
-      id: 3, 
-      name: 'Monthly Newsletter', 
+    {
+      id: 3,
+      name: 'Monthly Newsletter',
       subject: 'Your Monthly Update - {{month}}',
-      content: 'Hello {{name}},\n\nHere are the latest updates for {{month}}:\n\n{{news_items}}\n\nThank you for your continued support.\n\nBest regards,\nMarketing Team' 
+      content: 'Hello {{name}},\n\nHere are the latest updates for {{month}}:\n\n{{news_items}}\n\nThank you for your continued support.\n\nBest regards,\nMarketing Team'
     }
   ];
 };
@@ -72,39 +77,61 @@ const saveTemplate = () => {
     id: templates.value.length + 1,
     ...newTemplate.value
   });
-  
+
   // Reset form
   newTemplate.value = {
     name: '',
     subject: '',
     content: ''
   };
-  
+
   showTemplateDialog.value = false;
 };
 
-const sendEmail = () => {
-  // Implement send email logic
-  alert(`Sending email to ${selectedContacts.value.length} recipients`);
-  
-  // Add to emails list for display
-  const now = new Date();
-  emails.value.unshift({
-    id: emails.value.length + 1,
-    subject: emailSubject.value,
-    content: emailBody.value,
-    recipients: selectedContacts.value.length,
-    status: 'Sent',
-    has_attachments: attachments.value.length > 0,
-    sent_at: now.toISOString().slice(0, 10)
-  });
-  
-  // Reset form
-  emailSubject.value = '';
-  emailBody.value = '';
-  selectedContacts.value = [];
-  attachments.value = [];
-  showNewEmailDialog.value = false;
+import axios from 'axios';
+
+const sendEmail = async () => {
+  try {
+    // Prepare email data
+    const emailData = {
+      user_id: userId.value, // Include user ID in the request
+      subject: emailSubject.value,
+      body: emailBody.value,
+      recipients: selectedContacts.value.map(contact => contact.email),
+      attachments: attachments.value,
+    };
+
+    // Make POST request to send email
+    const response = await axios.post('/api/v1/send-email', emailData);
+
+    if (response.status === 200) {
+      this.$toastr.success('Email sent successfully!');
+
+      // Add to emails list for display
+      const now = new Date();
+      emails.value.unshift({
+        id: emails.value.length + 1,
+        subject: emailSubject.value,
+        content: emailBody.value,
+        recipients: selectedContacts.value.length,
+        status: 'Sent',
+        has_attachments: attachments.value.length > 0,
+        sent_at: now.toISOString().slice(0, 10),
+      });
+
+      // Reset form
+      emailSubject.value = '';
+      emailBody.value = '';
+      selectedContacts.value = [];
+      attachments.value = [];
+      showNewEmailDialog.value = false;
+    } else {
+      this.$toastr.error('Failed to send email. Please try again.');
+    }
+  } catch (error) {
+    console.error('Error sending email:', error);
+    this.$toastr.error('An error occurred while sending the email.');
+  }
 };
 
 onMounted(() => {
@@ -115,16 +142,18 @@ onMounted(() => {
     { id: 3, subject: 'New Features Announcement', content: 'Announcement about new platform features...', recipients: 215, status: 'Delivered', has_attachments: true, sent_at: '2025-04-17' },
     { id: 4, subject: 'Account Verification Required', content: 'Security verification reminder...', recipients: 5, status: 'Opened', has_attachments: false, sent_at: '2025-04-16' },
   ];
-  
+
   loadContacts();
   loadTemplates();
+  console.log('user_id', userId.value);
 });
 </script>
 
 <template>
   <AppLayout>
+
     <Head title="Email" />
-    
+
     <v-container>
       <v-row>
         <v-col cols="12" md="3">
@@ -134,15 +163,12 @@ onMounted(() => {
                 <v-icon size="48" color="white">mdi-email</v-icon>
               </v-avatar>
               <h2 class="text-h6">Email Marketing</h2>
-              <v-chip
-                :color="emailStatus === 'Connected' ? 'success' : 'error'"
-                class="mt-2"
-              >
+              <v-chip :color="emailStatus === 'Connected' ? 'success' : 'error'" class="mt-2">
                 {{ emailStatus }}
               </v-chip>
-              
+
               <v-divider class="my-4"></v-divider>
-              
+
               <v-row>
                 <v-col cols="6" class="py-1">
                   <div class="text-subtitle-2">Sent</div>
@@ -161,9 +187,9 @@ onMounted(() => {
                   <div class="text-h6">{{ stats.failed }}</div>
                 </v-col>
               </v-row>
-              
+
               <v-divider class="my-4"></v-divider>
-              
+
               <v-btn color="primary" block @click="showNewEmailDialog = true">
                 New Email
               </v-btn>
@@ -176,22 +202,15 @@ onMounted(() => {
             </v-card-text>
           </v-card>
         </v-col>
-        
+
         <v-col cols="12" md="9">
           <v-card>
             <v-card-title class="d-flex justify-space-between align-center">
               <div>Email History</div>
-              <v-text-field
-                v-model="search"
-                append-icon="mdi-magnify"
-                label="Search emails"
-                single-line
-                hide-details
-                density="compact"
-                class="max-w-xs"
-              ></v-text-field>
+              <v-text-field v-model="search" append-icon="mdi-magnify" label="Search emails" single-line hide-details
+                density="compact" class="max-w-xs"></v-text-field>
             </v-card-title>
-            
+
             <v-card-text>
               <v-table>
                 <thead>
@@ -211,8 +230,7 @@ onMounted(() => {
                     <td>
                       <v-chip
                         :color="email.status === 'Delivered' ? 'success' : email.status === 'Opened' ? 'info' : 'warning'"
-                        size="small"
-                      >
+                        size="small">
                         {{ email.status }}
                       </v-chip>
                     </td>
@@ -240,84 +258,49 @@ onMounted(() => {
         </v-col>
       </v-row>
     </v-container>
-    
+
     <!-- New Email Dialog -->
     <v-dialog v-model="showNewEmailDialog" max-width="800px">
       <v-card>
         <v-card-title>Compose Email</v-card-title>
         <v-card-text>
-          <v-select
-            v-model="selectedContacts"
-            :items="contacts"
-            item-title="name"
-            item-value="id"
-            label="Select Recipients"
-            multiple
-            chips
-            return-object
-          >
+          <v-select v-model="selectedContacts" :items="contacts" item-title="name" item-value="id"
+            label="Select Recipients" multiple chips return-object>
             <template v-slot:selection="{ item }">
               <v-chip>{{ item.raw.name }} ({{ item.raw.email }})</v-chip>
             </template>
           </v-select>
-          
-          <v-select
-            label="Select Template"
-            :items="templates"
-            item-title="name"
-            item-value="id"
-            @update:model-value="(id) => selectTemplate(templates.find(t => t.id === id))"
-            class="mt-4"
-          ></v-select>
-          
-          <v-text-field
-            v-model="emailSubject"
-            label="Subject"
-            class="mt-4"
-          ></v-text-field>
-          
-          <v-textarea
-            v-model="emailBody"
-            label="Message"
-            rows="10"
-            class="mt-4"
-            hint="Variables format: {{variable_name}}"
-            persistent-hint
-          ></v-textarea>
-          
-          <v-file-input
-            v-model="attachments"
-            label="Attachments"
-            multiple
-            prepend-icon="mdi-paperclip"
-            show-size
-            truncate-length="25"
-            class="mt-4"
-          ></v-file-input>
+
+          <v-select label="Select Template" :items="templates" item-title="name" item-value="id"
+            @update:model-value="(id) => selectTemplate(templates.find(t => t.id === id))" class="mt-4"></v-select>
+
+          <v-text-field v-model="emailSubject" label="Subject" class="mt-4"></v-text-field>
+
+          <v-textarea v-model="emailBody" label="Message" rows="10" class="mt-4"
+            hint="Variables format: {{variable_name}}" persistent-hint></v-textarea>
+
+          <v-file-input v-model="attachments" label="Attachments" multiple prepend-icon="mdi-paperclip" show-size
+            truncate-length="25" class="mt-4"></v-file-input>
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
           <v-btn color="error" @click="showNewEmailDialog = false">Cancel</v-btn>
-          <v-btn color="primary" @click="sendEmail" :disabled="!emailSubject || !emailBody || selectedContacts.length === 0">
+          <v-btn color="primary" @click="sendEmail"
+            :disabled="!emailSubject || !emailBody || selectedContacts.length === 0">
             Send Email
           </v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
-    
+
     <!-- Import Contacts Dialog -->
     <v-dialog v-model="showImportDialog" max-width="500px">
       <v-card>
         <v-card-title>Import Email Contacts</v-card-title>
         <v-card-text>
-          <v-file-input
-            label="Upload CSV File"
-            accept=".csv"
-            prepend-icon="mdi-file-upload"
-            show-size
-            truncate-length="25"
-          ></v-file-input>
-          
+          <v-file-input label="Upload CSV File" accept=".csv" prepend-icon="mdi-file-upload" show-size
+            truncate-length="25"></v-file-input>
+
           <v-alert type="info" class="mt-4">
             CSV file should have columns: Name, Email Address, Status
           </v-alert>
@@ -329,46 +312,29 @@ onMounted(() => {
         </v-card-actions>
       </v-card>
     </v-dialog>
-    
+
     <!-- Create Template Dialog -->
     <v-dialog v-model="showTemplateDialog" max-width="700px">
       <v-card>
         <v-card-title>Create Email Template</v-card-title>
         <v-card-text>
-          <v-text-field
-            v-model="newTemplate.name"
-            label="Template Name"
-            required
-          ></v-text-field>
-          
-          <v-text-field
-            v-model="newTemplate.subject"
-            label="Email Subject"
-            required
-            class="mt-4"
-          ></v-text-field>
-          
-          <v-textarea
-            v-model="newTemplate.content"
-            label="Email Content"
-            rows="10"
-            hint="Use {{variable_name}} for dynamic content"
-            persistent-hint
-            class="mt-4"
-          ></v-textarea>
-          
+          <v-text-field v-model="newTemplate.name" label="Template Name" required></v-text-field>
+
+          <v-text-field v-model="newTemplate.subject" label="Email Subject" required class="mt-4"></v-text-field>
+
+          <v-textarea v-model="newTemplate.content" label="Email Content" rows="10"
+            hint="Use {{variable_name}} for dynamic content" persistent-hint class="mt-4"></v-textarea>
+
           <v-alert type="info" class="mt-4">
-            Available variables: {{name}}, {{email}}, {{amount}}, {{date}}, {{invoice_number}}, {{month}}, {{news_items}}
+            Available variables: {{ name }}, {{ email }}, {{ amount }}, {{ date }}, {{ invoice_number }}, {{ month }},
+            {{ news_items }}
           </v-alert>
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
           <v-btn color="error" @click="showTemplateDialog = false">Cancel</v-btn>
-          <v-btn 
-            color="primary" 
-            @click="saveTemplate"
-            :disabled="!newTemplate.name || !newTemplate.subject || !newTemplate.content"
-          >
+          <v-btn color="primary" @click="saveTemplate"
+            :disabled="!newTemplate.name || !newTemplate.subject || !newTemplate.content">
             Save Template
           </v-btn>
         </v-card-actions>

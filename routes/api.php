@@ -9,6 +9,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ApiUserController;
 use App\Http\Controllers\ApiCallCentreController;
+use App\Http\Controllers\ApiCredentialController;
+use App\Http\Controllers\ApiEmailController;
 use App\Http\Controllers\ApiIvrOptionController;
 use App\Http\Controllers\ApiOrderController;
 
@@ -155,6 +157,28 @@ Route::delete('v1/ivr-options/{id}', [ApiIvrOptionController::class, 'destroy'])
 
 Route::get('v1/orders', [ApiOrderController::class, 'index']); 
 
+
+
+Route::prefix('v1')->group(function () {
+  // Channel Credentials Routes
+  Route::get('/channel-credentials', [ApiCredentialController::class, 'index']);
+  Route::get('/fetch-credentials', [ApiCredentialController::class, 'fetchCredentials']);
+
+  // fetchCredentials
+  Route::post('/channel-credentials', [ApiCredentialController::class, 'store']);
+  Route::get('/channel-credentials/{id}', [ApiCredentialController::class, 'show']);
+  Route::put('/channel-credentials/{id}', [ApiCredentialController::class, 'update']);
+  Route::delete('/channel-credentials/{id}', [ApiCredentialController::class, 'destroy']);
+
+  // Owner Type Routes
+  Route::get('/credentialable-types', [ApiCredentialController::class, 'getCredentialableTypes']);
+  
+  // Using a query parameter approach instead of URL path for model type
+  Route::get('/credentialables', [ApiCredentialController::class, 'getOwnersByType']);
+});
+
+
+Route::post('v1/send-email', [ApiEmailController::class, 'send']);
 
 
 

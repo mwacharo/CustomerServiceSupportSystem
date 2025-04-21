@@ -86,6 +86,13 @@ class Vendor extends Model
     //     return $this->belongsTo(Settings::class, 'branch_id');
     // }
     
+
+
+    public function channelCredentials()
+{
+    return $this->morphMany(ChannelCredential::class, 'credentialable');
+}
+
     
 
 }

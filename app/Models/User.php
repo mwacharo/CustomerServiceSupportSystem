@@ -71,4 +71,11 @@ class User extends Authenticatable
     {
         return $this->hasMany(Contact::class);
     }
+
+
+    public function channelCredentials()
+{
+    return $this->morphMany(ChannelCredential::class, 'credentialable');
+}
+
 }
