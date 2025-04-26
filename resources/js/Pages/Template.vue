@@ -610,7 +610,7 @@
         this.loading = true;
         axios.get("/api/v1/templates")
           .then(response => {
-            this.templates = response.data;
+            this.templates = response.data.data;
             this.originalTemplates = [...this.templates];
             this.loading = false;
           })
