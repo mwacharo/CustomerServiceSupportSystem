@@ -19,10 +19,12 @@ const templates = ref([]);
 const showImportDialog = ref(false);
 const showNewMessageDialog = ref(false);
 const showTemplateDialog = ref(false);
+
 const newTemplate = ref({
   name: '',
   content: ''
 });
+const selectedTemplate = ref(null);
 const whatsappStatus = ref('Connected');
 const stats = ref({
   sent: 156,
@@ -49,17 +51,29 @@ const loadTemplates = async () => {
     const response = await axios.get('/api/v1/templates');
 
     // Update templates with the data from the API
-    templates.value = response.data;
+    templates.value = response.data.data;
+    console.log('Templates loaded:', templates.value);
   } catch (error) {
     console.error('Error loading templates:', error);
     // Optionally handle error - show notification, etc.
   }
 };
 
-const selectTemplate = (template) => {
-  messageText.value = template.content;
-};
+// const selectTemplate = (template) => {
+//   messageText.value = template.content;
+// };
 
+
+// Function to handle template selection
+const onTemplateSelect = (templateId) => {
+  if (!templateId) return;
+  
+  const template = templates.value.find(t => t.id === templateId);
+  if (template) {
+    messageText.value = template.content;
+    console.log('Selected template:', template);
+  }
+};
 
 
 
@@ -248,6 +262,8 @@ onMounted(() => {
             @update:model-value="onTemplateSelect" class="mt-4"
             :hint="selectedTemplate ? `Channel: ${selectedTemplate.channel} | Module: ${selectedTemplate.module}` : ''"
             persistent-hint></v-select>
+
+
           <v-textarea v-model="messageText" label="Message" rows="5" class="mt-4"
             hint="Variables format: {{variable_name}}" persistent-hint></v-textarea>
         </v-card-text>
