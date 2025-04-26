@@ -86,7 +86,7 @@ const saveTemplate = () => {
 
 const sendMessage = async () => {
   try {
-    const response = await axios.post('/api/v1/whatsapp/send', {
+    const response = await axios.post('/api/v1/whatsapp-send', {
       contacts: selectedContacts.value.map(c => ({
         id: c.id,
         name: c.name,
