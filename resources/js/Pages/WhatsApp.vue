@@ -27,7 +27,7 @@ const stats = ref({
 const loadContacts = () => {
   // Mock data - would be replaced with API call
   contacts.value = [
-    { id: 1, name: 'John Doe', phone: '+254712345678', status: 'Active' },
+    { id: 1, name: 'John Mwacharo', phone: '+25474182113', status: 'Active' },
     { id: 2, name: 'Jane Smith', phone: '+254723456789', status: 'Active' },
     { id: 3, name: 'Robert Brown', phone: '+254734567890', status: 'Inactive' },
     { id: 4, name: 'Sarah Wilson', phone: '+254745678901', status: 'Active' },
@@ -86,7 +86,7 @@ const saveTemplate = () => {
 
 const sendMessage = async () => {
   try {
-    const response = await axios.post('/api/whatsapp/send', {
+    const response = await axios.post('/api/v1/whatsapp/send', {
       contacts: selectedContacts.value.map(c => ({
         id: c.id,
         name: c.name,
