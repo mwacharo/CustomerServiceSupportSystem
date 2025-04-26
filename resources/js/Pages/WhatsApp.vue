@@ -41,13 +41,27 @@ const loadContacts = () => {
   ];
 };
 
-const loadTemplates = () => {
-  // Mock templates
-  templates.value = [
-    { id: 1, name: 'Welcome Message', content: 'Hello {{name}}, welcome to our service!' },
-    { id: 2, name: 'Payment Reminder', content: 'Dear {{name}}, this is a reminder about your payment of KES {{amount}} due on {{date}}.' },
-    { id: 3, name: 'Support Response', content: 'Hello {{name}}, thank you for contacting our support. Regarding your issue with {{topic}}, we recommend...' }
-  ];
+// const loadTemplates = () => {
+//   // Mock templates
+//   templates.value = [
+//     { id: 1, name: 'Welcome Message', content: 'Hello {{name}}, welcome to our service!' },
+//     { id: 2, name: 'Payment Reminder', content: 'Dear {{name}}, this is a reminder about your payment of KES {{amount}} due on {{date}}.' },
+//     { id: 3, name: 'Support Response', content: 'Hello {{name}}, thank you for contacting our support. Regarding your issue with {{topic}}, we recommend...' }
+//   ];
+// };
+
+
+const loadTemplates = async () => {
+  try {
+    // Make a request to the API endpoint
+    const response = await axios.get('/api/v1/templates');
+    
+    // Update templates with the data from the API
+    templates.value = response.data;
+  } catch (error) {
+    console.error('Error loading templates:', error);
+    // Optionally handle error - show notification, etc.
+  }
 };
 
 const selectTemplate = (template) => {
@@ -70,25 +84,6 @@ const saveTemplate = () => {
   showTemplateDialog.value = false;
 };
 
-// const sendMessage = () => {
-//   // Implement send message logic
-//   alert(`Sending WhatsApp message to ${selectedContacts.value.length} recipients`);
-  
-//   // Add to messages list for display
-//   const now = new Date();
-//   messages.value.unshift({
-//     id: messages.value.length + 1,
-//     content: messageText.value,
-//     recipients: selectedContacts.value.length,
-//     status: 'Sent',
-//     sent_at: now.toISOString().slice(0, 10)
-//   });
-  
-//   // Reset form
-//   messageText.value = '';
-//   selectedContacts.value = [];
-//   showNewMessageDialog.value = false;
-// };
 
 
 const sendMessage = async () => {
