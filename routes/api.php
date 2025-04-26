@@ -185,7 +185,7 @@ Route::post('v1/send-email', [ApiEmailController::class, 'send']);
 
 // webwhats    webhook 
 Route::post('/whatsapp/webhook', [WhatsAppWebhookController::class, 'receive']);
-Route::post('/v1/send', [ApiWhatsAppController::class, 'send']);
+Route::post('/v1/send/whatsapp', [ApiWhatsAppController::class, 'send']);
 
 
 // https://support.solssa.com/api/whatsapp/webhook
