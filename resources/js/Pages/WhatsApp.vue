@@ -99,7 +99,7 @@ const sendMessage = async () => {
       contacts: selectedContacts.value.map(c => ({
         id: c.id,
         name: c.name,
-        phone: c.phone,
+        chatId: c.phone,
 
         // inlcude user id 
         //       user_id: userId.value, // Include user ID in the request
