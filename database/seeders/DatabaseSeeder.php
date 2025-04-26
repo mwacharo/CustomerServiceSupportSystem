@@ -18,15 +18,15 @@ class DatabaseSeeder extends Seeder
 
                 // Example: $this->call(UserSeeder::class);
         // $this->call(IvrOptionSeeder::class);
-        $this->call(CountrySeeder::class);
+        // $this->call(CountrySeeder::class);
         // $this->call(BranchSeeder::class);
-        $this->call(ContactSeeder::class);
-        $this->call(VendorSeeder::class);
-        $this->call(CategorySeeder::class);
-        $this->call(ProductSeeder::class);
-        $this->call(ProductVariantSeeder::class);
-        $this->call(ClientSeeder::class,);
-        $this->call(OrderSeeder::class,);
+        // $this->call(ContactSeeder::class);
+        // $this->call(VendorSeeder::class);
+        // $this->call(CategorySeeder::class);
+        // $this->call(ProductSeeder::class);
+        // $this->call(ProductVariantSeeder::class);
+        // $this->call(ClientSeeder::class,);
+        // $this->call(OrderSeeder::class,);
 
         $this->call(OrderItemSeeder::class,);
 
