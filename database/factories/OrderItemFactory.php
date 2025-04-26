@@ -39,7 +39,7 @@ class OrderItemFactory extends Factory
             'product_id' => Product::inRandomOrder()->first()->id ?? Product::factory(), // Use an existing product or create one if none exist
             // 'sku_id' => $this->faker->randomDigitNotNull, // Random digit for SKU ID, can replace with actual SKU model relation
             'order_id' => Order::factory(), // Assuming the Order model has a factory
-            'seller_id' => Vendor::factory(), // Assuming the Seller model has a factory
+            'vendor_id' => Vendor::factory(), // Assuming the Seller model has a factory
         ];
     }
 }
