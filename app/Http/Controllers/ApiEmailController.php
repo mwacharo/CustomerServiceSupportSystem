@@ -75,6 +75,7 @@ class ApiEmailController extends Controller
             'status' => 'sent',
             'emailable_id' => $sender->id,
             'emailable_type' => get_class($sender),
+            
         ]);
 
         return response()->json(['status' => 'success', 'message' => 'Email sent successfully.']);

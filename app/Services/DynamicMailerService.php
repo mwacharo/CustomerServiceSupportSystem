@@ -19,9 +19,6 @@ class DynamicMailerService
 
 
  
-
-
-
     public function __construct(Model $credentialable, string $channel = 'email', string $provider = null)
     {
         $this->credential = $credentialable->channelCredentials()
