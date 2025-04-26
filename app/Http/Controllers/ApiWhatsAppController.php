@@ -63,9 +63,18 @@ class ApiWhatsAppController extends Controller
             ];
     
             // Send request to the WhatsApp API
-            $response = Http::withToken($token)
-                ->post('https://waapi.app/api/v1/messages', $data);
-    
+            
+
+
+            $response = Http::withHeaders([
+                'accept' => 'application/json',
+                'authorization' => 'Bearer ' . $token, // Add Bearer token to headers
+                'content-type' => 'application/json',
+            ])
+                ->post('https://waapi.app/api/v1/instances/62238/client/action/send-message', [
+                    'chatId' => $contact['chatId'],
+                    'message' => $request->message,
+                ]);
             // Log and collect the response for each contact
             $responses[] = [
                 'chatId' => $contact['chatId'],
