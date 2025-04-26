@@ -25,6 +25,22 @@ class Message extends Model
         'status',
         'sent_at',
         'response_payload',
+        'from',
+        'to',
+        'body',
+        'message_type',
+        'media_url',
+        'media_mime_type',
+        'message_status',
+        'external_message_id',
+        'reply_to_message_id',
+        'error_message',
+        'timestamp',
+        'direction',
+        'sent_at',
+        'delivered_at',
+        'read_at',
+        'failed_at',
     ];
 
     /**
@@ -35,6 +51,10 @@ class Message extends Model
     protected $casts = [
         'sent_at' => 'datetime',
         'response_payload' => 'array',
+        'timestamp' => 'datetime',
+        'delivered_at' => 'datetime',
+        'read_at' => 'datetime',
+        'failed_at' => 'datetime',
     ];
 
     /**
