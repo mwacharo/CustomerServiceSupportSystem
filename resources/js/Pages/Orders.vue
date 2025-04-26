@@ -317,33 +317,7 @@
                                 </template>
                             </v-data-table>
 
-                            <!-- <v-data-table :headers="headers" :items="orders" show-select v-model="selected"
-                                class="elevation-1 mt-4">
-                                <template #body="{ items }">
-
-                                    <tr v-for="item in items" :key="item.product">
-                                        <td>{{ item.orderItems }}</td>
-
-                                        <td>
-                                          
-                                                {{ item.order_no }}
-                                         
-                                        </td>
-                                        <td>
-                                            <span class="clickable" @click="openStatusModal(item)">
-                                                {{ item.status }}
-                                            </span>
-                                        </td>
-                                        <td>{{ item.total_price }}</td>
-                                        <td>{{ item.client.name }}</td>
-                                        <td>
-                                            <span class="clickable" @click="openPhonePopup(item)">
-                                                {{ item.client.phone_number }}
-                                            </span>
-                                        </td>
-                                    </tr>
-                                </template>
-                            </v-data-table> -->
+                            
                         </v-window-item>
 
                     </v-window>
@@ -805,13 +779,12 @@ export default {
 
         headers: [
             { title: "Order NO", align: "start", key: "order_no" },
+            { title: "Product", align: "start", key: "orderItems" },
             { title: "Status", key: "status", align: "start" },
             { title: "COD", key: "COD", align: "end" },
             { title: "Client", key: "client", align: "start" },
             { title: "Phone", key: "phone", align: "start" },
             { text: 'Actions', value: 'actions', sortable: false }
-
-            // { title: "Product", align: "start", key: "orderItems" },
 
         ],
         callsheaders: [

@@ -15,7 +15,7 @@ class ApiOrderController extends Controller
         // Retrieve all orders
         // $orders = Order::all();
 
-        $orders = Order::with('client','orderItems')->get();
+        $orders = Order::with('client','orderItems','vendor')->get();
     
         // Return JSON response
         return response()->json([
