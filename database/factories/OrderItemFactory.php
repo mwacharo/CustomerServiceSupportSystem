@@ -37,7 +37,7 @@ class OrderItemFactory extends Factory
             'product_rate' => $this->faker->randomFloat(2, 5, 50), // Random product rate between 5 and 50
             'quantity_tobe_delivered' => $this->faker->numberBetween(0, 10),
             'product_id' => Product::inRandomOrder()->first()->id ?? Product::factory(), // Use an existing product or create one if none exist
-            'sku_id' => $this->faker->randomDigitNotNull, // Random digit for SKU ID, can replace with actual SKU model relation
+            // 'sku_id' => $this->faker->randomDigitNotNull, // Random digit for SKU ID, can replace with actual SKU model relation
             'order_id' => Order::factory(), // Assuming the Order model has a factory
             'seller_id' => Vendor::factory(), // Assuming the Seller model has a factory
         ];
