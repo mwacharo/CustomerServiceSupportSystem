@@ -13,6 +13,7 @@ use App\Http\Controllers\ApiCredentialController;
 use App\Http\Controllers\ApiEmailController;
 use App\Http\Controllers\ApiIvrOptionController;
 use App\Http\Controllers\ApiOrderController;
+use App\Http\Controllers\WhatsAppWebhookController;
 
 /*
 |--------------------------------------------------------------------------
@@ -181,6 +182,10 @@ Route::prefix('v1')->group(function () {
 Route::post('v1/send-email', [ApiEmailController::class, 'send']);
 
 
+// webwhats    webhook 
+Route::post('/whatsapp/webhook', [WhatsAppWebhookController::class, 'receive']);
+
+// https://support.solssa.com/api/whatsapp/webhook
 
 
 

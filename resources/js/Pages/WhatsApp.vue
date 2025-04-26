@@ -63,25 +63,59 @@ const saveTemplate = () => {
   showTemplateDialog.value = false;
 };
 
-const sendMessage = () => {
-  // Implement send message logic
-  alert(`Sending WhatsApp message to ${selectedContacts.value.length} recipients`);
+// const sendMessage = () => {
+//   // Implement send message logic
+//   alert(`Sending WhatsApp message to ${selectedContacts.value.length} recipients`);
   
-  // Add to messages list for display
-  const now = new Date();
-  messages.value.unshift({
-    id: messages.value.length + 1,
-    content: messageText.value,
-    recipients: selectedContacts.value.length,
-    status: 'Sent',
-    sent_at: now.toISOString().slice(0, 10)
-  });
+//   // Add to messages list for display
+//   const now = new Date();
+//   messages.value.unshift({
+//     id: messages.value.length + 1,
+//     content: messageText.value,
+//     recipients: selectedContacts.value.length,
+//     status: 'Sent',
+//     sent_at: now.toISOString().slice(0, 10)
+//   });
   
-  // Reset form
-  messageText.value = '';
-  selectedContacts.value = [];
-  showNewMessageDialog.value = false;
+//   // Reset form
+//   messageText.value = '';
+//   selectedContacts.value = [];
+//   showNewMessageDialog.value = false;
+// };
+
+
+const sendMessage = async () => {
+  try {
+    const response = await axios.post('/api/whatsapp/send', {
+      contacts: selectedContacts.value.map(c => ({
+        id: c.id,
+        name: c.name,
+        phone: c.phone,
+      })),
+      message: messageText.value,
+    });
+
+    const now = new Date();
+    messages.value.unshift({
+      id: messages.value.length + 1,
+      content: messageText.value,
+      recipients: selectedContacts.value.length,
+      status: 'Sent',
+      sent_at: now.toISOString().slice(0, 10),
+      results: response.data.results
+    });
+
+    // Clear form
+    messageText.value = '';
+    selectedContacts.value = [];
+    showNewMessageDialog.value = false;
+
+  } catch (error) {
+    alert("Message failed to send. Check console.");
+    console.error(error);
+  }
 };
+
 
 onMounted(() => {
   // Mock data - would be replaced with API call
