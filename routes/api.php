@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ApiUserController;
 use App\Http\Controllers\ApiCallCentreController;
+use App\Http\Controllers\ApiContactController;
 use App\Http\Controllers\ApiCredentialController;
 use App\Http\Controllers\ApiEmailController;
 use App\Http\Controllers\ApiIvrOptionController;
@@ -17,26 +18,15 @@ use App\Http\Controllers\ApiTemplateController;
 use App\Http\Controllers\ApiWhatsAppController;
 use App\Http\Controllers\WhatsAppWebhookController;
 
-/*
-|--------------------------------------------------------------------------
-| API Routes
-|--------------------------------------------------------------------------
-|
-| Here is where you can register API routes for your application. These
-| routes are loaded by the RouteServiceProvider and all of them will
-| be assigned to the "api" middleware group. Make something great!
-|
-*/
+
 
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
   return $request->user();
 });
 
 
-
 Route::get('v1/roles', [ApiRolesController::class, 'index']);
 Route::get('v1/permissions', [ApiPermissionsController::class, 'index']);
-
 
 
 Route::put('/users/{userId}/role', [ApiUserController::class, 'updateRole']);
@@ -92,10 +82,7 @@ Route::apiResource('v1/branches', ApiBranchController::class)->only([
 ]);
 
 
-
-
 // callcentre 
-
 
 Route::post('v1/africastalking-handle-callback', [ApiCallCentreController::class, 'handleVoiceCallback']);
 Route::post('v1/africastalking-handle-event', [ApiCallCentreController::class, 'handleEventCallback']);
@@ -150,15 +137,15 @@ Route::get('v1/call-agent-details/{id}', [ApiCallAgentController::class, 'getCal
 Route::get('v1/call-agent-details-2/{id}', [ApiCallAgentController::class, 'getCallAgentDetails2']);
 Route::get('v1/call-agent-summary/{id}', [ApiCallAgentController::class, 'getCallAgentSummary']);
 
-Route::get('v1/ivr-options', [ApiIvrOptionController::class, 'index']); 
-Route::get('v1/ivr-options/search', [ApiIvrOptionController::class, 'search']); 
-Route::post('v1/ivr-options', [ApiIvrOptionController::class, 'store']); 
-Route::get('v1/ivr-options/{id}', [ApiIvrOptionController::class, 'show']); 
-Route::put('v1/ivr-options/{id}', [ApiIvrOptionController::class, 'update']); 
-Route::delete('v1/ivr-options/{id}', [ApiIvrOptionController::class, 'destroy']); 
+Route::get('v1/ivr-options', [ApiIvrOptionController::class, 'index']);
+Route::get('v1/ivr-options/search', [ApiIvrOptionController::class, 'search']);
+Route::post('v1/ivr-options', [ApiIvrOptionController::class, 'store']);
+Route::get('v1/ivr-options/{id}', [ApiIvrOptionController::class, 'show']);
+Route::put('v1/ivr-options/{id}', [ApiIvrOptionController::class, 'update']);
+Route::delete('v1/ivr-options/{id}', [ApiIvrOptionController::class, 'destroy']);
 
 
-Route::get('v1/orders', [ApiOrderController::class, 'index']); 
+Route::get('v1/orders', [ApiOrderController::class, 'index']);
 
 
 
@@ -175,7 +162,7 @@ Route::prefix('v1')->group(function () {
 
   // Owner Type Routes
   Route::get('/credentialable-types', [ApiCredentialController::class, 'getCredentialableTypes']);
-  
+
   // Using a query parameter approach instead of URL path for model type
   Route::get('/credentialables', [ApiCredentialController::class, 'getOwnersByType']);
 });
@@ -191,11 +178,22 @@ Route::post('v1/whatsapp-send', [ApiWhatsAppController::class, 'send']);
 
 // Template APIs
 
-  Route::get('v1/templates', [ApiTemplateController::class, 'index']); // List all templates
-  Route::post('v1/templates', [ApiTemplateController::class, 'store']); // Create a new template
-  Route::get('v1/templates/{id}', [ApiTemplateController::class, 'show']); // Show a specific template
-  Route::put('v1/templates/{id}', [ApiTemplateController::class, 'update']); // Update a specific template
-  Route::delete('v1/templates/{id}', [ApiTemplateController::class, 'destroy']); // Delete a specific template
+Route::get('v1/templates', [ApiTemplateController::class, 'index']); // List all templates
+Route::post('v1/templates', [ApiTemplateController::class, 'store']); // Create a new template
+Route::get('v1/templates/{id}', [ApiTemplateController::class, 'show']); // Show a specific template
+Route::put('v1/templates/{id}', [ApiTemplateController::class, 'update']); // Update a specific template
+Route::delete('v1/templates/{id}', [ApiTemplateController::class, 'destroy']); // Delete a specific template
+
+
+
+// Conacts APIs
+Route::get('v1/contacts', [ApiContactController::class, 'index']);       // List all contacts
+Route::post('v1/contacts', [ApiContactController::class, 'store']);       // Create new contact
+Route::get('v1/contacts/{contact}', [ApiContactController::class, 'show']); // Show single contact
+Route::put('v1/contacts/{contact}', [ApiContactController::class, 'update']); // Update contact
+Route::patch('v1contacts/{contact}', [ApiContactController::class, 'update']); // Also support patch
+Route::delete('v1/contacts/{contact}', [ApiContactController::class, 'destroy']); // Delete contact
+
 
 
 // https://support.solssa.com/api/whatsapp/webhook

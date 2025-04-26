@@ -59,9 +59,7 @@ const loadTemplates = async () => {
   }
 };
 
-// const selectTemplate = (template) => {
-//   messageText.value = template.content;
-// };
+
 
 
 // Function to handle template selection
@@ -247,17 +245,7 @@ onMounted(() => {
             </template>
           </v-select>
 
-          <!-- <v-select
-            label="Select Template"
-            :items="templates"
-            item-title="name"
-            item-value="id"
-            @update:model-value="(id) => selectTemplate(templates.find(t => t.id === id))"
-            class="mt-4"
-          ></v-select> -->
-
-
-
+      
           <v-select label="Select Template" :items="templates" item-title="name" item-value="id"
             @update:model-value="onTemplateSelect" class="mt-4"
             :hint="selectedTemplate ? `Channel: ${selectedTemplate.channel} | Module: ${selectedTemplate.module}` : ''"

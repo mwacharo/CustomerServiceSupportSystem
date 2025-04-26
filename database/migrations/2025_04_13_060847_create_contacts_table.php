@@ -10,23 +10,28 @@ return new class extends Migration
     {
         Schema::create('contacts', function (Blueprint $table) {
             $table->id();
-            // $table->morphs('contactable'); // contactable_id and contactable_type
+
+            $table->morphs('contactable'); // Adds contactable_id (unsignedBigInteger) and contactable_type (string)
 
             $table->string('name');
-            $table->string('email')->unique();
-            $table->string('phone');
+            $table->string('email')->nullable(); // Make nullable, because not all contacts might have email
+            $table->string('phone')->nullable();
             $table->string('alt_phone')->nullable();
             $table->text('address')->nullable();
             $table->string('city')->nullable();
             $table->string('zip_code')->nullable();
-            // $table->foreignId('country_id')->nullable()->constrained('countries')->nullOnDelete();
-            // $table->foreignId('state_id')->nullable()->constrained('states')->nullOnDelete();
+
             $table->string('country_name')->nullable();
             $table->string('state_name')->nullable();
-            $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
-            $table->string('type')->nullable(); // e.g. customer, vendor, employee
+            // Optional if you want actual relationships:
+            // $table->foreignId('country_id')->nullable()->constrained('countries')->nullOnDelete();
+            // $table->foreignId('state_id')->nullable()->constrained('states')->nullOnDelete();
+
+            $table->string('type')->nullable(); // customer, vendor, employee, etc
             $table->string('company_name')->nullable();
             $table->string('job_title')->nullable();
+
+            // Socials
             $table->string('whatsapp')->nullable();
             $table->string('linkedin')->nullable();
             $table->string('telegram')->nullable();
@@ -39,10 +44,12 @@ return new class extends Migration
             $table->string('youtube')->nullable();
             $table->string('pinterest')->nullable();
             $table->string('reddit')->nullable();
+
             $table->boolean('consent_to_contact')->default(false);
             $table->timestamp('consent_given_at')->nullable();
+
             $table->json('tags')->nullable();
-            $table->string('profile_picture')->nullable(); // store file path or URL
+            $table->string('profile_picture')->nullable();
             $table->text('notes')->nullable();
 
             $table->boolean('status')->default(true); // active/inactive
@@ -54,5 +61,4 @@ return new class extends Migration
     {
         Schema::dropIfExists('contacts');
     }
-   
 };

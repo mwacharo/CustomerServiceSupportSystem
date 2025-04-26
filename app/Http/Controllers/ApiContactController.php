@@ -2,58 +2,50 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreContactRequest;
+use App\Http\Requests\UpdateContactRequest;
+use App\Http\Resources\ContactResource;
+use App\Models\Contact;
 use Illuminate\Http\Request;
 
 class ApiContactController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index()
     {
-        //
-    }
+        $contacts = Contact::latest()->paginate(20);
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
+        return response()->json([
+            'success' => true,
+            'data' => $contacts,
+        ]);
+    }
+    public function store(StoreContactRequest $request)
     {
-        //
+        $contact = Contact::create($request->validated());
+    
+        return new ContactResource($contact);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
-    {
-        //
-    }
-
-    /**
-     * Display the specified resource.
-     */
     public function show(string $id)
     {
-        //
+        $contact = Contact::findOrFail($id);
+    
+        $this->authorize('view', $contact);
+    
+        return new ContactResource($contact);
     }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
+    
+    public function update(UpdateContactRequest $request, string $id)
     {
-        //
+        $contact = Contact::findOrFail($id);
+    
+        $this->authorize('update', $contact);
+    
+        $contact->update($request->validated());
+    
+        return new ContactResource($contact);
     }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
-    {
-        //
-    }
-
+    
     /**
      * Remove the specified resource from storage.
      */

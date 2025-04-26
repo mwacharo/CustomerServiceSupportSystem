@@ -2,8 +2,8 @@
 
 namespace Database\Factories;
 
-use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
+use App\Models\User;
 
 /**
  * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Contact>
@@ -17,24 +17,30 @@ class ContactFactory extends Factory
      */
     public function definition(): array
     {
+        // Randomly pick a contactable type
+        $contactableTypes = [
+            User::class,
+            // Add other models later like Vendor::class, Rider::class, Driver::class, Company::class, etc
+        ];
+
+        $contactableType = $this->faker->randomElement($contactableTypes);
+        $contactable = $contactableType::factory()->create(); // Create the owner model
+
         return [
-            // 'contactable_id' => null, // set manually when attaching
-            // 'contactable_type' => null, // set manually when attaching
+            'contactable_id' =>User::factory(),
+            'contactable_type' => User::class,
             'name' => $this->faker->name(),
-            'email' => $this->faker->unique()->safeEmail(),
-            'phone' => $this->faker->e164PhoneNumber(),
+            'email' => $this->faker->optional()->safeEmail(),
+            'phone' => $this->faker->optional()->e164PhoneNumber(),
             'alt_phone' => $this->faker->optional()->e164PhoneNumber(),
-            'address' => $this->faker->address(),
-            'city' => $this->faker->city(),
-            'zip_code' => $this->faker->postcode(),
-            // 'country_id' => null, // assign if you already have countries seeded
-            // 'state_id' => null,   // assign if you already have states seeded
-            'country_name' => $this->faker->country(),
-            'state_name' => $this->faker->state(),
-            'user_id' => User::factory()->create()->id,
-            // 'type' => $this->faker->randomElement(['customer', 'vendor', 'employee', 'partner']),
-            'company_name' => $this->faker->company(),
-            'job_title' => $this->faker->jobTitle(),
+            'address' => $this->faker->optional()->address(),
+            'city' => $this->faker->optional()->city(),
+            'zip_code' => $this->faker->optional()->postcode(),
+            'country_name' => $this->faker->optional()->country(),
+            'state_name' => $this->faker->optional()->state(),
+            'type' => $this->faker->randomElement(['customer', 'vendor', 'employee', 'partner']),
+            'company_name' => $this->faker->optional()->company(),
+            'job_title' => $this->faker->optional()->jobTitle(),
             'whatsapp' => $this->faker->optional()->e164PhoneNumber(),
             'linkedin' => $this->faker->optional()->url(),
             'telegram' => $this->faker->optional()->userName(),
@@ -49,7 +55,7 @@ class ContactFactory extends Factory
             'reddit' => $this->faker->optional()->userName(),
             'consent_to_contact' => $this->faker->boolean(80),
             'consent_given_at' => now(),
-            'tags' => json_encode($this->faker->randomElements(['priority', 'new', 'loyal', 'vip'], rand(1, 2))),
+        
             'profile_picture' => null,
             'notes' => $this->faker->optional()->sentence(),
             'status' => $this->faker->boolean(90),
