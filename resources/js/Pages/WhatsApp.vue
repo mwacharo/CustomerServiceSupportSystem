@@ -41,14 +41,6 @@ const loadContacts = () => {
   ];
 };
 
-// const loadTemplates = () => {
-//   // Mock templates
-//   templates.value = [
-//     { id: 1, name: 'Welcome Message', content: 'Hello {{name}}, welcome to our service!' },
-//     { id: 2, name: 'Payment Reminder', content: 'Dear {{name}}, this is a reminder about your payment of KES {{amount}} due on {{date}}.' },
-//     { id: 3, name: 'Support Response', content: 'Hello {{name}}, thank you for contacting our support. Regarding your issue with {{topic}}, we recommend...' }
-//   ];
-// };
 
 
 const loadTemplates = async () => {
@@ -68,21 +60,6 @@ const selectTemplate = (template) => {
   messageText.value = template.content;
 };
 
-const saveTemplate = () => {
-  // Add template to list
-  templates.value.push({
-    id: templates.value.length + 1,
-    ...newTemplate.value
-  });
-  
-  // Reset form
-  newTemplate.value = {
-    name: '',
-    content: ''
-  };
-  
-  showTemplateDialog.value = false;
-};
 
 
 
@@ -187,9 +164,7 @@ onMounted(() => {
               <v-btn color="primary" block @click="showNewMessageDialog = true">
                 New Message
               </v-btn>
-              <v-btn color="secondary" block class="mt-2" @click="showTemplateDialog = true">
-                Create Template
-              </v-btn>
+              
               <v-btn color="info" block class="mt-2" @click="showImportDialog = true">
                 Import Contacts
               </v-btn>
@@ -329,42 +304,6 @@ onMounted(() => {
       </v-card>
     </v-dialog>
     
-    <!-- Create Template Dialog -->
-    <v-dialog v-model="showTemplateDialog" max-width="600px">
-      <v-card>
-        <v-card-title>Create Message Template</v-card-title>
-        <v-card-text>
-          <v-text-field
-            v-model="newTemplate.name"
-            label="Template Name"
-            required
-          ></v-text-field>
-          
-          <v-textarea
-            v-model="newTemplate.content"
-            label="Template Content"
-            rows="5"
-            hint="Use {{variable_name}} for dynamic content"
-            persistent-hint
-            class="mt-4"
-          ></v-textarea>
-          
-          <v-alert type="info" class="mt-4">
-            Available variables: {{name}}, {{phone}}, {{amount}}, {{date}}, {{topic}}
-          </v-alert>
-        </v-card-text>
-        <v-card-actions>
-          <v-spacer></v-spacer>
-          <v-btn color="error" @click="showTemplateDialog = false">Cancel</v-btn>
-          <v-btn 
-            color="primary" 
-            @click="saveTemplate"
-            :disabled="!newTemplate.name || !newTemplate.content"
-          >
-            Save Template
-          </v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
+   
   </AppLayout>
 </template>
