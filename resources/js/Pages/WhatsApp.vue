@@ -1,7 +1,14 @@
 <script setup>
 import { ref, onMounted } from 'vue';
+import { defineComponent, computed } from 'vue';
+
 import { Head } from '@inertiajs/vue3';
 import AppLayout from "@/Layouts/AppLayout.vue";
+
+import { usePage } from '@inertiajs/inertia-vue3';
+
+const userId = computed(() => usePage().props.value.user?.id);
+
 
 const search = ref('');
 const messages = ref([]);
@@ -27,7 +34,7 @@ const stats = ref({
 const loadContacts = () => {
   // Mock data - would be replaced with API call
   contacts.value = [
-    { id: 1, name: 'John Mwacharo', phone: '+25474182113', status: 'Active' },
+    { id: 1, name: 'John Mwacharo', phone: '254799806098@c.us', status: 'Active' },
     { id: 2, name: 'Jane Smith', phone: '+254723456789', status: 'Active' },
     { id: 3, name: 'Robert Brown', phone: '+254734567890', status: 'Inactive' },
     { id: 4, name: 'Sarah Wilson', phone: '+254745678901', status: 'Active' },
@@ -87,10 +94,16 @@ const saveTemplate = () => {
 const sendMessage = async () => {
   try {
     const response = await axios.post('/api/v1/whatsapp-send', {
+      user_id: userId.value, 
+
       contacts: selectedContacts.value.map(c => ({
         id: c.id,
         name: c.name,
         phone: c.phone,
+
+        // inlcude user id 
+        //       user_id: userId.value, // Include user ID in the request
+
       })),
       message: messageText.value,
     });
@@ -128,6 +141,8 @@ onMounted(() => {
   
   loadContacts();
   loadTemplates();
+  console.log('user_id', userId.value);
+
 });
 </script>
 
