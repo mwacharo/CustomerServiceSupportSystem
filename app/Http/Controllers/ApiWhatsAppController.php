@@ -17,127 +17,75 @@ class ApiWhatsAppController extends Controller
     public function send(Request $request)
     {
         Log::info('Received request to send WhatsApp messages', ['request' => $request->all()]);
-
+    
+        // Validate incoming request
         $request->validate([
             'contacts' => 'required|array',
-            'message' => 'required|string',
-            'chatId' => 'required|string',  // Validate chatId
+            'contacts.*.chatId' => 'required|string',  // Validate each contact's chatId
+            'message' => 'required|string', // Validate message
         ]);
-
+    
         Log::info('Request validated successfully');
-
+    
+        // Get user (sender) credentials
         $credentialable = User::find($request->user_id);
-
+    
         if (!$credentialable) {
             Log::error('Sender not found', ['user_id' => $request->user_id]);
             return response()->json(['error' => 'Sender not found'], 404);
         }
-
+    
         Log::info('Sender found', ['user_id' => $request->user_id]);
-
+    
+        // Fetch the credentials for the WhatsApp API
         $credentialService = new DynamicChannelCredentialService($credentialable, 'whatsapp');
-
+    
+        // Get the token and the sender's phone number (this acts as the chatId)
         $token = $credentialService->getApiToken();
-        $sender = $credentialService->getPhoneNumber();
-
+        $sender = $credentialService->getPhoneNumber(); // This will be used as the sender's chatId
+    
         Log::info('Credentials retrieved', ['token' => $token, 'sender' => $sender]);
-
+    
         $responses = [];
-
+    
+        // Loop through contacts and send messages
         foreach ($request->contacts as $contact) {
-            Log::info('Sending message', ['phone' => $contact['phone'], 'message' => $request->message]);
-
-            // Prepare request body
+            Log::info('Sending message', ['chatId' => $contact['chatId'], 'message' => $request->message]);
+    
+            // Prepare request body for each contact
             $data = [
-                'chatId' => $request->chatId, // The chat ID (phone number or group chat ID)
+                'chatId' => $contact['chatId'], // Chat ID for this specific contact
                 'message' => $request->message, // The message to send
-                'sender' => $sender, // Sender's phone number
+                'sender' => $sender, // Sender’s phone number
                 'mentions' => $request->mentions ?? [], // Optional mentions array
                 'replyToMessageId' => $request->replyToMessageId ?? null, // Optional reply ID
                 'previewLink' => $request->previewLink ?? true, // Whether to show link previews
             ];
-
+    
             // Send request to the WhatsApp API
             $response = Http::withToken($token)
                 ->post('https://waapi.app/api/v1/messages', $data);
-
+    
+            // Log and collect the response for each contact
             $responses[] = [
-                'phone' => $contact['phone'],
+                'chatId' => $contact['chatId'],
                 'status' => $response->successful() ? 'sent' : 'failed',
                 'response' => $response->json(),
             ];
-
+    
             Log::info('Message sent', [
-                'phone' => $contact['phone'],
+                'chatId' => $contact['chatId'],
                 'status' => $response->successful() ? 'sent' : 'failed',
                 'response' => $response->json(),
             ]);
         }
-
+    
         Log::info('All messages processed', ['responses' => $responses]);
-
+    
         return response()->json([
             'status' => 'done',
             'results' => $responses,
         ]);
     }
-//     public function send(Request $request)
-//     {
-//         Log::info('Received request to send WhatsApp messages', ['request' => $request->all()]);
-
-//         $request->validate([
-//             'contacts' => 'required|array',
-//             'message' => 'required|string',
-//         ]);
-
-//         Log::info('Request validated successfully');
-
-//         $credentialable = User::find($request->user_id);
-
-//         if (!$credentialable) {
-//             Log::error('Sender not found', ['user_id' => $request->user_id]);
-//             return response()->json(['error' => 'Sender not found'], 404);
-//         }
-
-//         Log::info('Sender found', ['user_id' => $request->user_id]);
-
-//         $credentialService = new DynamicChannelCredentialService($credentialable, 'whatsapp');
-
-//         $token = $credentialService->getApiToken();
-//         $sender = $credentialService->getPhoneNumber();
-
-//         Log::info('Credentials retrieved', ['token' => $token, 'sender' => $sender]);
-
-//         $responses = [];
-
-//         foreach ($request->contacts as $contact) {
-//             Log::info('Sending message', ['phone' => $contact['phone'], 'message' => $request->message]);
-
-//             $response = Http::withToken($token)
-//                 ->post('https://waapi.app/api/v1/messages', [
-//                     'phone' => $contact['phone'],
-//                     'message' => $request->message,
-//                     'sender' => $sender,
-//                 ]);
-
-//             $responses[] = [
-//                 'phone' => $contact['phone'],
-//                 'status' => $response->successful() ? 'sent' : 'failed',
-//                 'response' => $response->json(),
-//             ];
-
-//             Log::info('Message sent', [
-//                 'phone' => $contact['phone'],
-//                 'status' => $response->successful() ? 'sent' : 'failed',
-//                 'response' => $response->json(),
-//             ]);
-//         }
-
-//         Log::info('All messages processed', ['responses' => $responses]);
-
-//         return response()->json([
-//             'status' => 'done',
-//             'results' => $responses,
-//         ]);
-//     }
+    
 }
