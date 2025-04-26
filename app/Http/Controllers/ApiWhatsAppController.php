@@ -70,23 +70,11 @@ class ApiWhatsAppController extends Controller
                 'content' => $request->message,
                 'status' => 'pending', // Initially set to 'pending'
                 'reply_to_message_id' => $request->replyToMessageId,
+                'messageable_id' => $credentialable->id,
+                'messageable_type' => get_class($credentialable),
             ]);
+            
 
-
-
-
-            // $table->id();
-            // $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete();
-            // $table->string('channel')->nullable(); // SMS, Email, WhatsApp etc.
-            // $table->string('recipient_name')->nullable();
-            // $table->string('recipient_phone');
-            // $table->text('content');
-            // $table->string('status')->default('sent'); // sent, delivered, failed
-            // $table->timestamp('sent_at')->nullable();
-            // $table->json('response_payload')->nullable();
-            // $table->timestamps();
-            // $table->softDeletes();
-    
             Log::info('Message stored in database', ['message_id' => $message->id]);
     
             // Construct the dynamic URL using the account ID

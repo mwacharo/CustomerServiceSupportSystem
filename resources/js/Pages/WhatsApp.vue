@@ -47,7 +47,7 @@ const loadTemplates = async () => {
   try {
     // Make a request to the API endpoint
     const response = await axios.get('/api/v1/templates');
-    
+
     // Update templates with the data from the API
     templates.value = response.data;
   } catch (error) {
@@ -66,7 +66,7 @@ const selectTemplate = (template) => {
 const sendMessage = async () => {
   try {
     const response = await axios.post('/api/v1/whatsapp-send', {
-      user_id: userId.value, 
+      user_id: userId.value,
 
       contacts: selectedContacts.value.map(c => ({
         id: c.id,
@@ -110,7 +110,7 @@ onMounted(() => {
     { id: 3, content: 'New feature announcement', recipients: 50, status: 'Delivered', sent_at: '2025-04-17' },
     { id: 4, content: 'Urgent: Account verification required', recipients: 5, status: 'Read', sent_at: '2025-04-16' },
   ];
-  
+
   loadContacts();
   loadTemplates();
   console.log('user_id', userId.value);
@@ -120,8 +120,9 @@ onMounted(() => {
 
 <template>
   <AppLayout>
+
     <Head title="WhatsApp" />
-    
+
     <v-container>
       <v-row>
         <v-col cols="12" md="3">
@@ -131,15 +132,12 @@ onMounted(() => {
                 <v-icon size="48" color="white">mdi-whatsapp</v-icon>
               </v-avatar>
               <h2 class="text-h6">WhatsApp Business</h2>
-              <v-chip
-                :color="whatsappStatus === 'Connected' ? 'success' : 'error'"
-                class="mt-2"
-              >
+              <v-chip :color="whatsappStatus === 'Connected' ? 'success' : 'error'" class="mt-2">
                 {{ whatsappStatus }}
               </v-chip>
-              
+
               <v-divider class="my-4"></v-divider>
-              
+
               <v-row>
                 <v-col cols="6" class="py-1">
                   <div class="text-subtitle-2">Sent</div>
@@ -158,35 +156,28 @@ onMounted(() => {
                   <div class="text-h6">{{ stats.failed }}</div>
                 </v-col>
               </v-row>
-              
+
               <v-divider class="my-4"></v-divider>
-              
+
               <v-btn color="primary" block @click="showNewMessageDialog = true">
                 New Message
               </v-btn>
-              
+
               <v-btn color="info" block class="mt-2" @click="showImportDialog = true">
                 Import Contacts
               </v-btn>
             </v-card-text>
           </v-card>
         </v-col>
-        
+
         <v-col cols="12" md="9">
           <v-card>
             <v-card-title class="d-flex justify-space-between align-center">
               <div>Recent Messages</div>
-              <v-text-field
-                v-model="search"
-                append-icon="mdi-magnify"
-                label="Search messages"
-                single-line
-                hide-details
-                density="compact"
-                class="max-w-xs"
-              ></v-text-field>
+              <v-text-field v-model="search" append-icon="mdi-magnify" label="Search messages" single-line hide-details
+                density="compact" class="max-w-xs"></v-text-field>
             </v-card-title>
-            
+
             <v-card-text>
               <v-table>
                 <thead>
@@ -205,8 +196,7 @@ onMounted(() => {
                     <td>
                       <v-chip
                         :color="message.status === 'Delivered' ? 'success' : message.status === 'Read' ? 'info' : 'warning'"
-                        size="small"
-                      >
+                        size="small">
                         {{ message.status }}
                       </v-chip>
                     </td>
@@ -230,27 +220,19 @@ onMounted(() => {
         </v-col>
       </v-row>
     </v-container>
-    
+
     <!-- New Message Dialog -->
     <v-dialog v-model="showNewMessageDialog" max-width="700px">
       <v-card>
         <v-card-title>Send WhatsApp Message</v-card-title>
         <v-card-text>
-          <v-select
-            v-model="selectedContacts"
-            :items="contacts"
-            item-title="name"
-            item-value="id"
-            label="Select Recipients"
-            multiple
-            chips
-            return-object
-          >
+          <v-select v-model="selectedContacts" :items="contacts" item-title="name" item-value="id"
+            label="Select Recipients" multiple chips return-object>
             <template v-slot:selection="{ item }">
               <v-chip>{{ item.raw.name }} ({{ item.raw.phone }})</v-chip>
             </template>
           </v-select>
-          
+
           <!-- <v-select
             label="Select Template"
             :items="templates"
@@ -262,24 +244,12 @@ onMounted(() => {
 
 
 
-          <v-select
-      label="Select Template"
-      :items="templates"
-      item-title="name"
-      item-value="id"
-      @update:model-value="onTemplateSelect"
-      class="mt-4"
-      :hint="selectedTemplate ? `Channel: ${selectedTemplate.channel} | Module: ${selectedTemplate.module}` : ''"
-      persistent-hint
-    ></v-select>          
-          <v-textarea
-            v-model="messageText"
-            label="Message"
-            rows="5"
-            class="mt-4"
-            hint="Variables format: {{variable_name}}"
-            persistent-hint
-          ></v-textarea>
+          <v-select label="Select Template" :items="templates" item-title="name" item-value="id"
+            @update:model-value="onTemplateSelect" class="mt-4"
+            :hint="selectedTemplate ? `Channel: ${selectedTemplate.channel} | Module: ${selectedTemplate.module}` : ''"
+            persistent-hint></v-select>
+          <v-textarea v-model="messageText" label="Message" rows="5" class="mt-4"
+            hint="Variables format: {{variable_name}}" persistent-hint></v-textarea>
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
@@ -290,20 +260,15 @@ onMounted(() => {
         </v-card-actions>
       </v-card>
     </v-dialog>
-    
+
     <!-- Import Contacts Dialog -->
     <v-dialog v-model="showImportDialog" max-width="500px">
       <v-card>
         <v-card-title>Import Contacts</v-card-title>
         <v-card-text>
-          <v-file-input
-            label="Upload CSV File"
-            accept=".csv"
-            prepend-icon="mdi-file-upload"
-            show-size
-            truncate-length="25"
-          ></v-file-input>
-          
+          <v-file-input label="Upload CSV File" accept=".csv" prepend-icon="mdi-file-upload" show-size
+            truncate-length="25"></v-file-input>
+
           <v-alert type="info" class="mt-4">
             CSV file should have columns: Name, Phone Number, Status
           </v-alert>
@@ -315,7 +280,7 @@ onMounted(() => {
         </v-card-actions>
       </v-card>
     </v-dialog>
-    
-   
+
+
   </AppLayout>
 </template>

@@ -93,6 +93,12 @@ class Vendor extends Model
     return $this->morphMany(ChannelCredential::class, 'credentialable');
 }
 
+
+
+public function messages()
+{
+    return $this->morphMany(Message::class, 'messageable');
+}
     
 
 }
