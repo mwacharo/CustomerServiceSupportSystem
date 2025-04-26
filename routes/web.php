@@ -114,6 +114,13 @@ Route::middleware([
         return Inertia::render('Integrations');
     })->name('integrations');
 
+    Route::get('/template', function () {
+        return Inertia::render('Template');
+    })->name('template');
+
+    Route::get('/marketplace-sources', function () {
+        return Inertia::render('Marketplace');
+    })->name('marketplace-sources');
 
 
 

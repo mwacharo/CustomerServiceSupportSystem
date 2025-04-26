@@ -13,6 +13,7 @@ use App\Http\Controllers\ApiCredentialController;
 use App\Http\Controllers\ApiEmailController;
 use App\Http\Controllers\ApiIvrOptionController;
 use App\Http\Controllers\ApiOrderController;
+use App\Http\Controllers\ApiTemplateController;
 use App\Http\Controllers\ApiWhatsAppController;
 use App\Http\Controllers\WhatsAppWebhookController;
 
@@ -186,6 +187,15 @@ Route::post('v1/send-email', [ApiEmailController::class, 'send']);
 // webwhats    webhook 
 Route::post('/whatsapp/webhook', [WhatsAppWebhookController::class, 'receive']);
 Route::post('v1/whatsapp-send', [ApiWhatsAppController::class, 'send']);
+
+
+// Template APIs
+
+  Route::get('v1/templates', [ApiTemplateController::class, 'index']); // List all templates
+  Route::post('v1/templates', [ApiTemplateController::class, 'store']); // Create a new template
+  Route::get('v1/templates/{id}', [ApiTemplateController::class, 'show']); // Show a specific template
+  Route::put('v1/templates/{id}', [ApiTemplateController::class, 'update']); // Update a specific template
+  Route::delete('v1/templates/{id}', [ApiTemplateController::class, 'destroy']); // Delete a specific template
 
 
 // https://support.solssa.com/api/whatsapp/webhook

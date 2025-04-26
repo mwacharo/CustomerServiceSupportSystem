@@ -117,7 +117,9 @@
       icon: 'mdi-cog-outline',
       items: [
         { route: 'ivr-options', icon: 'mdi-cog-outline', title: 'IvrOptions' },
-        { route: 'integrations', icon: 'mdi-puzzle', title: 'Third-Party Integrations' }
+        { route: 'integrations', icon: 'mdi-puzzle', title: 'Integrations' },
+        { route: 'template', icon: 'mdi-file-outline', title: 'Template' },
+        // { route: 'marketplace-sources', icon: 'mdi-storefront-outline', title: 'Marketplace' },
 
         // { route: 'sms', icon: 'mdi-message-text-outline', title: 'SmsOptions' },
         // { route: 'whatsapp', icon: 'mdi-whatsapp', title: 'WhatsappOptions' },

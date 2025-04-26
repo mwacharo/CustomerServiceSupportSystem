@@ -57,4 +57,9 @@ class DynamicChannelCredentialService
     {
         return $this->credential->provider;
     }
+
+    public function getAccountId(): ?string
+    {
+        return $this->credential->account_id;
+    }
 }
