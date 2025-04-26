@@ -78,4 +78,10 @@ class User extends Authenticatable
     return $this->morphMany(ChannelCredential::class, 'credentialable');
 }
 
+
+public function messages()
+{
+    return $this->morphMany(Message::class, 'messageable');
+}
+
 }

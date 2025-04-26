@@ -13,7 +13,9 @@ return new class extends Migration
     {
         Schema::create('messages', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete();
+            // $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete();
+            $table->morphs('messageable'); // adds messageable_id and messageable_type columns
+
             $table->string('channel')->nullable(); // SMS, Email, WhatsApp etc.
             $table->string('recipient_name')->nullable();
             $table->string('recipient_phone');
