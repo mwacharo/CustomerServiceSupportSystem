@@ -65,8 +65,8 @@ class ApiWhatsAppController extends Controller
     
             // Store the message in the database before sending it
             $message = Message::create([
-                'user_id' => $request->user_id,
-                'chat_id' => $contact['chatId'],
+                // 'user_id' => $request->user_id,
+                'recipient_phone' => $contact['chatId'],
                 'content' => $request->message,
                 'status' => 'pending', // Initially set to 'pending'
                 'reply_to_message_id' => $request->replyToMessageId,
