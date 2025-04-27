@@ -4,6 +4,100 @@ import { Head } from '@inertiajs/vue3';
 import AppLayout from "@/Layouts/AppLayout.vue";
 import { usePage } from '@inertiajs/inertia-vue3';
 
+
+
+// Additional variables for contact table
+const filterType = ref('all');
+const filterStatus = ref('all');
+const itemsPerPage = ref(10);
+
+// Contact type options
+const contactTypes = [
+  { title: 'All Types', value: 'all' },
+  { title: 'Customer', value: 'customer' },
+  { title: 'Vendor', value: 'vendor' },
+  { title: 'Partner', value: 'partner' },
+  { title: 'Employee', value: 'employee' }
+];
+
+// Status options
+const statusOptions = [
+  { title: 'All Statuses', value: 'all' },
+  { title: 'Active', value: 1 },
+  { title: 'Inactive', value: 0 }
+];
+
+// Filtered contacts computed property
+const filteredContacts = computed(() => {
+  if (!Array.isArray(contacts.value)) return [];
+  
+  let filtered = [...contacts.value];
+  
+  // Apply type filter
+  if (filterType.value !== 'all') {
+    filtered = filtered.filter(contact => contact.type === filterType.value);
+  }
+  
+  // Apply status filter
+  if (filterStatus.value !== 'all') {
+    filtered = filtered.filter(contact => contact.status === filterStatus.value);
+  }
+  
+  // Search filter is handled by v-data-table directly
+  
+  return filtered;
+});
+
+// Check if contact has WhatsApp number
+const hasWhatsAppNumber = (contact) => {
+  return Boolean(contact.whatsapp || contact.alt_phone || contact.phone);
+};
+
+// View contact details
+const viewContact = (contact) => {
+  // For now just show an alert with basic details
+  alert(`Contact: ${contact.name}
+Phone: ${contact.phone || 'N/A'}
+WhatsApp: ${contact.whatsapp || 'N/A'}
+Type: ${contact.type || 'N/A'}
+Company: ${contact.company_name || 'N/A'}
+Country: ${contact.country_name || 'N/A'}`);
+  
+  // You can implement a modal dialog or navigation to contact details page
+};
+
+// Open send message dialog for a specific contact
+const openSendMessage = (isBulk = false, contact = null) => {
+  errorMessage.value = ''; // Clear any previous errors
+  messageText.value = ''; // Clear message text
+  
+  if (isBulk) {
+    // Use already selected contacts from the table
+    selectedContacts.value = selectedMessages.value;
+  } else if (contact) {
+    // Use the individual contact that was clicked
+    selectedContacts.value = [contact];
+  } else {
+    // Clear selection
+    selectedContacts.value = [];
+  }
+  
+  // Make sure templates are loaded
+  if ((!Array.isArray(templates.value) || templates.value.length === 0) && !loading.value.templates) {
+    loadTemplates();
+  }
+  
+  // Open message dialog
+  showNewMessageDialog.value = true;
+};
+
+// Reset all filters
+const resetFilters = () => {
+  search.value = '';
+  filterType.value = 'all';
+  filterStatus.value = 'all';
+};
+
 const userId = computed(() => usePage().props.value.user?.id);
 
 // State variables
@@ -48,6 +142,8 @@ const stats = ref({
   failed: 0,
   pending: 0
 });
+
+const selectedMessages = ref([]);
 
 // Pagination
 const totalPages = computed(() => Math.ceil(totalMessages.value / perPage.value));
@@ -181,53 +277,6 @@ const calculateStats = () => {
   }
 };
 
-// Check WhatsApp connection status
-const checkWhatsappStatus = async () => {
-  try {
-    const response = await axios.get('/api/v1/whatsapp-status');
-    
-    if (response.data && response.data.status) {
-      whatsappStatus.value = response.data.status;
-    } else {
-      whatsappStatus.value = 'Unknown';
-    }
-  } catch (error) {
-    console.error('Error checking WhatsApp status:', error);
-    whatsappStatus.value = 'Disconnected';
-  }
-};
-
-// Load contacts from API with pagination
-// const loadContacts = async () => {
-//   try {
-//     loading.value.contacts = true;
-//     const response = await axios.get('/api/v1/contacts');
-    
-//     // Check if data property exists and is an array
-//     if (response.data?.data && Array.isArray(response.data.data)) {
-//       // contacts.value = response.data.data;
-//             contacts.value = response.data.data.data;
-
-//       console.log('Contacts loaded:', contacts.value.length);
-//     } else {
-//       console.error('Unexpected API response format:', response.data);
-//       // Don't reset if we already have data
-//       if (!Array.isArray(contacts.value) || contacts.value.length === 0) {
-//         contacts.value = [];
-//       }
-//       showError('Invalid contact data format received from server');
-//     }
-//   } catch (error) {
-//     console.error('Error loading contacts:', error);
-//     showError(`Failed to load contacts: ${error.response?.data?.message || error.message}`);
-//     // Don't reset if we already have data
-//     if (!Array.isArray(contacts.value) || contacts.value.length === 0) {
-//       contacts.value = [];
-//     }
-//   } finally {
-//     loading.value.contacts = false;
-//   }
-// };
 
 const loadContacts = async () => {
   try {
@@ -236,7 +285,9 @@ const loadContacts = async () => {
     
     // Updated to handle the triple-nested data structure
     if (response.data?.data?.data && Array.isArray(response.data.data.data)) {
-      contacts.value = response.data.data.data;
+      contacts.value= response.data.data.data;
+     filteredContacts = contacts;
+
       console.log('Contacts loaded:', contacts.value.length);
     } else {
       console.error('Unexpected API response format:', response.data);
@@ -613,12 +664,12 @@ onMounted(() => {
   loadMessages(1);
   loadContacts();
   loadTemplates();
-  checkWhatsappStatus();
+  // checkWhatsappStatus();
   
   // Set up polling for status updates (every 30 seconds)
-  const statusInterval = setInterval(() => {
-    checkWhatsappStatus();
-  }, 30000);
+  // const statusInterval = setInterval(() => {
+  //   checkWhatsappStatus();
+  // }, 30000);
   
   // Clean up interval on unmount
   return () => {
@@ -793,6 +844,123 @@ onMounted(() => {
         </v-col>
       </v-row>
     </v-container>
+
+
+    <v-container>
+  <v-row>
+    <v-col cols="12">
+      <v-card>
+        <v-card-title class="d-flex align-center justify-space-between">
+          <span>WhatsApp Contacts</span>
+          <div>
+            
+            <v-btn color="success" @click="openSendMessage(true)" :disabled="!selectedMessages.length">
+              <v-icon start>mdi-send</v-icon>
+              Bulk Message
+            </v-btn>
+          </div>
+        </v-card-title>
+        
+        <v-card-text>
+          <v-row>
+              <v-col cols="12" sm="6" md="4">
+                <v-text-field
+                  v-model="search"
+                  label="Search Contacts"
+                  prepend-inner-icon="mdi-magnify"
+                  density="compact"
+                  variant="outlined"
+                  hide-details
+                ></v-text-field>
+              </v-col>
+              <v-col cols="12" sm="6" md="3">
+                <v-select
+                  v-model="filterType"
+                  :items="contactTypes"
+                  label="Contact Type"
+                  density="compact"
+                  variant="outlined"
+                  hide-details
+                ></v-select>
+              </v-col>
+              <v-col cols="12" sm="6" md="3">
+                <v-select
+                  v-model="filterStatus"
+                  :items="statusOptions"
+                  label="Contact Status"
+                  density="compact"
+                  variant="outlined"
+                  hide-details
+                ></v-select>
+              </v-col>
+              <v-col cols="12" sm="6" md="2">
+                <v-btn color="info" variant="text" @click="resetFilters">
+                  <v-icon start>mdi-filter-off</v-icon>
+                  Reset
+                </v-btn>
+              </v-col>
+            </v-row>
+
+          <v-data-table
+              v-model="selectedContacts"
+              :headers="[
+                { title: 'ID', key: 'id', width: '5%' },
+                { title: 'Name', key: 'name', width: '20%' },
+                { title: 'WhatsApp', key: 'whatsapp', width: '15%' },
+                { title: 'Type', key: 'type', width: '10%' },
+                { title: 'Company', key: 'company_name', width: '15%' },
+                { title: 'Status', key: 'status', width: '10%' },
+                { title: 'Country', key: 'country_name', width: '15%' },
+                { title: 'Actions', key: 'actions', sortable: false, width: '10%' }
+              ]"
+             
+              
+               :items="filteredContacts"
+              :search="search"
+              :items-per-page="itemsPerPage"
+              item-value="id"
+              show-select
+              class="mt-4"
+            >
+              <template v-slot:item.whatsapp="{ item }">
+                {{ item.whatsapp || item.alt_phone || item.phone || 'N/A' }}
+              </template>
+              
+              <template v-slot:item.type="{ item }">
+                <v-chip
+                  :color="item.type === 'customer' ? 'primary' : 
+                         item.type === 'vendor' ? 'success' : 
+                         item.type === 'partner' ? 'warning' : 
+                         item.type === 'employee' ? 'info' : 'grey'"
+                  size="small"
+                >
+                  {{ item.type }}
+                </v-chip>
+              </template>
+              
+              <template v-slot:item.status="{ item }">
+                <v-chip
+                  :color="item.status === 1 ? 'success' : 'grey'"
+                  size="small"
+                >
+                  {{ item.status === 1 ? 'Active' : 'Inactive' }}
+                </v-chip>
+              </template>
+              
+              <template v-slot:item.actions="{ item }">
+                <v-btn icon size="small" color="primary" @click="viewContact(item)">
+                  <v-icon>mdi-eye</v-icon>
+                </v-btn>
+                <v-btn icon size="small" color="success" @click="openSendMessage(false, item)" :disabled="!hasWhatsAppNumber(item)">
+                  <v-icon>mdi-send</v-icon>
+                </v-btn>
+              </template>
+            </v-data-table>
+        </v-card-text>
+      </v-card>
+    </v-col>
+  </v-row>
+</v-container>
 
     <!-- New Message Dialog -->
     <v-dialog v-model="showNewMessageDialog" max-width="700px">
