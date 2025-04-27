@@ -141,6 +141,16 @@ class ApiWhatsAppController extends Controller
 
 
 
+    public function index()
+    {
+        $messages = Message::latest()->paginate(20);
+    
+        return response()->json([
+            'success' => true,
+            'data' => $messages,
+        ]);
+    }
+
 
     
 }

@@ -175,6 +175,8 @@ Route::post('v1/send-email', [ApiEmailController::class, 'send']);
 // webwhats    webhook 
 Route::post('/whatsapp/webhook', [WhatsAppWebhookController::class, 'receive']);
 Route::post('v1/whatsapp-send', [ApiWhatsAppController::class, 'send']);
+Route::get('v1/whatsapp-messages', [ApiWhatsAppController::class, 'index']);
+
 
 
 // Template APIs
