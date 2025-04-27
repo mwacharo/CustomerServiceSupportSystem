@@ -82,6 +82,7 @@ Route::apiResource('v1/branches', ApiBranchController::class)->only([
 ]);
 
 
+
 // callcentre 
 
 Route::post('v1/africastalking-handle-callback', [ApiCallCentreController::class, 'handleVoiceCallback']);

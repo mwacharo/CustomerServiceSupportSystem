@@ -33,15 +33,32 @@ const stats = ref({
   failed: 11
 });
 
-const loadContacts = () => {
-  // Mock data - would be replaced with API call
-  contacts.value = [
-    { id: 1, name: 'John Mwacharo', phone: '254799806098@c.us', status: 'Active' },
-    { id: 2, name: 'Jane Smith', phone: '+254723456789', status: 'Active' },
-    { id: 3, name: 'Robert Brown', phone: '+254734567890', status: 'Inactive' },
-    { id: 4, name: 'Sarah Wilson', phone: '+254745678901', status: 'Active' },
-  ];
+// const loadContacts = () => {
+//   // Mock data - would be replaced with API call
+//   contacts.value = [
+//     { id: 1, name: 'John Mwacharo', phone: '254799806098@c.us', status: 'Active' },
+//     { id: 2, name: 'Jane Smith', phone: '+254723456789', status: 'Active' },
+//     { id: 3, name: 'Robert Brown', phone: '+254734567890', status: 'Inactive' },
+//     { id: 4, name: 'Sarah Wilson', phone: '+254745678901', status: 'Active' },
+//   ];
+// };
+
+
+const loadContacts = async () => {
+  try {
+    // Make a request to the API endpoint
+    const response = await axios.get('/api/v1/contacts');
+
+    // Update contacts with the data from the API
+    contacts.value = response.data.data;
+    console.log('Contacts loaded:', contacts.value);
+  } catch (error) {
+    console.error('Error loading contacts:', error);
+    // Optionally handle error - show notification, etc.
+  }
 };
+
+
 
 
 
@@ -85,9 +102,7 @@ const sendMessage = async () => {
         name: c.name,
         chatId: c.phone,
 
-        // inlcude user id 
-        //       user_id: userId.value, // Include user ID in the request
-
+        
       })),
       message: messageText.value,
     });
