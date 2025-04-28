@@ -64,17 +64,17 @@ class ApiWhatsAppController extends Controller
             ];
     
             // Store the message in the database before sending it
-            $message = Message::create([
-                'recipient_phone' => $contact['chatId'],
-                'content' => $request->message,
-                'message_status' => 'pending', // Initially set to 'pending'
-                'reply_to_message_id' => $request->replyToMessageId,
-                'messageable_id' => $credentialable->id,
-                'messageable_type' => get_class($credentialable),
-            ]);
+            // $message = Message::create([
+            //     'recipient_phone' => $contact['chatId'],
+            //     'content' => $request->message,
+            //     'message_status' => 'pending', // Initially set to 'pending'
+            //     'reply_to_message_id' => $request->replyToMessageId,
+            //     'messageable_id' => $credentialable->id,
+            //     'messageable_type' => get_class($credentialable),
+            // ]);
             
 
-            Log::info('Message stored in database', ['message_id' => $message->id]);
+            // Log::info('Message stored in database', ['message_id' => $message->id]);
     
             // Construct the dynamic URL using the account ID
             $url = "https://waapi.app/api/v1/instances/{$accountId}/client/action/send-message";
@@ -92,10 +92,10 @@ class ApiWhatsAppController extends Controller
                 $responseData = $response->json();
                 $externalMessageId = $responseData['responses'][0]['response']['data']['data']['_data']['id']['_serialized'] ?? null;
             
-                $message->update([
-                    'message_status' => 'sent',
-                    'external_message_id' => $externalMessageId, // <-- store this for future tracking
-                ]);
+                // $message->update([
+                //     'message_status' => 'sent',
+                //     'external_message_id' => $externalMessageId, // <-- store this for future tracking
+                // ]);
     
                 // Log and collect the response for each contact
                 $responses[] = [
@@ -116,9 +116,9 @@ class ApiWhatsAppController extends Controller
                 ]);
     
                 // If an error occurs, update the message status to 'failed'
-                $message->update([
-                    'message_status' => 'failed',
-                ]);
+                // $message->update([
+                //     'message_status' => 'failed',
+                // ]);
     
                 $responses[] = [
                     'chatId' => $contact['chatId'],

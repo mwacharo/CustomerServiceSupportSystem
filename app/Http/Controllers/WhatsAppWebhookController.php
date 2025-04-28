@@ -73,7 +73,10 @@ class WhatsAppWebhookController extends Controller
     Log::debug('Prepared message attributes for storage', $messageAttributes);
 
     try {
-        $message = Message::create($messageAttributes);
+        $message = Message::updateOrCreate(
+            ['external_message_id' => $messageAttributes['external_message_id']],
+            $messageAttributes
+        );
 
         Log::info('Message stored successfully', ['message_id' => $message->id]);
         return response()->json(['status' => 'Message stored successfully']);
