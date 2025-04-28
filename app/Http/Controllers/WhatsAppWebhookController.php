@@ -23,6 +23,8 @@ class WhatsAppWebhookController extends Controller
 
 public function receive(Request $request)
 {
+
+    Log::info('Incoming WhatsApp Message', $request->all());
     $messageData = $request->input('data.message');
 
     $waId = str_replace('@c.us', '', $messageData['from'] ?? '');
