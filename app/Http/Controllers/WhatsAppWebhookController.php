@@ -73,11 +73,23 @@ class WhatsAppWebhookController extends Controller
     Log::debug('Prepared message attributes for storage', $messageAttributes);
 
     try {
-        $message = Message::updateOrCreate(
-            ['external_message_id' => $messageAttributes['external_message_id']],
-            $messageAttributes
-        );
-
+        // Prevent creating duplicate when external_message_id is missing
+        $externalId = $messageAttributes['external_message_id'] ?? null;
+    
+        if (!$externalId) {
+            Log::warning('Missing external_message_id, skipping message storage', ['attributes' => $messageAttributes]);
+            return response()->json(['error' => 'Missing external_message_id'], 400);
+        }
+    
+        $existingMessage = Message::where('external_message_id', $externalId)->first();
+    
+        if ($existingMessage) {
+            Log::info('Duplicate message detected, skipping storage', ['external_message_id' => $externalId]);
+            return response()->json(['status' => 'Message already exists']);
+        }
+    
+        $message = Message::create($messageAttributes);
+    
         Log::info('Message stored successfully', ['message_id' => $message->id]);
         return response()->json(['status' => 'Message stored successfully']);
     } catch (\Exception $e) {
@@ -88,6 +100,7 @@ class WhatsAppWebhookController extends Controller
         ]);
         return response()->json(['error' => 'Failed to store message', 'details' => $e->getMessage()], 500);
     }
+    
 }
 
  }
