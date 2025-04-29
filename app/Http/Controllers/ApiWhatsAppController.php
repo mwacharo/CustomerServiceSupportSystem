@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\MessageResource;
 use App\Models\Message;
 use App\Models\User;
 use App\Services\DynamicChannelCredentialService;
@@ -175,28 +176,33 @@ class ApiWhatsAppController extends Controller
     $messages = $query->paginate($perPage);
 
     // Transform output (format datetime)
-    $messages->getCollection()->transform(function ($message) {
-        return [
-            'id' => $message->id,
-            'content' => $message->content,
-            'recipient_phone' => $message->recipient_phone,
-            'status' => $message->status,
-            'message_status' => $message->message_status,
-            'sent_at' => optional($message->sent_at)->format('Y-m-d H:i:s'),
-            'created_at' => optional($message->created_at)->format('Y-m-d H:i:s'),
-        ];
-    });
+    // $messages->getCollection()->transform(function ($message) {
+    //     return [
+    //         'id' => $message->id,
+    //         'content' => $message->content,
+    //         'recipient_phone' => $message->recipient_phone,
+    //         'status' => $message->status,
+    //         'message_status' => $message->message_status,
+    //         'sent_at' => optional($message->sent_at)->format('Y-m-d H:i:s'),
+    //         'created_at' => optional($message->created_at)->format('Y-m-d H:i:s'),
+    //     ];
+    // });
 
-    return response()->json([
-        'success' => true,
-        'meta' => [
-            'current_page' => $messages->currentPage(),
-            'last_page' => $messages->lastPage(),
-            'per_page' => $messages->perPage(),
-            'total' => $messages->total(),
-        ],
-        'data' => $messages->items(),
-    ]);
+    // return response()->json([
+    //     'success' => true,
+    //     'meta' => [
+    //         'current_page' => $messages->currentPage(),
+    //         'last_page' => $messages->lastPage(),
+    //         'per_page' => $messages->perPage(),
+    //         'total' => $messages->total(),
+    //     ],
+    //     'data' => $messages->items(),
+    // ]);
+
+
+
+    return MessageResource::collection($query->paginate($perPage));
+
 }
 
 

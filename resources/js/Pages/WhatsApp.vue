@@ -5,20 +5,6 @@ import AppLayout from "@/Layouts/AppLayout.vue";
 import { usePage } from '@inertiajs/inertia-vue3';
 
 
-const formatDate = (date) => {
-  if (!date) return '';
-  const options = {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-    hour12: true,  // Set to false for 24-hour format
-  };
-  const formattedDate = new Date(date).toLocaleString('en-US', options);
-  return formattedDate;
-};
 
 // Additional variables for contact table
 const filterType = ref('all');
