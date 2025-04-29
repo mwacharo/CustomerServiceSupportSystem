@@ -50,6 +50,8 @@ class Message extends Model
      */
     protected $casts = [
         'sent_at' => 'datetime',
+        'created_at' => 'datetime',
+
         'response_payload' => 'array',
         'timestamp' => 'datetime',
         'delivered_at' => 'datetime',
