@@ -817,7 +817,7 @@ onMounted(() => {
                         {{ message.message_status || message.status || 'Unknown' }}
                       </v-chip>
                     </td>
-                    <td>{{ formatDate(message.sent_at || message.created_at) }}</td>
+                    <td>{{ message.sent_at || message.created_at }}</td>
                     <td class="text-center">
                       <v-btn icon size="small" color="info" variant="text" @click="viewMessageDetails(message)">
                         <v-icon>mdi-eye</v-icon>
