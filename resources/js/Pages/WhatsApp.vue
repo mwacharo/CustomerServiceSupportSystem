@@ -5,6 +5,20 @@ import AppLayout from "@/Layouts/AppLayout.vue";
 import { usePage } from '@inertiajs/inertia-vue3';
 
 
+const formatDate = (date) => {
+  if (!date) return '';
+  const options = {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: true,  // Set to false for 24-hour format
+  };
+  const formattedDate = new Date(date).toLocaleString('en-US', options);
+  return formattedDate;
+};
 
 // Additional variables for contact table
 const filterType = ref('all');
@@ -817,7 +831,7 @@ onMounted(() => {
                         {{ message.message_status || message.status || 'Unknown' }}
                       </v-chip>
                     </td>
-                    <td>{{ message.sent_at || (message.created_at ? message.created_at.split('T')[0] : 'N/A') }}</td>
+                    <td>{{ formatDate(message.sent_at || message.created_at) }}</td>
                     <td class="text-center">
                       <v-btn icon size="small" color="info" variant="text" @click="viewMessageDetails(message)">
                         <v-icon>mdi-eye</v-icon>
