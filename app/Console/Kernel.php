@@ -24,7 +24,7 @@ class Kernel extends ConsoleKernel
 
         Log::info('📥 Starting Call Recordings Download Job');
 
-        $schedule->job(new DownloadCallRecordingsJob)->everyTwoMinutes();
+        $schedule->job(new DownloadCallRecordingsJob)->everytenMinutes();
 
 
     }

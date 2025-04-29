@@ -9,6 +9,8 @@ use App\Services\DynamicChannelCredentialService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use App\Jobs\SendWhatsAppMessageJob;
+
 
 class ApiWhatsAppController extends Controller
 {
@@ -52,8 +54,11 @@ class ApiWhatsAppController extends Controller
     
         // Loop through contacts and send messages
         foreach ($request->contacts as $contact) {
+
+
             Log::info('Preparing to send message', ['chatId' => $contact['chatId'], 'message' => $request->message]);
-    
+        SendWhatsAppMessageJob::dispatch($contact['chatId'], $request->message, $request->user_id);
+
             // Prepare request body for each contact
             $data = [
                 'chatId' => $contact['chatId'], // Chat ID for this specific contact

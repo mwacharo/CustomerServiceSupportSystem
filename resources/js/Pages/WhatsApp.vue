@@ -200,7 +200,7 @@ const loadMessages = async (page = 1) => {
     
     // Safely extract data
     if (response.data?.data?.data && Array.isArray(response.data.data.data)) {
-      messages.value = response.data.data.data;
+      messages.value = response.data.data;
       totalMessages.value = response.data.data.total || messages.value.length;
       
       // Calculate stats from actual data
