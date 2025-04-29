@@ -199,13 +199,23 @@ const loadMessages = async (page = 1) => {
     });
     
     // Safely extract data
-    if (response.data?.data?.data && Array.isArray(response.data.data.data)) {
-      messages.value = response.data.data;
-      totalMessages.value = response.data.data.total || messages.value.length;
+    // if (response.data?.data?.data && Array.isArray(response.data.data.data)) {
+    //   messages.value = response.data.data;
+    //   totalMessages.value = response.data.data.total || messages.value.length;
       
-      // Calculate stats from actual data
-      calculateStats();
-    } else {
+    //   // Calculate stats from actual data
+    //   calculateStats();
+    // }
+
+
+    if (Array.isArray(response.data.data)) {
+  messages.value = response.data.data;
+  totalMessages.value = response.data.meta?.total || messages.value.length;
+
+  // Calculate stats from actual data
+  calculateStats();
+}
+     else {
       console.error('Unexpected API response format:', response.data);
       // Don't empty the existing messages if there was data before
       if (!Array.isArray(messages.value)) {
@@ -817,7 +827,7 @@ onMounted(() => {
                         {{ message.message_status || message.status || 'Unknown' }}
                       </v-chip>
                     </td>
-                    <!-- <td>{{ message.sent_at || message.created_at }}</td> -->
+                    <td>{{ message.sent_at || message.created_at }}</td>
                     <td class="text-center">
                       <v-btn icon size="small" color="info" variant="text" @click="viewMessageDetails(message)">
                         <v-icon>mdi-eye</v-icon>
