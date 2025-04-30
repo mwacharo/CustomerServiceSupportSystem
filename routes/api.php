@@ -176,6 +176,10 @@ Route::post('v1/send-email', [ApiEmailController::class, 'send']);
 Route::post('/whatsapp/webhook', [WhatsAppWebhookController::class, 'receive']);
 Route::post('v1/whatsapp-send', [ApiWhatsAppController::class, 'send']);
 Route::get('v1/whatsapp-messages', [ApiWhatsAppController::class, 'index']);
+Route::get('v1/messages/chat/{phone}', [ApiWhatsAppController::class, 'getChat']);
+Route::delete('v1/messages/{id}', [ApiWhatsAppController::class, 'destroy']);
+
+
 
 
 
