@@ -17,15 +17,31 @@ class ApiWhatsAppController extends Controller
 
 
 
-    public function getChat($phone)
-    {
-        $messages = Message::where('recipient_phone', $phone)
-            ->orWhere('from', $phone . '@c.us')
-            ->orderBy('timestamp', 'asc')
-            ->get();
 
-        return response()->json($messages);
-    }
+    public function getChat($phone)
+{
+    $waId = $phone . '@c.us';
+
+    $messages = Message::where(function ($query) use ($waId) {
+            $query->where('from', $waId)
+                  ->orWhere('to', $waId);
+        })
+        ->orderBy('timestamp', 'asc')
+        ->get();
+
+    return response()->json($messages);
+}
+
+
+    // public function getChat($phone)
+    // {
+    //     $messages = Message::where('recipient_phone', $phone)
+    //         ->orWhere('from', $phone . '@c.us')
+    //         ->orderBy('timestamp', 'asc')
+    //         ->get();
+
+    //     return response()->json($messages);
+    // }
 
     public function destroy($id)
     {
