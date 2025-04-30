@@ -50,8 +50,10 @@ class GenerateTokens extends Command
                     'username'    => config('services.africastalking.username'),
                     'clientName'  => $clientName,
                     'phoneNumber' => config('services.africastalking.phone'),
-                    'incoming'    => $incoming,
-                    'outgoing'    => $outgoing,
+                    // 'incoming'    => $incoming,
+                    // 'outgoing'    => $outgoing,
+                    'incoming'    => $incoming ? "true" : "false",
+                    'outgoing'    => $outgoing ? "true" : "false",
                     'lifeTimeSec'      => "86400"
                 ];
 
