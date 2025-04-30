@@ -1,10 +1,16 @@
 <script setup>
+
+
 import { ref, onMounted, computed, watch } from 'vue';
 import { Head } from '@inertiajs/vue3';
 import AppLayout from "@/Layouts/AppLayout.vue";
 import { usePage } from '@inertiajs/inertia-vue3';
 
 
+
+const selectedPhone = ref(null);
+const dialog = ref(false);
+const conversation = ref([]);
 
 // Additional variables for contact table
 const filterType = ref('all');
@@ -198,15 +204,7 @@ const loadMessages = async (page = 1) => {
       }
     });
     
-    // Safely extract data
-    // if (response.data?.data?.data && Array.isArray(response.data.data.data)) {
-    //   messages.value = response.data.data;
-    //   totalMessages.value = response.data.data.total || messages.value.length;
-      
-    //   // Calculate stats from actual data
-    //   calculateStats();
-    // }
-
+ 
 
     if (Array.isArray(response.data.data)) {
   messages.value = response.data.data;
@@ -468,18 +466,23 @@ const sendMessage = async () => {
   }
 };
 
+
+
 // View message details
 const viewMessageDetails = (message) => {
-  // Implementation for viewing message details
-  console.log('Viewing message details:', message);
-  
-  // Open a dialog with delivery status for each recipient (you can implement this)
-  // For now, we'll just show an alert with basic details
-  alert(`Message ID: ${message.id}
-Content: ${message.content}
-Status: ${message.status || message.message_status || 'Unknown'}
-Sent At: ${message.sent_at || (message.created_at ? message.created_at.split('T')[0] : 'N/A')}
-Recipient: ${message.recipient_name || 'Unknown'} (${message.recipient_phone || 'Unknown'})`);
+  selectedPhone.value = message.recipient_phone;
+  dialog.value = true;
+  loading.value = true;
+
+  axios.get(`/api/v1/messages/chat/${message.recipient_phone}`)
+    .then((response) => {
+      conversation.value = response.data;
+      loading.value = false;
+    })
+    .catch((error) => {
+      console.error("Error loading chat:", error);
+      loading.value = false;
+    });
 };
 
 // Delete message
@@ -654,6 +657,98 @@ const reconnectWhatsapp = async () => {
     showError(`Failed to connect to WhatsApp: ${error.response?.data?.message || error.message}`);
   }
 };
+
+
+
+// conversation 
+const props = defineProps({
+  initialPhone: {
+    type: String,
+    default: ''
+  }
+});
+
+// const dialog = ref(false);
+// const selectedPhone = ref(props.initialPhone);
+// const loading = ref(false);
+const newMessage = ref('');
+const showEmojiPicker = ref(false);
+const selectedFile = ref(null);
+
+const groupedConversation = computed(() => {
+  return conversation.value.reduce((groups, msg) => {
+    const date = msg.timestamp.split('T')[0];
+    if (!groups[date]) groups[date] = [];
+    groups[date].push(msg);
+    return groups;
+  }, {});
+});
+
+// function viewMessageDetails(message) {
+//   selectedPhone.value = message.recipient_phone;
+//   loading.value = true;
+//   conversation.value = [];
+
+//   axios.get(`/api/messages/chat/${message.recipient_phone}`)
+//     .then(response => {
+//       conversation.value = response.data;
+//     })
+//     .catch(err => console.error(err))
+//     .finally(() => loading.value = false);
+// }
+
+function formatDate(date) {
+  return new Date(date).toDateString();
+}
+
+function formatTime(datetime) {
+  return new Date(datetime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+
+function addEmoji(emoji) {
+  newMessage.value += emoji.native;
+}
+
+// function sendMessage() {
+//   if (!newMessage.value.trim()) return;
+
+//   const message = {
+//     id: Date.now(),
+//     body: newMessage.value,
+//     timestamp: new Date().toISOString(),
+//     direction: 'outgoing',
+//     reactions: [],
+//   };
+
+//   conversation.value.push(message);
+//   newMessage.value = '';
+// }
+
+function uploadFile() {
+  if (!selectedFile.value) return;
+
+  const fileMessage = {
+    id: Date.now(),
+    body: `[File sent: ${selectedFile.value.name}]`,
+    timestamp: new Date().toISOString(),
+    direction: 'outgoing',
+    reactions: [],
+    file: selectedFile.value
+  };
+
+  conversation.value.push(fileMessage);
+  selectedFile.value = null;
+}
+
+function addReaction(msg, reaction) {
+  if (!msg.reactions) msg.reactions = [];
+  msg.reactions.push(reaction);
+}
+
+// Expose methods that need to be accessed from parent components
+defineExpose({
+  viewMessageDetails
+});
 
 // Format phone number for display
 const formatPhoneNumber = (phone) => {
@@ -1081,7 +1176,109 @@ onMounted(() => {
       </v-card>
     </v-dialog>
 
-    <!-- Import Contacts Dialog -->
+
+
+    <!-- conversation -->
+
+
+    <v-dialog v-model="dialog" width="800">
+  <v-card>
+    <v-card-title>Conversation with {{ selectedPhone }}</v-card-title>
+    <v-card-text>
+      <v-progress-linear indeterminate v-if="loading" color="primary"></v-progress-linear>
+      <div v-else class="chat-window" style="max-height: 400px; overflow-y: auto;">
+        <div v-for="msg in conversation" :key="msg.id" class="my-2">
+          <div :class="msg.direction === 'outgoing' ? 'text-right' : 'text-left'">
+            <v-chip :color="msg.direction === 'outgoing' ? 'blue lighten-4' : 'green lighten-4'" label>
+              {{ msg.body }}
+            </v-chip>
+          </div>
+        </div>
+      </div>
+
+      
+    </v-card-text>
+    <v-card-actions>
+      <v-spacer></v-spacer>
+      <v-btn text @click="dialog = false">Close</v-btn>
+    </v-card-actions>
+  </v-card>
+</v-dialog> -
+
+
+
+
+<!-- <v-dialog v-model="dialog" width="800">
+    <v-card>
+      <v-card-title class="headline">Conversation with {{ selectedPhone }}</v-card-title>
+
+      <v-card-text>
+        <v-progress-linear v-if="loading" indeterminate color="primary"></v-progress-linear>
+
+        <div v-else class="chat-window" style="max-height: 400px; overflow-y: auto; padding: 10px;">
+          <div v-for="(group, date) in groupedConversation" :key="date">
+            <div class="text-center grey--text caption my-2">{{ formatDate(date) }}</div>
+
+            <div v-for="msg in group" :key="msg.id" :class="msg.direction === 'outgoing' ? 'text-right' : 'text-left'" class="mb-2">
+              <v-chip
+                :color="msg.direction === 'outgoing' ? 'blue lighten-5' : 'green lighten-5'"
+                class="ma-1"
+                label
+              >
+                <div>
+                  {{ msg.body }}
+                  <div class="text-caption grey--text mt-1">{{ formatTime(msg.timestamp) }}</div>
+                </div>
+              </v-chip>
+
+              <div class="text-caption" v-if="msg.reactions">
+                <span v-for="(r, i) in msg.reactions" :key="i">{{ r }}</span>
+              </div>
+
+              <v-btn icon x-small @click="addReaction(msg, '❤️')"><v-icon small>mdi-heart</v-icon></v-btn>
+              <v-btn icon x-small @click="addReaction(msg, '😂')"><v-icon small>mdi-emoticon-excited</v-icon></v-btn>
+              <v-btn icon x-small @click="addReaction(msg, '👍')"><v-icon small>mdi-thumb-up</v-icon></v-btn>
+            </div>
+          </div>
+        </div>
+      </v-card-text>
+
+      <v-divider></v-divider>
+
+      <v-card-actions class="d-flex flex-column">
+        <v-text-field
+          v-model="newMessage"
+          label="Type a message"
+          append-icon="mdi-emoticon"
+          dense
+          outlined
+          @click:append="showEmojiPicker = !showEmojiPicker"
+          class="w-100"
+        />
+
+        <picker v-if="showEmojiPicker" @emoji-select="addEmoji" />
+
+        <v-file-input
+          v-model="selectedFile"
+          label="Attach File"
+          prepend-icon="mdi-paperclip"
+          dense
+          outlined
+          show-size
+          @change="uploadFile"
+          class="w-100"
+        />
+
+        <v-btn color="primary" @click="sendMessage" class="mt-2">Send</v-btn>
+      </v-card-actions>
+
+      <v-card-actions>
+        <v-spacer></v-spacer>
+        <v-btn text @click="dialog = false">Close</v-btn>
+      </v-card-actions>
+    </v-card>
+  </v-dialog>
+
     <v-dialog v-model="showImportDialog" max-width="500px">
       <v-card>
         <v-card-title>
@@ -1147,7 +1344,7 @@ onMounted(() => {
           </v-btn>
         </v-card-actions>
       </v-card>
-    </v-dialog>
+    </v-dialog> -->
     
     <!-- Template Management Dialog -->
     <v-dialog v-model="showTemplateDialog" max-width="700px">
