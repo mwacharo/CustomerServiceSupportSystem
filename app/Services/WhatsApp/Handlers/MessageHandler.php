@@ -13,7 +13,7 @@ class MessageHandler
 {
     protected $aiResponder;
 
-   
+
 
     public function __construct(AIResponderService $aiResponder)
     {
@@ -31,8 +31,8 @@ class MessageHandler
 
         return $this->$event($request);
     }
-// Someone has sent you a message via WhatsApp.
-// incoming message
+    // Someone has sent you a message via WhatsApp.
+    // incoming message
 
 
     public function message(Request $request): string
@@ -97,8 +97,8 @@ class MessageHandler
 
         return "Message processed";
     }
-// This event is triggered when a message is created (sent).
-// Fired when a new message is created. Applies to both, sent and received messages.
+    // This event is triggered when a message is created (sent).
+    // Fired when a new message is created. Applies to both, sent and received messages.
 
 
     public function message_create(Request $request): string
@@ -107,7 +107,7 @@ class MessageHandler
 
         $payload = $request->input('data.message');
 
-      
+
 
         if (!$payload) {
             Log::error("Invalid or missing message data in message_create");
@@ -141,8 +141,8 @@ class MessageHandler
 
         // Fallback: match by phone + body + approximate timestamp
         if (!$message
-        //  && $from && $body
-         ) {
+            //  && $from && $body
+        ) {
             $approxTime = now()->subMinutes(5); // only recent messages
             $message = Message::where('recipient_phone', $from)
                 // ->where('body', $body)
@@ -183,7 +183,7 @@ class MessageHandler
             'timestamp' => date('Y-m-d H:i:s', $timestamp),
             'direction' => 'outgoing',
         ]);
-      
+
         return "creating a new message.";
     }
 
@@ -227,8 +227,8 @@ class MessageHandler
 
         // Fallback: match by recipient_phone + body + recent timestamp
         if (!$message
-        //  && $from && $body
-         ) {
+            //  && $from && $body
+        ) {
             $approxTime = now()->subMinutes(5);
             $message = Message::where('recipient_phone', $from)
                 // ->where('body', $body)
