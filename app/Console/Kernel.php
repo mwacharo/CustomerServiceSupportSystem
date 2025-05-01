@@ -16,7 +16,7 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule): void
     {
         // Log the start of the token generation scheduling
-        Log::info('🔑 Scheduling daily token generation command at midnight.');
+        // Log::info('🔑 Scheduling daily token generation command at midnight.');
 
         // Schedule the token generation command at midnight daily
         $schedule->command('generate:tokens')->dailyAt('23:00');

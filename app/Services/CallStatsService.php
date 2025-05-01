@@ -204,7 +204,7 @@ class CallStatsService
 
     public function getAgentStats(User $user, ?array $dateRange = null): array
     {
-        Log::info('Fetching agent stats', ['user_id' => $user->id, 'date_range' => $dateRange]);
+        // Log::info('Fetching agent stats', ['user_id' => $user->id, 'date_range' => $dateRange]);
 
         $isAdmin = $user->hasRole('CallCentreAdmin') || $user->hasRole('SuperAdmin');
         $ivrOptions = IvrOption::all();
@@ -467,7 +467,7 @@ class CallStatsService
     {
         if ($userId !== null) {
             $ivrStats = $ivrStats->where('user_id', $userId);
-            Log::info('After filtering by user_id', ['user_id' => $userId, 'ivrStats' => $ivrStats->pluck('ivr_option_id')]);
+            // Log::info('After filtering by user_id', ['user_id' => $userId, 'ivrStats' => $ivrStats->pluck('ivr_option_id')]);
         }
 
         if ($dateRange !== null) {
@@ -475,11 +475,11 @@ class CallStatsService
                 $createdAt = Carbon::parse($stat->created_at);
                 return $createdAt->between($dateRange[0], $dateRange[1]);
             });
-            Log::info('After filtering by date range', ['dateRange' => $dateRange, 'ivrStats' => $ivrStats->pluck('ivr_option_id')]);
+            // Log::info('After filtering by date range', ['dateRange' => $dateRange, 'ivrStats' => $ivrStats->pluck('ivr_option_id')]);
         }
 
         $totalSelections = $ivrStats->count();
-        Log::info('Total selections after all filters', ['total' => $totalSelections]);
+        // Log::info('Total selections after all filters', ['total' => $totalSelections]);
 
         return $ivrOptions->map(function ($ivrOption) use ($ivrStats, $totalSelections) {
             $matchedStats = $ivrStats->where('ivr_option_id', $ivrOption->id);
