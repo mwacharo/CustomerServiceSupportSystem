@@ -291,7 +291,7 @@ class CallStatsService
             $airtimeStats = $this->getAirtimeStatistics($user, false, $dateRange);
             $peakHourStats = $this->getPeakHourStatistics($user, false, $dateRange);
 
-            Log::info('Returning stats for agent', ['user_id' => $user->id]);
+            // Log::info('Returning stats for agent', ['user_id' => $user->id]);
         }
 
         return [
@@ -484,11 +484,11 @@ class CallStatsService
         return $ivrOptions->map(function ($ivrOption) use ($ivrStats, $totalSelections) {
             $matchedStats = $ivrStats->where('ivr_option_id', $ivrOption->id);
 
-            Log::info('Stats for IVR Option', [
-                'option_id' => $ivrOption->id,
-                'description' => $ivrOption->description,
-                'matched_count' => $matchedStats->count()
-            ]);
+            // Log::info('Stats for IVR Option', [
+            //     'option_id' => $ivrOption->id,
+            //     'description' => $ivrOption->description,
+            //     'matched_count' => $matchedStats->count()
+            // ]);
 
             $totalSelected = $matchedStats->count();
             $totalDuration = $matchedStats->sum('durationInSeconds') ?? 0;
