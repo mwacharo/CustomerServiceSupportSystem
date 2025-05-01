@@ -96,64 +96,7 @@ class ApiWhatsAppController extends Controller
             Log::info('Preparing to send message', ['chatId' => $contact['chatId'], 'message' => $request->message]);
             SendWhatsAppMessageJob::dispatch($contact['chatId'], $request->message, $request->user_id);
 
-            // Prepare request body for each contact
-            // $data = [
-            //     'chatId' => $contact['chatId'], // Chat ID for this specific contact
-            //     'message' => $request->message, // The message to send
-            //     'sender' => $sender, // Sender’s phone number
-            //     'mentions' => $request->mentions ?? [], // Optional mentions array
-            //     'replyToMessageId' => $request->replyToMessageId ?? null, // Optional reply ID
-            //     'previewLink' => $request->previewLink ?? true, // Whether to show link previews
-            // ];
-
-          
-
-         
-            // $url = "https://waapi.app/api/v1/instances/{$accountId}/client/action/send-message";
-
-            // Send request to the WhatsApp API
-            // try {
-            //     $response = Http::withToken($token)
-            //         ->post($url, $data);
-
-            //     // Update the message status based on the response
-            //     $status = $response->successful() ? 'sent' : 'failed';
-
-
-
-            //     $responseData = $response->json();
-            //     $externalMessageId = $responseData['responses'][0]['response']['data']['data']['_data']['id']['_serialized'] ?? null;
-
-            
-
-            //     // Log and collect the response for each contact
-            //     $responses[] = [
-            //         'chatId' => $contact['chatId'],
-            //         'status' => $status,
-            //         'response' => $response->json(),
-            //     ];
-
-            //     Log::info('Message sent', [
-            //         'chatId' => $contact['chatId'],
-            //         'status' => $status,
-            //         'response' => $response->json(),
-            //     ]);
-            // } catch (\Exception $e) {
-            //     Log::error('Error sending message', [
-            //         'chatId' => $contact['chatId'],
-            //         'error' => $e->getMessage(),
-            //     ]);
-
-            
-
-            //     $responses[] = [
-            //         'chatId' => $contact['chatId'],
-            //         'status' => 'failed',
-            //         'response' => [
-            //             'error' => $e->getMessage(),
-            //         ],
-            //     ];
-            // }
+        
         }
 
         Log::info('All messages processed', ['responses' => $responses]);
