@@ -279,3 +279,4 @@ protected function getMessageStatus(int $ack): string
 
 }
 
+}
