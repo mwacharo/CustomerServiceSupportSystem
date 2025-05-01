@@ -149,63 +149,112 @@ class WhatsAppWebhookController extends Controller
 
 
     public function receive(Request $request)
-{
-    // Log the incoming request for debugging purposes
-    Log::info('Incoming WhatsApp Message', $request->all());
-
-    // Check if the event is a 'message_create' or 'message' event
-    $eventType = $request->input('event');
+    {
+        Log::info('Incoming WhatsApp Event', $request->all());
     
-    // Handle only 'message' events that contain actual message data
-    if ($eventType === 'message' || $eventType === 'message_create') {
-        // Get the message data from the correct path in the payload
+        $eventType = $request->input('event');
+    
+        if ($eventType !== 'message') {
+            Log::info("Ignoring non-message event: $eventType");
+            return response()->json(['status' => 'Ignored non-message event']);
+        }
+    
         $messageData = $request->input('data.message');
         $internalData = $request->input('data.message._data');
-        
-        // Ensure the message data is not empty and contains a valid body
-        if (!$messageData || !isset($messageData['body']) || empty($messageData['body'])) {
-            Log::error('Invalid message data received or no valid message body', $request->all());
-            return response()->json(['error' => 'Invalid message body'], 400);
+    
+        if (!$messageData) {
+            Log::error('No message data received', $request->all());
+            return response()->json(['error' => 'Invalid data'], 400);
         }
-
-        // Extract the message ID to avoid duplication
+    
+        $waId = str_replace('@c.us', '', $messageData['from'] ?? '');
+        $fromMe = $messageData['fromMe'] ?? false;
+        $body = $messageData['body'] ?? '';
+        $timestamp = $messageData['timestamp'] ?? time();
+        $type = $messageData['type'] ?? 'text';
+        $mediaUrl = $request->input('data.media.url');
+        $mediaMimeType = $request->input('data.media.mimetype');
+    
         $externalMessageId = $messageData['id']['id'] ?? null;
-
-        if (!$externalMessageId) {
-            Log::warning('Missing external_message_id, skipping message storage', $request->all());
-            return response()->json(['error' => 'Missing external_message_id'], 400);
+        $replyToMessageId = $internalData['parentMsgId'] ?? null;
+        $notifyName = $internalData['notifyName'] ?? null;
+        $direction = $fromMe ? 'outgoing' : 'incoming';
+    
+        // Hash fallback for messages without externalMessageId
+        $messageHash = md5($waId . $timestamp . $body);
+    
+        // Check for duplicate by external ID or hash
+        if ($externalMessageId) {
+            $existingMessage = Message::where('external_message_id', $externalMessageId)->first();
+        } else {
+            $existingMessage = Message::where('message_hash', $messageHash)->first();
         }
-
-        // Check if the message already exists in the database based on the external_message_id
-        $existingMessage = Message::where('external_message_id', $externalMessageId)->first();
-
+    
         if ($existingMessage) {
-            // Log the duplicate message detection and skip storing it
-            Log::info('Duplicate message detected, skipping storage', ['external_message_id' => $externalMessageId]);
-            return response()->json(['status' => 'Message already exists'], 200);
+            Log::info('Duplicate message detected, skipping storage', [
+                'external_message_id' => $externalMessageId,
+                'message_hash' => $messageHash
+            ]);
+            return response()->json(['status' => 'Message already exists']);
         }
-
-        // If it's a new message, proceed to store it
-        $newMessage = new Message();
-        $newMessage->external_message_id = $externalMessageId;
-        $newMessage->sender_id = $messageData['from'] ?? null;
-        $newMessage->message_body = $messageData['body'];
-        $newMessage->timestamp = $messageData['timestamp'] ?? now();
-        $newMessage->status = 'received'; // You can adjust status accordingly
-
-        // Save the new message to the database
-        $newMessage->save();
-
-        // Log the successful storage of the new message
-        Log::info('New message stored successfully', ['external_message_id' => $externalMessageId]);
-
-        return response()->json(['status' => 'Message received and stored successfully'], 200);
+    
+        $messageAttributes = [
+            'messageable_type' => null,
+            'messageable_id' => null,
+            'channel' => 'whatsapp',
+            'recipient_name' => $notifyName,
+            'recipient_phone' => $waId,
+            'content' => $body,
+            'status' => 'received',
+            'sent_at' => date('Y-m-d H:i:s', $timestamp),
+            'response_payload' => $request->all(),
+            'from' => $messageData['from'] ?? null,
+            'to' => $messageData['to'] ?? null,
+            'body' => $body,
+            'message_type' => $type,
+            'media_url' => $mediaUrl,
+            'media_mime_type' => $mediaMimeType,
+            'message_status' => 'received',
+            'external_message_id' => $externalMessageId,
+            'reply_to_message_id' => $replyToMessageId,
+            'timestamp' => date('Y-m-d H:i:s', $timestamp),
+            'direction' => $direction,
+            'message_hash' => $messageHash, // fallback identifier
+        ];
+    
+        try {
+            $message = Message::create($messageAttributes);
+    
+            $aiReply = $this->aiResponder->interpretCustomerQuery($body);
+    
+            if ($aiReply) {
+                $message->update(['ai_interpretation' => $aiReply]);
+                Log::info('AI interpretation successful', ['ai_interpretation' => $aiReply]);
+            }
+    
+            $user = User::where('phone', $waId)->first() ?? User::first();
+    
+            $whatsappService = new WhatsAppMessageService($user);
+            $sendResult = $whatsappService->sendMessage($waId . '@c.us', $aiReply);
+    
+            if ($sendResult['status'] === 'sent') {
+                Log::info('AI response sent', ['chatId' => $waId, 'response' => $aiReply]);
+            } else {
+                Log::warning('Failed to send AI response', ['error' => $sendResult['error'] ?? 'unknown']);
+            }
+    
+            Log::info('Message stored successfully', ['message_id' => $message->id]);
+            return response()->json(['status' => 'Message stored successfully']);
+        } catch (\Exception $e) {
+            Log::error('Error storing message', [
+                'error_message' => $e->getMessage(),
+                'attributes' => $messageAttributes,
+                'trace' => $e->getTraceAsString()
+            ]);
+            return response()->json(['error' => 'Failed to store message'], 500);
+        }
     }
-
-    // If the event type is not recognized, return an error
-    Log::warning('Unrecognized event type', ['event_type' => $eventType]);
-    return response()->json(['error' => 'Unrecognized event type'], 400);
-}
+    
 
 
 
