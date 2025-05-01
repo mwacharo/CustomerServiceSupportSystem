@@ -159,23 +159,39 @@ class WhatsAppWebhookController extends Controller
     {
         $event = $request->input('event');
 
-        Log::info("Incoming WhatsApp Event", ['event' => $event, 'payload' => $request->all()]);
+        Log::info("Incoming WhatsApp Event", [
+            'event' => $event,
+            'payload' => $request->all(),
+            'headers' => $request->headers->all(),
+            'ip' => $request->ip(),
+        ]);
 
         if (!isset($this->handlers[$event])) {
-            Log::info("No handler for event: $event");
+            Log::info("No handler for event: $event", [
+                'event' => $event,
+                'available_handlers' => array_keys($this->handlers),
+            ]);
             return response()->json(['status' => "Ignored event type: $event"], 200);
         }
 
         try {
             $handler = $this->handlers[$event];
+            Log::info("Handler found for event: $event", ['handler' => get_class($handler)]);
+
             $response = $handler->handle($request->all());
+
+            Log::info("Event handled successfully", [
+                'event' => $event,
+                'response' => $response,
+            ]);
 
             return response()->json(['status' => 'Handled', 'details' => $response], 200);
         } catch (\Exception $e) {
             Log::error("Error handling $event", [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
-                'payload' => $request->all()
+                'payload' => $request->all(),
+                'event' => $event,
             ]);
             return response()->json(['error' => "Failed to handle event"], 500);
         }
