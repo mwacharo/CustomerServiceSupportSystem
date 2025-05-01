@@ -16,19 +16,35 @@ class ApiWhatsAppController extends Controller
 {
 
 
+    // public function getChat($phone)
+    // {
+    //     $waId = $phone . '@c.us';
+
+    //     $messages = Message::where(function ($query) use ($waId) {
+    //         $query->where('from', $waId)
+    //             ->orWhere('to', $waId);
+    //     })
+    //         ->orderBy('timestamp', 'asc')
+    //         ->get();
+
+    //     return response()->json($messages);
+    // }
+
+
     public function getChat($phone)
-    {
-        $waId = $phone . '@c.us';
+{
+    // Check if the phone number already has '@c.us' suffix
+    $waId = str_contains($phone, '@c.us') ? $phone : $phone . '@c.us';
 
-        $messages = Message::where(function ($query) use ($waId) {
-            $query->where('from', $waId)
-                ->orWhere('to', $waId);
-        })
-            ->orderBy('timestamp', 'asc')
-            ->get();
+    $messages = Message::where(function ($query) use ($waId) {
+        $query->where('from', $waId)
+            ->orWhere('to', $waId);
+    })
+        ->orderBy('timestamp', 'asc')
+        ->get();
 
-        return response()->json($messages);
-    }
+    return response()->json($messages);
+}
 
 
     // public function getChat($phone)
