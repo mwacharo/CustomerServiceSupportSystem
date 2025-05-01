@@ -1,10 +1,12 @@
 <?php
+
 namespace App\Services\WhatsApp\Handlers;
 
 use App\Models\Message;
 use App\Models\User;
 use App\Services\AIResponderService;
 use App\Services\WhatsAppMessageService;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
 class MessageHandler
@@ -16,8 +18,9 @@ class MessageHandler
         $this->aiResponder = $aiResponder;
     }
 
-    public function handle(array $data): string
+    public function handle(Request $request): string
     {
+        $data = $request->all();
         $messageData = $data['data']['message'] ?? null;
         $internalData = $messageData['_data'] ?? [];
 

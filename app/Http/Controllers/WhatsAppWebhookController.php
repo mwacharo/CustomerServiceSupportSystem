@@ -8,15 +8,14 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Http;
 
 use App\Services\AIResponderService;
-use App\Services\WhatsAppMessageService;
 use App\Models\User;
 
 
-use App\Services\WhatsApp\Handlers\MessageHandler;
+use App\Services\WhatsAppMessageService;
+
 use App\Services\WhatsApp\Handlers\GroupHandler;
 use App\Services\WhatsApp\Handlers\CallHandler;
-
-
+use App\Services\WhatsApp\Handlers\MessageHandler;
 
 class WhatsAppWebhookController extends Controller
 {
@@ -178,7 +177,7 @@ class WhatsAppWebhookController extends Controller
             $handler = $this->handlers[$event];
             Log::info("Handler found for event: $event", ['handler' => get_class($handler)]);
 
-            $response = $handler->handle($request->all());
+            $response = $handler->handle($request);
 
             Log::info("Event handled successfully", [
                 'event' => $event,
