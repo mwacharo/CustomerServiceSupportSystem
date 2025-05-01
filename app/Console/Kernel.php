@@ -22,7 +22,7 @@ class Kernel extends ConsoleKernel
         $schedule->command('generate:tokens')->dailyAt('23:00');
     
 
-        Log::info('📥 Starting Call Recordings Download Job');
+        // Log::info('📥 Starting Call Recordings Download Job');
 
         $schedule->job(new DownloadCallRecordingsJob)->everytenMinutes();
 
