@@ -177,7 +177,9 @@ class MessageHandler
     
         $status = $this->getMessageStatus($ack);
     
-        $message = Message::where('wa_id', $waMessageId)->first();
+        $message = $waMessageId 
+            ? Message::where('external_message_id', $waMessageId)->first() 
+            : Message::where('recipient_phone', $messageData['from'] ?? null)->first();
     
         if ($message) {
             $message->update([
@@ -205,7 +207,11 @@ class MessageHandler
 
     $status = $this->getMessageStatus($ack);
 
-    $message = Message::where('wa_id', $waMessageId)->first();
+    // $message = Message::where('external_message_id', $waMessageId)->first();
+
+    $message = $waMessageId 
+    ? Message::where('external_message_id', $waMessageId)->first() 
+    : Message::where('recipient_phone', $messageData['from'] ?? null)->first();
 
     if ($message) {
         $message->update([
