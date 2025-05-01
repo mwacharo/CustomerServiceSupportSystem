@@ -274,14 +274,18 @@ class MessageHandler
     protected function getMessageStatus(int $ack): string
     {
         switch ($ack) {
+            case -1:
+                return 'Error'; // An error occurred while sending the message
             case 0:
-                return 'Pending'; // Message is pending to be sent
+                return 'Pending'; // Message is still pending and has not yet been sent to the server
             case 1:
-                return 'Sent'; // Message has been sent
+                return 'Server'; // Message has been successfully sent to the WhatsApp server
             case 2:
-                return 'Delivered'; // Message has been delivered to recipient's device
+                return 'Device'; // Message has been delivered to the recipient's device
             case 3:
-                return 'Read'; // Message has been read by the recipient
+                return 'Read'; // Recipient has read the message
+            case 4:
+                return 'Played'; // Recipient has played the audio/video message
             default:
                 return 'Unknown'; // Default status if ack value is unknown
         }
