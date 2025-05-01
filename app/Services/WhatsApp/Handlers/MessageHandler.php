@@ -135,10 +135,12 @@ class MessageHandler
         }
 
         // Fallback: match by phone + body + approximate timestamp
-        if (!$message && $from && $body) {
+        if (!$message
+        //  && $from && $body
+         ) {
             $approxTime = now()->subMinutes(5); // only recent messages
             $message = Message::where('recipient_phone', $from)
-                ->where('body', $body)
+                // ->where('body', $body)
                 ->where('created_at', '>=', $approxTime)
                 ->latest()
                 ->first();
