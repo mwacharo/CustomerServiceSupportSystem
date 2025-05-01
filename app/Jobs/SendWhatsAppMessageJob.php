@@ -77,7 +77,7 @@ class SendWhatsAppMessageJob implements ShouldQueue
 
             Log::info('Message record created', ['message_id' => $message->id, 'chatId' => $this->chatId]);
 
-            Log::info('Message processed', ['chatId' => $this->chatId, 'status' => $status]);
+            // Log::info('Message processed', ['chatId' => $this->chatId, 'status' => $status]);
         } catch (\Exception $e) {
             Log::error('Error sending message', ['chatId' => $this->chatId, 'error' => $e->getMessage()]);
         }
