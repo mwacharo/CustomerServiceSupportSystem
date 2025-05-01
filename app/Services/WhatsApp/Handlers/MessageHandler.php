@@ -169,15 +169,55 @@ class MessageHandler
         $payload = $request->all();
         $messageData = $payload['data']['message'] ?? [];
         $waMessageId = $messageData['id']['_serialized'] ?? null;
-
-        $message = Message::where('wa_id', $waMessageId)->first();
-        if ($message) {
-            $message->update(['ack' => $messageData['ack'] ?? null]);
-            return "Message updated with ACK";
+        $ack = $messageData['ack'] ?? null;
+    
+        if (!$waMessageId || $ack === null) {
+            return "Missing message ID or ACK value";
         }
-
+    
+        $status = $this->getMessageStatus($ack);
+    
+        $message = Message::where('wa_id', $waMessageId)->first();
+    
+        if ($message) {
+            $message->update([
+                'ack' => $ack,
+                'message_status' => $status,
+            ]);
+    
+            return "Message updated with ACK and status: $status";
+        }
+    
         return "Message not found for ACK update";
     }
+
+
+    public function message_ack(Request $request): string
+{
+    $payload = $request->all();
+    $messageData = $payload['data']['message'] ?? [];
+    $waMessageId = $messageData['id']['_serialized'] ?? null;
+    $ack = $messageData['ack'] ?? null;
+
+    if (!$waMessageId || $ack === null) {
+        return "Missing message ID or ACK value";
+    }
+
+    $status = $this->getMessageStatus($ack);
+
+    $message = Message::where('wa_id', $waMessageId)->first();
+
+    if ($message) {
+        $message->update([
+            'ack' => $ack,
+            'message_status' => $status,
+        ]);
+
+        return "Message ACK updated with status: $status";
+    }
+
+    return "Message not found for ACK update";
+}
 
     public function loading_screen(Request $request): string
     {
@@ -217,5 +257,25 @@ class MessageHandler
 
     // Add more methods for:
     // message_edit, message_revoke_everyone, message_ack, etc.
+
+
+
+
+    // Helper function to convert ack value to message status
+protected function getMessageStatus(int $ack): string
+{
+    switch ($ack) {
+        case 0:
+            return 'Pending'; // Message is pending to be sent
+        case 1:
+            return 'Sent'; // Message has been sent
+        case 2:
+            return 'Delivered'; // Message has been delivered to recipient's device
+        case 3:
+            return 'Read'; // Message has been read by the recipient
+        default:
+            return 'Unknown'; // Default status if ack value is unknown
+    }
+
 }
 

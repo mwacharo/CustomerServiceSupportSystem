@@ -147,6 +147,7 @@ class WhatsAppWebhookController extends Controller
         $this->handlers = [
             'message' => app(MessageHandler::class),
             'message_create' => app(MessageHandler::class),
+            ' message_ack' => app(MessageHandler::class),
 
             // 'group_join' => app(GroupHandler::class),
             // 'group_leave' => app(GroupHandler::class),
