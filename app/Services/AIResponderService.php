@@ -15,7 +15,6 @@ class AIResponderService
         
             $response = Http::withHeaders([
                 'Authorization' => 'Bearer ' . env('OPENROUTER_API_KEY'),
-                // 'Authorization' => 'Bearer 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',
 
 
                 'HTTP-Referer' => 'your-app.com', // required by OpenRouter
