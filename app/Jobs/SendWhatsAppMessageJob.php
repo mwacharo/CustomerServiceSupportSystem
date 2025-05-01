@@ -56,6 +56,15 @@ class SendWhatsAppMessageJob implements ShouldQueue
             $responseData = $response->json();
             $externalMessageId = data_get($responseData, 'responses.0.response.data.data._data.id._serialized');
 
+
+            // Log missing _serialized if null
+            if (!$externalMessageId) {
+                Log::warning('Missing _serialized WhatsApp ID', [
+                    'chatId' => $this->chatId,
+                    'response' => $responseData,
+                ]);
+            }
+
             Message::create([
                 'recipient_phone' => $this->chatId,
                 'content' => $this->messageContent,
@@ -63,6 +72,8 @@ class SendWhatsAppMessageJob implements ShouldQueue
                 'external_message_id' => $externalMessageId,
                 'messageable_id' => $user->id,
                 'messageable_type' => get_class($user),
+                'response_payload' => $responseData,
+
             ]);
 
             Log::info('Message processed', ['chatId' => $this->chatId, 'status' => $status]);
