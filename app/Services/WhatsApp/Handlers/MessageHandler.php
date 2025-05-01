@@ -31,6 +31,9 @@ class MessageHandler
 
         return $this->$event($request);
     }
+// Someone has sent you a message via WhatsApp.
+// incoming message
+
 
     public function message(Request $request): string
     {
@@ -94,6 +97,9 @@ class MessageHandler
 
         return "Message processed";
     }
+// This event is triggered when a message is created (sent).
+// Fired when a new message is created. Applies to both, sent and received messages.
+
 
     public function message_create(Request $request): string
     {
@@ -108,7 +114,6 @@ class MessageHandler
             return "Invalid or missing message data.";
         }
 
-        // $waMessageId = $payload['id']['_serialized'] ?? null;
 
         $waMessageId = $payload['id']['id'] ?? null;
         $ack = $payload['ack'] ?? null;
@@ -159,7 +164,27 @@ class MessageHandler
         }
 
         Log::warning("Message not found for update in message_create", compact('waMessageId', 'from', 'body'));
-        return "Message not found for update.";
+
+
+
+        // creating a new message
+        $message = Message::create([
+            'channel' => 'whatsapp',
+            'recipient_name' => $from,
+            'recipient_phone' => $from,
+            'content' => $body,
+            'status' => 'sent',
+            'sent_at' => date('Y-m-d H:i:s', $timestamp),
+            'from' => $payload['from'] ?? null,
+            'to' => $payload['to'] ?? null,
+            'body' => $body,
+            'message_type' => $payload['type'] ?? null,
+            'external_message_id' => $waMessageId,
+            'timestamp' => date('Y-m-d H:i:s', $timestamp),
+            'direction' => 'outgoing',
+        ]);
+      
+        return "creating a new message.";
     }
 
 
