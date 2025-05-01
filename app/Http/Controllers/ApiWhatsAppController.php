@@ -18,7 +18,7 @@ class ApiWhatsAppController extends Controller
 
     public function getChat($phone)
     {
-        $waId = $phone;
+        $waId = $phone . '@c.us';
 
         $messages = Message::where(function ($query) use ($waId) {
             $query->where('from', $waId)
