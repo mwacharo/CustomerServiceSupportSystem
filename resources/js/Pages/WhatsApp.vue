@@ -294,7 +294,7 @@ const loadContacts = async () => {
     // Updated to handle the triple-nested data structure
     if (response.data?.data?.data && Array.isArray(response.data.data.data)) {
       contacts.value= response.data.data.data;
-     filteredContacts = contacts;
+    //  filteredContacts = contacts;
 
       console.log('Contacts loaded:', contacts.value.length);
     } else {
