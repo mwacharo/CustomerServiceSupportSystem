@@ -94,7 +94,7 @@ class ApiWhatsAppController extends Controller
 
 
             Log::info('Preparing to send message', ['chatId' => $contact['chatId'], 'message' => $request->message]);
-            SendWhatsAppMessageJob::dispatch($contact['chatId'], $request->message, $request->user_id);
+            // SendWhatsAppMessageJob::dispatch($contact['chatId'], $request->message, $request->user_id);
 
             // Prepare request body for each contact
             $data = [
@@ -184,16 +184,6 @@ class ApiWhatsAppController extends Controller
 
 
 
-    // public function index()
-    // {
-    //     $messages = Message::latest()->paginate(20);
-
-    //     return response()->json([
-    //         'success' => true,
-    //         'data' => $messages,
-    //     ]);
-    // }
-
 
 
     public function index()
@@ -216,30 +206,6 @@ class ApiWhatsAppController extends Controller
             ->orderByDesc('created_at'); // Fallback to created_at
 
         $messages = $query->paginate($perPage);
-
-        // Transform output (format datetime)
-        // $messages->getCollection()->transform(function ($message) {
-        //     return [
-        //         'id' => $message->id,
-        //         'content' => $message->content,
-        //         'recipient_phone' => $message->recipient_phone,
-        //         'status' => $message->status,
-        //         'message_status' => $message->message_status,
-        //         'sent_at' => optional($message->sent_at)->format('Y-m-d H:i:s'),
-        //         'created_at' => optional($message->created_at)->format('Y-m-d H:i:s'),
-        //     ];
-        // });
-
-        // return response()->json([
-        //     'success' => true,
-        //     'meta' => [
-        //         'current_page' => $messages->currentPage(),
-        //         'last_page' => $messages->lastPage(),
-        //         'per_page' => $messages->perPage(),
-        //         'total' => $messages->total(),
-        //     ],
-        //     'data' => $messages->items(),
-        // ]);
 
 
 
