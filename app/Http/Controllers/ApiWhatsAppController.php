@@ -16,8 +16,6 @@ class ApiWhatsAppController extends Controller
 {
 
 
-
-
     public function getChat($phone)
     {
         $waId = $phone . '@c.us';
@@ -95,8 +93,6 @@ class ApiWhatsAppController extends Controller
 
             Log::info('Preparing to send message', ['chatId' => $contact['chatId'], 'message' => $request->message]);
             SendWhatsAppMessageJob::dispatch($contact['chatId'], $request->message, $request->user_id);
-
-        
         }
 
         Log::info('All messages processed', ['responses' => $responses]);
@@ -106,10 +102,6 @@ class ApiWhatsAppController extends Controller
             'results' => $responses,
         ]);
     }
-
-
-
-
 
 
     public function index()
