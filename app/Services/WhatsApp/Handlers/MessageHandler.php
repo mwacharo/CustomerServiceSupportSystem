@@ -166,9 +166,12 @@ class MessageHandler
 
     public function message_create(Request $request): string
     {
+        Log::info("message_create event triggered", $request->all());
+
         $payload = $request->input('data.message');
 
         if (!$payload) {
+            Log::error("Invalid or missing message data in message_create");
             return "Invalid or missing message data.";
         }
 
@@ -178,17 +181,22 @@ class MessageHandler
         $body = $payload['body'] ?? null;
         $timestamp = $payload['timestamp'] ?? null;
 
+        Log::debug("Parsed message_create payload", compact('waMessageId', 'ack', 'from', 'body', 'timestamp'));
+
         if ($ack === null) {
+            Log::warning("Missing ACK value in message_create");
             return "Missing ACK value.";
         }
 
         $status = $this->getMessageStatus($ack);
+        Log::info("Determined message status", ['ack' => $ack, 'status' => $status]);
 
         $message = null;
 
         // Try matching by external_message_id first
         if ($waMessageId) {
             $message = Message::where('external_message_id', $waMessageId)->first();
+            Log::debug("Message lookup by external_message_id", ['waMessageId' => $waMessageId, 'message' => $message]);
         }
 
         // Fallback: match by phone + body + approximate timestamp
@@ -199,6 +207,7 @@ class MessageHandler
                 ->where('created_at', '>=', $approxTime)
                 ->latest()
                 ->first();
+            Log::debug("Message fallback lookup", ['from' => $from, 'body' => $body, 'approxTime' => $approxTime, 'message' => $message]);
         }
 
         if ($message) {
@@ -208,40 +217,50 @@ class MessageHandler
                 'external_message_id' => $waMessageId ?? $message->external_message_id,
             ]);
 
+            Log::info("Message updated successfully", ['message_id' => $message->id, 'status' => $status]);
             return "Message updated with ACK: $ack and status: $status";
         }
 
+        Log::warning("Message not found for update in message_create", compact('waMessageId', 'from', 'body'));
         return "Message not found for update.";
     }
 
 
     public function message_ack(Request $request): string
     {
+        Log::info("message_ack event triggered", $request->all());
+
         $payload = $request->input('data.message');
-    
+
         if (!$payload) {
+            Log::error("Invalid or missing message data in message_ack");
             return "Invalid or missing message data.";
         }
-    
+
         $waMessageId = $payload['id']['_serialized'] ?? null;
         $ack = $payload['ack'] ?? null;
         $from = $payload['from'] ?? null;
         $body = $payload['body'] ?? null;
         $timestamp = $payload['timestamp'] ?? null;
-    
+
+        Log::debug("Parsed message_ack payload", compact('waMessageId', 'ack', 'from', 'body', 'timestamp'));
+
         if ($ack === null) {
+            Log::warning("Missing ACK value in message_ack");
             return "Missing ACK value.";
         }
-    
+
         $status = $this->getMessageStatus($ack);
-    
+        Log::info("Determined message status", ['ack' => $ack, 'status' => $status]);
+
         $message = null;
-    
+
         // Try matching by external_message_id first
         if ($waMessageId) {
             $message = Message::where('external_message_id', $waMessageId)->first();
+            Log::debug("Message lookup by external_message_id", ['waMessageId' => $waMessageId, 'message' => $message]);
         }
-    
+
         // Fallback: match by recipient_phone + body + recent timestamp
         if (!$message && $from && $body) {
             $approxTime = now()->subMinutes(5);
@@ -250,21 +269,23 @@ class MessageHandler
                 ->where('created_at', '>=', $approxTime)
                 ->latest()
                 ->first();
+            Log::debug("Message fallback lookup", ['from' => $from, 'body' => $body, 'approxTime' => $approxTime, 'message' => $message]);
         }
-    
+
         if ($message) {
             $message->update([
                 'ack' => $ack,
                 'message_status' => $status,
                 'external_message_id' => $waMessageId ?? $message->external_message_id,
             ]);
-    
+
+            Log::info("Message updated successfully", ['message_id' => $message->id, 'status' => $status]);
             return "Message ACK updated with status: $status";
         }
-    
-        return "Message not found for ACK update";
+
+        Log::warning("Message not found for ACK update in message_ack", compact('waMessageId', 'from', 'body'));
+        return "Message not found for ACK update.";
     }
-    
 
     public function loading_screen(Request $request): string
     {
