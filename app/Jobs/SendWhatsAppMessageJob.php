@@ -65,7 +65,7 @@ class SendWhatsAppMessageJob implements ShouldQueue
                 ]);
             }
 
-            Message::create([
+            $message = Message::create([
                 'recipient_phone' => $this->chatId,
                 'content' => $this->messageContent,
                 'message_status' => $status,
@@ -73,8 +73,9 @@ class SendWhatsAppMessageJob implements ShouldQueue
                 'messageable_id' => $user->id,
                 'messageable_type' => get_class($user),
                 'response_payload' => $responseData,
-
             ]);
+
+            Log::info('Message record created', ['message_id' => $message->id, 'chatId' => $this->chatId]);
 
             Log::info('Message processed', ['chatId' => $this->chatId, 'status' => $status]);
         } catch (\Exception $e) {
