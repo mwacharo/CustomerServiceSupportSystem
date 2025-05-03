@@ -34,7 +34,7 @@ class CallFailureService
     {
         Log::info('Handling failed call.', ['call_id' => $call->id]);
 
-        $client = Client::where('phone', $call->phone_number)->first();
+        $client = Client::where('phone_number', $call->phone_number)->first();
         Log::info('Client lookup result.', ['phone' => $call->phone_number, 'client_id' => $client?->id]);
 
         $orders = $client
@@ -83,7 +83,7 @@ class CallFailureService
         SendWhatsAppMessageJob::dispatch($call->client_phone, $orderDetails, $userId);
     }
 
-    protected function isFailedCall( $code)
+    protected function isFailedCall($code)
     {
         $isFailed = in_array($code, [
             'NO_ANSWER',
