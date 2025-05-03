@@ -17,11 +17,11 @@ class CallFailureService
         Log::info('Processing recent failed calls.');
 
         $calls = CallHistory::where('created_at', '>=', now()->subMinutes(10))->get();
-        
+
         foreach ($calls as $call) {
             Log::info('Processing call', ['call_id' => $call->id, 'lastBridgeHangupCause' => $call->lastBridgeHangupCause]);
 
-                if (!$call->lastBridgeHangupCause || !$this->isFailedCall($call->lastBridgeHangupCause)) {
+            if (!$call->lastBridgeHangupCause || !$this->isFailedCall($call->lastBridgeHangupCause)) {
 
                 Log::info('Call is not a failed call.', ['call_id' => $call->id]);
                 continue;
@@ -33,31 +33,39 @@ class CallFailureService
 
     protected function handleFailedCall(CallHistory $call)
     {
+
+
+
+
         Log::info('Handling failed call.', [
             'call_id' => $call->id,
-            'caller_number' => $call->CallerNumber,
+            'caller_number' => $call-> clientDialedNumber,
         ]);
 
-                if (!$call->CallerNumber) {
-                    Log::info('No caller number found.', ['call_id' => $call->id]);
-                    return;
-                }
+        if (!$call-> clientDialedNumber) {
+            Log::info('No caller number found.', ['call_id' => $call->id]);
+            return;
+        }
 
-                if ($call->client_phone) {
-                    $call->CallerNumber = WhatsAppHelper::normalizePhoneNumber($call->client_phone);
-                }
+        // if ($call->client_phone) {
+        //     $call->CallerNumber = WhatsAppHelper::normalizePhoneNumber($call->client_phone);
+        // }
 
-                Log::info('Normalized caller number.', ['normalized_number' => $call->CallerNumber
-    ]);
-                $client = Client::where('phone_number', $call->CallerNumber)->first();
-        Log::info('Client lookup result.', ['phone' => $call->CallerNumber, 'client_id' => $client?->id]);
+
+
+        //  clientDialedNumber
+        Log::info('Normalized caller number.', [
+            'normalized_number' => $call->clientDialedNumber
+        ]);
+        $client = Client::where('phone_number', $call->clientDialedNumber)->first();
+        Log::info('Client lookup result.', ['phone' => $call->clientDialedNumber, 'client_id' => $client?->id]);
 
         $orders = $client
             ? Order::with('client')
-                ->where('client_id', $client->id)
-                ->latest()
-                ->take(2)
-                ->get()
+            ->where('client_id', $client->id)
+            ->latest()
+            ->take(2)
+            ->get()
             : collect();
 
         Log::info('Orders fetched for client.', ['client_id' => $client?->id, 'orders' => $orders->pluck('id')]);
