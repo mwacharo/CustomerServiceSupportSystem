@@ -34,15 +34,12 @@ class CallFailureService
     protected function handleFailedCall(CallHistory $call)
     {
 
-
-
-
         Log::info('Handling failed call.', [
             'call_id' => $call->id,
-            'caller_number' => $call-> clientDialedNumber,
+            'caller_number' => $call->clientDialedNumber,
         ]);
 
-        if (!$call-> clientDialedNumber) {
+        if (!$call->clientDialedNumber) {
             Log::info('No caller number found.', ['call_id' => $call->id]);
             return;
         }
@@ -51,13 +48,16 @@ class CallFailureService
         //     $call->CallerNumber = WhatsAppHelper::normalizePhoneNumber($call->client_phone);
         // }
 
-
-
         //  clientDialedNumber
         Log::info('Normalized caller number.', [
             'normalized_number' => $call->clientDialedNumber
+
+            //             {
+            //   "normalized_number": "741821113"
+            // }
         ]);
         $client = Client::where('phone_number', $call->clientDialedNumber)->first();
+        // the client phone could be in different format 0741821113 or 2541821113 or +254741821113
         Log::info('Client lookup result.', ['phone' => $call->clientDialedNumber, 'client_id' => $client?->id]);
 
         $orders = $client
