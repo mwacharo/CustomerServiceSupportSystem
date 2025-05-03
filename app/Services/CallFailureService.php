@@ -50,12 +50,12 @@ class CallFailureService
             $client = Client::where('name', 'LIKE', '%Unknown%')->first();
 
             if (!$client) {
-            $client = Client::create([
-                'name' => 'Unknown Client',
-                'phone_number' => $call->clientDialedNumber,
-            ]);
+                $client = Client::create([
+                    'name' => 'Unknown Client',
+                    'phone_number' => $call->clientDialedNumber,
+                ]);
 
-            Log::info('Created new client record for unknown client.', ['client_id' => $client->id]);
+                Log::info('Created new client record for unknown client.', ['client_id' => $client->id]);
             }
         }
 
@@ -63,38 +63,40 @@ class CallFailureService
 
         $orders = $client
             ? Order::with('client')
-                ->where('client_id', $client->id)
-                ->latest()
-                ->take(2)
-                ->get()
+            ->where('client_id', $client->id)
+            ->latest()
+            ->take(2)
+            ->get()
             : collect();
 
         Log::info('Orders fetched for client.', [
             'client_id' => $client?->id,
             'client_name' => $client?->name,
             'orders' => $orders->map(function ($order) {
-            return [
-                'id' => $order->id,
-                'status' => $order->status,
-                'created_at' => $order->created_at,
-                'total_amount' => $order->total_amount,
-                'seller' => $order->vendor?->name ?? 'Unknown Seller',
-                'items' => $order->orderItems->map(function ($item) {
                 return [
-                    'name' => $item->name,
-                    'quantity' => $item->quantity,
-                    'price' => $item->price,
+                    'id' => $order->id,
+                    'status' => $order->status,
+                    'created_at' => $order->created_at,
+                    'total_amount' => $order->total_price,
+                    'tracking_number' => $order->tracking_no,
+                    'seller' => $order->vendor?->name ?? 'Unknown Seller',
+                    'seller online store' => $order->vendor?->website_url ?? 'Unknown Online Store',
+                    'items' => $order->orderItems->map(function ($item) {
+                        return [
+                            'name' => $item->product_name,
+                            'quantity' => $item->quantity,
+                            'price' => $item->price,
+                        ];
+                    }),
                 ];
-                }),
-            ];
             }),
         ]);
 
         $orderDetails = $orders->isEmpty()
             ? "Hi, we tried reaching you regarding your order, but couldn't get through. Please reply to confirm your delivery details."
             : "Hi! We attempted to reach you regarding the following orders:\n\n" .
-                $orders->map(fn($o) => "Order #{$o->id} - Status: {$o->status}")->implode("\n") .
-                "\n\nPlease reply to confirm your delivery address or if you need help.";
+            $orders->map(fn($o) => "Order #{$o->id} - Status: {$o->status}")->implode("\n") .
+            "\n\nPlease reply to confirm your delivery address or if you need help.";
 
         $userId = null;
 
@@ -176,9 +178,9 @@ class CallFailureService
         $possibleFormats = [
             $normalized,                         // e.g., 254741821113
             '0' . substr($normalized, 3),        // e.g., 0741821113
-            '+'.$normalized,                     // e.g., +254741821113
+            '+' . $normalized,                     // e.g., +254741821113
         ];
-// there is a client with 0741821113
+        // there is a client with 0741821113
         return Client::whereIn('phone_number', $possibleFormats)->first();
     }
 }
