@@ -235,14 +235,19 @@ class CallFailureService
             // Fallback to a placeholder client
             $client = Client::where('name', 'LIKE', '%Unknown%')->first();
     
-            // if (!$client) {
-            //     $client = Client::create([
-            //         'name' => 'Unknown Client',
-            //         'phone_number' => $call->clientDialedNumber,
-            //     ]);
+            if (!$client) {
+                if ($call->clientDialedNumber) {
+                    $client = Client::create([
+                        'name' => 'Unknown Client',
+                        'phone_number' => $call->clientDialedNumber,
+                    ]);
     
-            //     Log::info('Created new client record for unknown client.', ['client_id' => $client->id]);
-            // }
+                    Log::info('Created new client record for unknown client.', ['client_id' => $client->id]);
+                } else {
+                    Log::warning('Cannot create client record: phone number is null.', ['call_id' => $call->id]);
+                    return;
+                }
+            }
         }
     
         // Fetch the last 2 orders by this client
@@ -252,13 +257,13 @@ class CallFailureService
         //     ->take(2)
         //     ->get();
 
-           $orders = $client
-            ? Order::with('client')
-            ->where('client_id', $client->id)
-            ->latest()
-            ->take(2)
-            ->get()
-            : collect();
+       //     $orders = $client
+    //         ? Order::with('client')
+    //         ->where('client_id', $client->id)
+    //         ->latest()
+    //         ->take(2)
+    //         ->get()
+    //         : collect();
     
         // Build the message content
         $orderDetails = $orders->isEmpty()
