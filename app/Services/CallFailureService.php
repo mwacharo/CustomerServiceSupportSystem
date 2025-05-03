@@ -235,14 +235,14 @@ class CallFailureService
             // Fallback to a placeholder client
             $client = Client::where('name', 'LIKE', '%Unknown%')->first();
     
-            if (!$client) {
-                $client = Client::create([
-                    'name' => 'Unknown Client',
-                    'phone_number' => $call->clientDialedNumber,
-                ]);
+            // if (!$client) {
+            //     $client = Client::create([
+            //         'name' => 'Unknown Client',
+            //         'phone_number' => $call->clientDialedNumber,
+            //     ]);
     
-                Log::info('Created new client record for unknown client.', ['client_id' => $client->id]);
-            }
+            //     Log::info('Created new client record for unknown client.', ['client_id' => $client->id]);
+            // }
         }
     
         // Fetch the last 2 orders by this client
