@@ -185,7 +185,7 @@ class CallFailureService
 //     NULL
 		
 // deleted_at	timestamp	YES		
-    NULL
+    // NULL
 		
 
 
