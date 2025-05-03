@@ -9,24 +9,29 @@ use Illuminate\Support\Facades\Log;
 
 class AIResponderService
 {
+
+    /**
+     * Interpret a customer query using OpenAI's API.
+     *
+     * @param string $message The customer query to interpret.
+     * @return string|null The interpreted response or null on failure.
+     */
     public function interpretCustomerQuery(string $message): ?string
     {
         try {
-        
             $response = Http::withHeaders([
-                'Authorization' => 'Bearer ' . env('OPENROUTER_API_KEY'),
+                'Authorization' => 'Bearer ' . env('OPENAI_API_KEY'),
+                'Content-Type' => 'application/json',
+            ])->post('https://api.openai.com/v1/chat/completions', [
+                // 'model' => 'gpt-4', // or 'gpt-3.5-turbo'
+                'model' => 'gpt-3.5-turbo',
 
-
-                'HTTP-Referer' => 'your-app.com', // required by OpenRouter
-            ])->post('https://openrouter.ai/api/v1/chat/completions', [
-                'model' => 'mistralai/mistral-7b-instruct', // or 'openai/gpt-3.5-turbo'
                 'messages' => [
                     ['role' => 'system', 'content' => 'You are a customer support assistant for a courier company.'],
                     ['role' => 'user', 'content' => $message],
                 ],
                 'temperature' => 0.2,
             ]);
-            
 
             if ($response->successful()) {
                 return $response->json()['choices'][0]['message']['content'];
@@ -39,4 +44,6 @@ class AIResponderService
             return null;
         }
     }
+
+
 }

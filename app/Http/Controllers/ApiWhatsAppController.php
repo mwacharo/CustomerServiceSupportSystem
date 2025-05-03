@@ -57,27 +57,27 @@ class ApiWhatsAppController extends Controller
 
         Log::info('Request validated successfully');
 
-        // Get user (sender) credentials
-        $credentialable = User::find($request->user_id);
+        // // Get user (sender) credentials
+        // $credentialable = User::find($request->user_id);
 
-        if (!$credentialable) {
-            Log::error('Sender not found', ['user_id' => $request->user_id]);
-            return response()->json(['error' => 'Sender not found'], 404);
-        }
+        // if (!$credentialable) {
+        //     Log::error('Sender not found', ['user_id' => $request->user_id]);
+        //     return response()->json(['error' => 'Sender not found'], 404);
+        // }
 
-        Log::info('Sender found', ['user_id' => $request->user_id]);
+        // Log::info('Sender found', ['user_id' => $request->user_id]);
 
-        // Fetch the credentials for the WhatsApp API
-        $credentialService = new DynamicChannelCredentialService($credentialable, 'whatsapp');
+        // // Fetch the credentials for the WhatsApp API
+        // $credentialService = new DynamicChannelCredentialService($credentialable, 'whatsapp');
 
-        // Get the token and the sender's phone number (this acts as the chatId)
-        $token = $credentialService->getApiToken();
-        $sender = $credentialService->getPhoneNumber(); // This will be used as the sender's chatId
+        // // Get the token and the sender's phone number (this acts as the chatId)
+        // $token = $credentialService->getApiToken();
+        // $sender = $credentialService->getPhoneNumber(); // This will be used as the sender's chatId
 
-        // Retrieve the account_id (instance ID) dynamically
-        $accountId = $credentialService->getAccountId(); // Assuming getAccountId() method exists or you can add it
+        // // Retrieve the account_id (instance ID) dynamically
+        // $accountId = $credentialService->getAccountId(); // Assuming getAccountId() method exists or you can add it
 
-        Log::info('Credentials retrieved', ['token' => '************', 'sender' => $sender, 'accountId' => $accountId]); // Hide the token for security
+        // Log::info('Credentials retrieved', ['token' => '************', 'sender' => $sender, 'accountId' => $accountId]); // Hide the token for security
 
         $responses = [];
 
