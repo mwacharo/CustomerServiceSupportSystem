@@ -221,37 +221,38 @@ class CallFailureService
             'call_id' => $call->id,
             'caller_number' => $call->clientDialedNumber,
         ]);
-
+    
         if (!$call->clientDialedNumber) {
             Log::info('No caller number found.', ['call_id' => $call->id]);
             return;
         }
-
+    
         $client = $this->findClientByPhoneNumber($call->clientDialedNumber);
-
+    
         if (!$client) {
             Log::info('Client not found by phone number.', ['phone' => $call->clientDialedNumber]);
-
+    
+            // Fallback to a placeholder client
             $client = Client::where('name', 'LIKE', '%Unknown%')->first();
-
+    
             if (!$client) {
                 $client = Client::create([
                     'name' => 'Unknown Client',
                     'phone_number' => $call->clientDialedNumber,
                 ]);
-
+    
                 Log::info('Created new client record for unknown client.', ['client_id' => $client->id]);
             }
         }
-
-        $orders = $client
-            ? Order::with(['client', 'vendor', 'orderItems'])
-                ->where('client_id', $client->id)
-                ->latest()
-                ->take(2)
-                ->get()
-            : collect();
-
+    
+        // Fetch the last 2 orders by this client
+        $orders = Order::with(['client', 'vendor', 'orderItems'])
+            ->where('client_id', $client->id)
+            ->latest()
+            ->take(2)
+            ->get();
+    
+        // Build the message content
         $orderDetails = $orders->isEmpty()
             ? "Hi {$client->name}, we tried reaching you regarding your order, but couldn't get through. Please reply to confirm your delivery details."
             : "Hi {$client->name}, we attempted to reach you regarding your recent order(s):\n\n" .
@@ -259,37 +260,27 @@ class CallFailureService
                   $items = $o->orderItems->map(fn($item) =>
                       "- {$item->product_name} x{$item->quantity} @ KES {$item->price}"
                   )->implode("\n");
-
-
-
-                  $orderDetails = $orders->isEmpty()
-    ? "Hi {$client->name}, we tried reaching you regarding your order, but couldn't get through. Please reply to confirm your delivery details."
-    : "Hi {$client->name}, we attempted to reach you regarding your recent order(s):\n\n" .
-      $orders->map(function ($o) {
-          $items = $o->orderItems->map(fn($item) =>
-              "- {$item->product_name} x{$item->quantity} @ KES {$item->price}"
-          )->implode("\n");
-
-          $vendorName = $o->vendor ? $o->vendor->name : 'Unknown';
-
-          return "Order #{$o->id} ({$o->status})\nTracking No: {$o->tracking_no}\nSeller: {$vendorName}\nItems:\n{$items}\n";
-      })->implode("\n") .
-      "\nPlease confirm your delivery address or let us know how we can assist.";
-
-
-   
+    
+                  $vendorName = $o->vendor ? $o->vendor->name : 'Unknown';
+    
+                  return "Order #{$o->id} ({$o->status})\nTracking No: {$o->tracking_no}\nSeller: {$vendorName}\nItems:\n{$items}\n";
+              })->implode("\n") .
+              "\nPlease confirm your delivery address or let us know how we can assist.";
+    
+        // Determine the user (agent or system) sending this message
         $userId = $this->determineUserId($call);
-
+    
         Log::info('Dispatching WhatsApp message.', [
             'client_phone' => $call->clientDialedNumber,
             'order_details' => $orderDetails,
             'user_id' => $userId,
         ]);
-
+    
+        // Send the WhatsApp message via queue
         SendWhatsAppMessageJob::dispatch($call->clientDialedNumber, $orderDetails, $userId);
     }
+    
 
-}
 
     protected function determineUserId(CallHistory $call)
     {
