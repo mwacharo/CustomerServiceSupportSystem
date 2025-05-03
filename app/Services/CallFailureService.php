@@ -312,7 +312,7 @@ class CallFailureService
         $normalized = $this->normalizePhoneNumber($number);
 
         return Client::where('phone_number', $normalized)
-            ->orWhere('alternate_phone', $normalized)
+            ->orWhere('alt_phone_number', $normalized)
             ->first();
     }
 
