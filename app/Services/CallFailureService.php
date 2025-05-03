@@ -119,12 +119,14 @@ class CallFailureService
         }
 
         Log::info('Dispatching WhatsApp message.', [
-            'client_phone' => $call->client_phone,
+            'client_phone' => $call->clientDialedNumber,
             'order_details' => $orderDetails,
             'user_id' => $userId,
+            // 'User Name' => $user->name,
+
         ]);
 
-        SendWhatsAppMessageJob::dispatch($call->client_phone, $orderDetails, $userId);
+        SendWhatsAppMessageJob::dispatch($call->clientDialedNumber, $orderDetails, $userId);
     }
 
     protected function isFailedCall($code)
