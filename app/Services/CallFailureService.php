@@ -69,7 +69,26 @@ class CallFailureService
                 ->get()
             : collect();
 
-        Log::info('Orders fetched for client.', ['client_id' => $client?->id, 'orders' => $orders->pluck('id')]);
+        Log::info('Orders fetched for client.', [
+            'client_id' => $client?->id,
+            'client_name' => $client?->name,
+            'orders' => $orders->map(function ($order) {
+            return [
+                'id' => $order->id,
+                'status' => $order->status,
+                'created_at' => $order->created_at,
+                'total_amount' => $order->total_amount,
+                'seller' => $order->vendor?->name ?? 'Unknown Seller',
+                'items' => $order->orderItems->map(function ($item) {
+                return [
+                    'name' => $item->name,
+                    'quantity' => $item->quantity,
+                    'price' => $item->price,
+                ];
+                }),
+            ];
+            }),
+        ]);
 
         $orderDetails = $orders->isEmpty()
             ? "Hi, we tried reaching you regarding your order, but couldn't get through. Please reply to confirm your delivery details."
