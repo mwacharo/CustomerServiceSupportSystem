@@ -257,13 +257,13 @@ class CallFailureService
         //     ->take(2)
         //     ->get();
 
-       //     $orders = $client
-    //         ? Order::with('client')
-    //         ->where('client_id', $client->id)
-    //         ->latest()
-    //         ->take(2)
-    //         ->get()
-    //         : collect();
+           $orders = $client
+            ? Order::with('client')
+            ->where('client_id', $client->id)
+            ->latest()
+            ->take(2)
+            ->get()
+            : collect();
     
         // Build the message content
         $orderDetails = $orders->isEmpty()
