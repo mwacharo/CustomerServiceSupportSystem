@@ -246,11 +246,19 @@ class CallFailureService
         }
     
         // Fetch the last 2 orders by this client
-        $orders = Order::with(['client', 'vendor', 'orderItems'])
+        // $orders = Order::with(['client', 'vendor', 'orderItems'])
+        //     ->where('client_id', $client->id)
+        //     ->latest()
+        //     ->take(2)
+        //     ->get();
+
+           $orders = $client
+            ? Order::with('client')
             ->where('client_id', $client->id)
             ->latest()
             ->take(2)
-            ->get();
+            ->get()
+            : collect();
     
         // Build the message content
         $orderDetails = $orders->isEmpty()
