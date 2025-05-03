@@ -19,7 +19,7 @@ class CallFailureService
         $calls = CallHistory::where('created_at', '>=', now()->subMinutes(10))->get();
 
         foreach ($calls as $call) {
-            Log::info('Processing call', ['call_id' => $call->id, 'cause_code' => $call->lastBridgeHangupCause]);
+            Log::info('Processing call', ['call_id' => $call->id, 'lastBridgeHangupCause' => $call->lastBridgeHangupCause]);
 
             if (!$this->isFailedCall($call->lastBridgeHangupCause)) {
                 Log::info('Call is not a failed call.', ['call_id' => $call->id]);
@@ -97,7 +97,7 @@ class CallFailureService
             'UNALLOCATED_NUMBER',
         ]);
 
-        Log::info('Checking if call is failed.', ['cause_code' => $code, 'is_failed' => $isFailed]);
+        Log::info('Checking if call is failed.', ['lastBridgeHangupCause' => $code, 'is_failed' => $isFailed]);
 
         return $isFailed;
     }
