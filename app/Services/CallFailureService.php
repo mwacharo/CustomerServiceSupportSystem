@@ -83,7 +83,7 @@ class CallFailureService
         SendWhatsAppMessageJob::dispatch($call->client_phone, $orderDetails, $userId);
     }
 
-    protected function isFailedCall(string $code): bool
+    protected function isFailedCall( $code)
     {
         $isFailed = in_array($code, [
             'NO_ANSWER',
