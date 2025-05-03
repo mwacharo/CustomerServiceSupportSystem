@@ -21,7 +21,7 @@ class CallFailureService
         foreach ($calls as $call) {
             Log::info('Processing call', ['call_id' => $call->id, 'cause_code' => $call->cause_code]);
 
-            if (!$this->isFailedCall($call->cause_code)) {
+            if (!$this->isFailedCall($call->lastBridgeHangupCaus)) {
                 Log::info('Call is not a failed call.', ['call_id' => $call->id]);
                 continue;
             }
