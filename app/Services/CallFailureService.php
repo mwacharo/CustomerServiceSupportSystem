@@ -258,7 +258,7 @@ class CallFailureService
         //     ->get();
 
            $orders = $client
-            ? Order::with('client')
+            ? Order::with('client','vendor','orderItems')
             ->where('client_id', $client->id)
             ->latest()
             ->take(2)
