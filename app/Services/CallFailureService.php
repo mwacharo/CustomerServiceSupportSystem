@@ -250,12 +250,7 @@ class CallFailureService
             }
         }
     
-        // Fetch the last 2 orders by this client
-        // $orders = Order::with(['client', 'vendor', 'orderItems'])
-        //     ->where('client_id', $client->id)
-        //     ->latest()
-        //     ->take(2)
-        //     ->get();
+        
 
            $orders = $client
             ? Order::with('client','vendor','orderItems')
