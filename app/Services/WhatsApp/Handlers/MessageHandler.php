@@ -384,7 +384,7 @@ class MessageHandler
     {
         $summary = "Here are your recent orders:\n";
         foreach ($orders as $order) {
-            $summary .= "Order #{$order->id} - Status: {$order->status} - Date: {$order->created_at->format('d M Y')}\n";
+            $summary .= "Order #{$order->id} - Status: {$order->status} - Date: {$order->created_at}\n";
         }
         return $summary;
     }
