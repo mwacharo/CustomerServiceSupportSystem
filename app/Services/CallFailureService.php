@@ -191,196 +191,503 @@ class CallFailureService
 
 
 
-     public function processRecentFailedCalls()
-    {
-        Log::info('Processing recent failed calls.');
+    //  public function processRecentFailedCalls()
+    // {
+    //     Log::info('Processing recent failed calls.');
 
-        $calls = CallHistory::where('created_at', '>=', now()->subMinutes(10))
-            ->where(function ($q) {
-                $q->whereNull('lastBridgeHangupCause')
-                  ->orWhereIn('lastBridgeHangupCause', [
-                      'NO_ANSWER', 'USER_BUSY', 'CALL_REJECTED',
-                      'SUBSCRIBER_ABSENT', 'NORMAL_TEMPORARY_FAILURE',
-                      'UNSPECIFIED', 'RECOVERY_ON_TIMER_EXPIRE',
-                      'NO_USER_RESPONSE', 'UNALLOCATED_NUMBER',
-                      'Aborted'
-                  ]);
-            })
-            ->get();
+    //     $calls = CallHistory::where('created_at', '>=', now()->subMinutes(10))
+    //         ->where(function ($q) {
+    //             $q->whereNull('lastBridgeHangupCause')
+    //               ->orWhereIn('lastBridgeHangupCause', [
+    //                   'NO_ANSWER', 'USER_BUSY', 'CALL_REJECTED',
+    //                   'SUBSCRIBER_ABSENT', 'NORMAL_TEMPORARY_FAILURE',
+    //                   'UNSPECIFIED', 'RECOVERY_ON_TIMER_EXPIRE',
+    //                   'NO_USER_RESPONSE', 'UNALLOCATED_NUMBER',
+    //                   'Aborted'
+    //               ]);
+    //         })
+    //         ->get();
 
-        foreach ($calls as $call) {
-            Log::info('Processing call', ['call_id' => $call->id]);
+    //     foreach ($calls as $call) {
+    //         Log::info('Processing call', ['call_id' => $call->id]);
 
-            $this->handleFailedCall($call);
-        }
-    }
+    //         $this->handleFailedCall($call);
+    //     }
+    // }
 
-    protected function handleFailedCall(CallHistory $call)
-    {
-        Log::info('Handling failed call.', [
-            'call_id' => $call->id,
-            'caller_number' => $call->clientDialedNumber,
-        ]);
+    // protected function handleFailedCall(CallHistory $call)
+    // {
+    //     Log::info('Handling failed call.', [
+    //         'call_id' => $call->id,
+    //         'caller_number' => $call->clientDialedNumber,
+    //     ]);
     
-        if (!$call->clientDialedNumber) {
-            Log::info('No caller number found.', ['call_id' => $call->id]);
-            return;
-        }
+    //     if (!$call->clientDialedNumber) {
+    //         Log::info('No caller number found.', ['call_id' => $call->id]);
+    //         return;
+    //     }
     
-        $client = $this->findClientByPhoneNumber($call->clientDialedNumber);
+    //     $client = $this->findClientByPhoneNumber($call->clientDialedNumber);
     
-        if (!$client) {
-            Log::info('Client not found by phone number.', ['phone' => $call->clientDialedNumber]);
+    //     if (!$client) {
+    //         Log::info('Client not found by phone number.', ['phone' => $call->clientDialedNumber]);
     
-            // Fallback to a placeholder client
-            $client = Client::where('name', 'LIKE', '%Unknown%')->first();
+    //         // Fallback to a placeholder client
+    //         $client = Client::where('name', 'LIKE', '%Unknown%')->first();
     
-            if (!$client) {
-                if ($call->clientDialedNumber) {
-                    $client = Client::create([
-                        'name' => 'Unknown Client',
-                        'phone_number' => $call->clientDialedNumber,
-                    ]);
+    //         if (!$client) {
+    //             if ($call->clientDialedNumber) {
+    //                 $client = Client::create([
+    //                     'name' => 'Unknown Client',
+    //                     'phone_number' => $call->clientDialedNumber,
+    //                 ]);
     
-                    Log::info('Created new client record for unknown client.', ['client_id' => $client->id]);
-                } else {
-                    Log::warning('Cannot create client record: phone number is null.', ['call_id' => $call->id]);
-                    return;
-                }
-            }
-        }
+    //                 Log::info('Created new client record for unknown client.', ['client_id' => $client->id]);
+    //             } else {
+    //                 Log::warning('Cannot create client record: phone number is null.', ['call_id' => $call->id]);
+    //                 return;
+    //             }
+    //         }
+    //     }
     
         
 
-           $orders = $client
-            ? Order::with('client','vendor','orderItems')
-            ->where('client_id', $client->id)
-            ->latest()
-            ->take(2)
-            ->get()
-            : collect();
+    //        $orders = $client
+    //         ? Order::with('client','vendor','orderItems')
+    //         ->where('client_id', $client->id)
+    //         ->latest()
+    //         ->take(2)
+    //         ->get()
+    //         : collect();
 
 
-            // log orders
-        Log::info('Orders fetched for client.', [
-            'client_id' => $client?->id,
-            'client_name' => $client?->name,
-            'orders' => $orders->map(function ($order) {
-                return [
-                    'id' => $order->id,
-                    'status' => $order->status,
-                    'created_at' => $order->created_at,
-                    'total_amount' => $order->total_price,
-                    'tracking_number' => $order->tracking_no,
-                    'seller' => $order->vendor?->name ?? 'Unknown Seller',
-                    'seller online store' => $order->vendor?->website_url ?? 'Unknown Online Store',
-                    'items' => $order->orderItems->map(function ($item) {
-                        return [
-                            'name' => $item->product_name,
-                            'quantity' => $item->quantity,
-                            'price' => $item->price,
-                        ];
-                    }),
-                ];
-            }),
-        ]);
+    //         // log orders
+    //     Log::info('Orders fetched for client.', [
+    //         'client_id' => $client?->id,
+    //         'client_name' => $client?->name,
+    //         'orders' => $orders->map(function ($order) {
+    //             return [
+    //                 'id' => $order->id,
+    //                 'status' => $order->status,
+    //                 'created_at' => $order->created_at,
+    //                 'total_amount' => $order->total_price,
+    //                 'tracking_number' => $order->tracking_no,
+    //                 'seller' => $order->vendor?->name ?? 'Unknown Seller',
+    //                 'seller online store' => $order->vendor?->website_url ?? 'Unknown Online Store',
+    //                 'items' => $order->orderItems->map(function ($item) {
+    //                     return [
+    //                         'name' => $item->product_name,
+    //                         'quantity' => $item->quantity,
+    //                         'price' => $item->price,
+    //                     ];
+    //                 }),
+    //             ];
+    //         }),
+    //     ]);
     
-        // Build the message content
-        $orderDetails = $orders->isEmpty()
-            ? "Hi {$client->name}, we tried reaching you regarding your order, but couldn't get through. Please reply to confirm your delivery details."
-            : "Hi {$client->name}, we attempted to reach you regarding your recent order(s):\n\n" .
-              $orders->map(function ($o) {
-                  $items = $o->orderItems->map(fn($item) =>
-                      "- {$item->product_name} x{$item->quantity} @ KES {$item->price}"
-                  )->implode("\n");
+    //     // Build the message content
+    //     $orderDetails = $orders->isEmpty()
+    //     // order->client->name as the relationship exist 
+    //     // inlcude order details like order id, status, tracking number, seller name, items
+    //     // selleer Name and the their online store 
+    //     // include name of the courier company in Thi Case Boxleo Courier & Fulfillment
+    //         ? "Hi {$client->name}, we tried reaching you regarding your order, but couldn't get through. Please reply to confirm your delivery details."
+    //         : "Hi {$client->name}, we attempted to reach you regarding your recent order(s):\n\n" .
+    //           $orders->map(function ($o) {
+    //               $items = $o->orderItems->map(fn($item) =>
+    //                   "- {$item->product_name} x{$item->quantity} @ KES {$item->price}"
+    //               )->implode("\n");
     
-                  $vendorName = $o->vendor ? $o->vendor->name : 'Unknown';
+    //               $vendorName = $o->vendor ? $o->vendor->name : 'Unknown';
     
-                  return "Order #{$o->id} ({$o->status})\nTracking No: {$o->tracking_no}\nSeller: {$vendorName}\nItems:\n{$items}\n";
-              })->implode("\n") .
-              "\nPlease confirm your delivery address or let us know how we can assist.";
+    //               return "Order #{$o->id} ({$o->status})\nTracking No: {$o->tracking_no}\nSeller: {$vendorName}\nItems:\n{$items}\n";
+    //           })->implode("\n") .
+    //           "\nPlease confirm your delivery address or let us know how we can assist.";
     
-        // Determine the user (agent or system) sending this message
-        $userId = $this->determineUserId($call);
+    //     // Determine the user (agent or system) sending this message
+    //     $userId = $this->determineUserId($call);
     
-        Log::info('Dispatching WhatsApp message.', [
-            'client_phone' => $call->clientDialedNumber,
-            'order_details' => $orderDetails,
-            'user_id' => $userId,
-        ]);
+    //     Log::info('Dispatching WhatsApp message.', [
+    //         'client_phone' => $call->clientDialedNumber,
+    //         'order_details' => $orderDetails,
+    //         'user_id' => $userId,
+    //     ]);
     
-        // Send the WhatsApp message via queue
-        SendWhatsAppMessageJob::dispatch($call->clientDialedNumber, $orderDetails, $userId);
+    //     // Send the WhatsApp message via queue
+    //     SendWhatsAppMessageJob::dispatch($call->clientDialedNumber, $orderDetails, $userId);
+    // }
+    
+
+
+    // protected function determineUserId(CallHistory $call)
+    // {
+    //     if ($call->user_id) {
+    //         Log::info('User ID found from call record.', ['user_id' => $call->user_id]);
+    //         return $call->user_id;
+    //     }
+
+    //     if ($call->CallerNumber) {
+    //         $normalizedCaller = $this->normalizePhoneNumber($call->CallerNumber);
+    //         $user = User::where('phone_number', $normalizedCaller)->first();
+
+    //         if ($user) {
+    //             Log::info('User ID found from caller number.', ['user_id' => $user->id]);
+    //             return $user->id;
+    //         }
+    //     }
+
+    //     $user = User::where('name', 'Default Agent')->first();
+    //     $fallbackId = $user?->id ?? 1;
+
+    //     Log::info('Fallback to default agent.', ['user_id' => $fallbackId]);
+
+    //     return $fallbackId;
+    // }
+
+    // protected function findClientByPhoneNumber($number)
+    // {
+    //     $normalized = $this->normalizePhoneNumber($number);
+
+    //     return Client::where('phone_number', $normalized)
+    //         ->orWhere('alt_phone_number', $normalized)
+    //         ->first();
+    // }
+
+    // protected function isFailedCall($code)
+    // {
+    //     $isFailed = in_array($code, [
+    //         'NO_ANSWER',
+    //         'USER_BUSY',
+    //         'CALL_REJECTED',
+    //         'SUBSCRIBER_ABSENT',
+    //         'NORMAL_TEMPORARY_FAILURE',
+    //         'UNSPECIFIED',
+    //         'RECOVERY_ON_TIMER_EXPIRE',
+    //         'NO_USER_RESPONSE',
+    //         'UNALLOCATED_NUMBER',
+    //         'Aborted'
+    //     ]);
+
+    //     Log::info('Checking if call is failed.', ['lastBridgeHangupCause' => $code, 'is_failed' => $isFailed]);
+
+    //     return $isFailed;
+    // }
+
+    // private function normalizePhoneNumber($number)
+    // {
+    //     $number = preg_replace('/\D/', '', $number);
+
+    //     if (str_starts_with($number, '0')) {
+    //         return '254' . substr($number, 1);
+    //     } elseif (str_starts_with($number, '254')) {
+    //         return $number;
+    //     } elseif (str_starts_with($number, '+254')) {
+    //         return substr($number, 1);
+    //     } else {
+    //         return '254' . $number;
+    //     }
+    // }
+
+
+
+
+    /**
+ * Process recent failed calls and send WhatsApp notifications to clients.
+ * 
+ * @return void
+ */
+public function processRecentFailedCalls()
+{
+    Log::info('Processing recent failed calls.');
+
+    // Define failed call statuses once
+    $failedCallStatuses = [
+        'NO_ANSWER', 'USER_BUSY', 'CALL_REJECTED',
+        'SUBSCRIBER_ABSENT', 'NORMAL_TEMPORARY_FAILURE',
+        'UNSPECIFIED', 'RECOVERY_ON_TIMER_EXPIRE',
+        'NO_USER_RESPONSE', 'UNALLOCATED_NUMBER',
+        'Aborted'
+    ];
+
+    // Get recent failed calls within the last 10 minutes
+    $calls = CallHistory::where('created_at', '>=', now()->subMinutes(10))
+        ->where(function ($q) use ($failedCallStatuses) {
+            $q->whereNull('lastBridgeHangupCause')
+              ->orWhereIn('lastBridgeHangupCause', $failedCallStatuses);
+        })
+        ->get();
+
+    Log::info('Found failed calls.', ['count' => $calls->count()]);
+
+    foreach ($calls as $call) {
+        Log::info('Processing call', ['call_id' => $call->id]);
+        $this->handleFailedCall($call);
+    }
+}
+
+/**
+ * Handle an individual failed call by sending a WhatsApp message.
+ * 
+ * @param CallHistory $call The failed call record
+ * @return void
+ */
+protected function handleFailedCall(CallHistory $call)
+{
+    Log::info('Handling failed call.', [
+        'call_id' => $call->id,
+        'caller_number' => $call->clientDialedNumber,
+    ]);
+
+    // Validate phone number
+    if (empty($call->clientDialedNumber)) {
+        Log::warning('No caller number found.', ['call_id' => $call->id]);
+        return;
+    }
+
+    // Find or create client
+    $client = $this->getOrCreateClient($call->clientDialedNumber);
+    
+    if (!$client) {
+        Log::error('Failed to find or create client.', ['call_id' => $call->id]);
+        return;
+    }
+
+    // Get recent orders for this client
+    $orders = $this->getRecentClientOrders($client);
+
+    // Build the message based on order information
+    $message = $this->buildClientMessage($client, $orders);
+    
+    // Determine the user (agent) sending this message
+    $userId = $this->determineUserId($call);
+
+    Log::info('Dispatching WhatsApp message.', [
+        'client_id' => $client->id,
+        'client_phone' => $call->clientDialedNumber,
+        'user_id' => $userId,
+    ]);
+
+    // Send the WhatsApp message via queue
+    SendWhatsAppMessageJob::dispatch($call->clientDialedNumber, $message, $userId);
+}
+
+/**
+ * Find existing client or create a new one if needed.
+ * 
+ * @param string $phoneNumber Client's phone number
+ * @return Client|null
+ */
+protected function getOrCreateClient($phoneNumber)
+{
+    // Find client by phone number
+    $client = $this->findClientByPhoneNumber($phoneNumber);
+    
+    if ($client) {
+        return $client;
     }
     
-
-
-    protected function determineUserId(CallHistory $call)
-    {
-        if ($call->user_id) {
-            Log::info('User ID found from call record.', ['user_id' => $call->user_id]);
-            return $call->user_id;
+    Log::info('Client not found by phone number.', ['phone' => $phoneNumber]);
+    
+    // Try to find a placeholder client
+    $client = Client::where('name', 'LIKE', '%Unknown%')->first();
+    
+    // Create a new unknown client if needed
+    if (!$client) {
+        try {
+            $client = Client::create([
+                'name' => 'Unknown Client',
+                'phone_number' => $phoneNumber,
+            ]);
+            Log::info('Created new client record for unknown client.', ['client_id' => $client->id]);
+        } catch (\Exception $e) {
+            Log::error('Failed to create client record', [
+                'phone' => $phoneNumber,
+                'error' => $e->getMessage()
+            ]);
         }
+    }
+    
+    return $client;
+}
 
-        if ($call->CallerNumber) {
-            $normalizedCaller = $this->normalizePhoneNumber($call->CallerNumber);
-            $user = User::where('phone_number', $normalizedCaller)->first();
+/**
+ * Get recent orders for a client.
+ * 
+ * @param Client $client
+ * @return \Illuminate\Database\Eloquent\Collection
+ */
+protected function getRecentClientOrders(Client $client)
+{
+    $orders = Order::with(['client', 'vendor', 'orderItems'])
+        ->where('client_id', $client->id)
+        ->latest()
+        ->take(2)
+        ->get();
+    
+    // Log order details
+    Log::info('Orders fetched for client.', [
+        'client_id' => $client->id,
+        'client_name' => $client->name,
+        'orders_count' => $orders->count(),
+        'orders' => $orders->map(function ($order) {
+            return [
+                'id' => $order->id,
+                'status' => $order->status,
+                'created_at' => $order->created_at->format('Y-m-d H:i'),
+                'total_amount' => $order->total_price,
+                'tracking_number' => $order->tracking_no,
+                'seller' => $order->vendor?->name ?? 'Unknown Seller',
+                'seller_store' => $order->vendor?->website_url ?? 'Unknown Online Store',
+                'items_count' => $order->orderItems->count(),
+            ];
+        }),
+    ]);
+    
+    return $orders;
+}
 
-            if ($user) {
-                Log::info('User ID found from caller number.', ['user_id' => $user->id]);
-                return $user->id;
-            }
+/**
+ * Build a personalized WhatsApp message for the client.
+ * 
+ * @param Client $client
+ * @param \Illuminate\Database\Eloquent\Collection $orders
+ * @return string
+ */
+protected function buildClientMessage(Client $client, $orders)
+{
+    if ($orders->isEmpty()) {
+        return "Hi {$client->name}, we tried reaching you regarding your order with Boxleo Courier & Fulfillment, but couldn't get through. Please reply to confirm your delivery details.";
+    }
+    
+    $message = "Hi {$client->name}, we attempted to reach you regarding your recent order(s) with Boxleo Courier & Fulfillment:\n\n";
+    
+    foreach ($orders as $order) {
+        $items = $order->orderItems->map(function($item) {
+            return "- {$item->product_name} x{$item->quantity} @ KES {$item->price}";
+        })->implode("\n");
+        
+        $vendorName = $order->vendor ? $order->vendor->name : 'Unknown';
+        $vendorStore = $order->vendor && $order->vendor->website_url ? "({$order->vendor->website_url})" : '';
+        
+        $message .= "Order #{$order->id} ({$order->status})\n";
+        $message .= "Tracking No: {$order->tracking_no}\n";
+        $message .= "Seller: {$vendorName} {$vendorStore}\n";
+        $message .= "Items:\n{$items}\n\n";
+    }
+    
+    $message .= "Please confirm your delivery address or let us know how we can assist.";
+    
+    return $message;
+}
+
+/**
+ * Determine which user ID should be used for the WhatsApp message.
+ * 
+ * @param CallHistory $call
+ * @return int
+ */
+protected function determineUserId(CallHistory $call)
+{
+    // Check if the call already has a user ID
+    if ($call->user_id) {
+        Log::info('User ID found from call record.', ['user_id' => $call->user_id]);
+        return $call->user_id;
+    }
+
+    // Try to find a user by caller number
+    if (!empty($call->CallerNumber)) {
+        $normalizedCaller = $this->normalizePhoneNumber($call->CallerNumber);
+        $user = User::where('phone_number', $normalizedCaller)->first();
+
+        if ($user) {
+            Log::info('User ID found from caller number.', ['user_id' => $user->id]);
+            return $user->id;
         }
+    }
 
+    // Fall back to default agent
+    try {
         $user = User::where('name', 'Default Agent')->first();
         $fallbackId = $user?->id ?? 1;
-
+        
         Log::info('Fallback to default agent.', ['user_id' => $fallbackId]);
-
         return $fallbackId;
+    } catch (\Exception $e) {
+        Log::error('Error finding default agent', ['error' => $e->getMessage()]);
+        return 1; // Ultimate fallback
     }
+}
 
-    protected function findClientByPhoneNumber($number)
-    {
-        $normalized = $this->normalizePhoneNumber($number);
+/**
+ * Find a client by phone number.
+ * 
+ * @param string $number
+ * @return Client|null
+ */
+protected function findClientByPhoneNumber($number)
+{
+    $normalized = $this->normalizePhoneNumber($number);
 
-        return Client::where('phone_number', $normalized)
-            ->orWhere('alt_phone_number', $normalized)
-            ->first();
+    return Client::where('phone_number', $normalized)
+        ->orWhere('alt_phone_number', $normalized)
+        ->first();
+}
+
+/**
+ * Check if a call hangup cause indicates a failed call.
+ * 
+ * @param string|null $code
+ * @return bool
+ */
+protected function isFailedCall($code)
+{
+    $failedCodes = [
+        'NO_ANSWER',
+        'USER_BUSY',
+        'CALL_REJECTED',
+        'SUBSCRIBER_ABSENT',
+        'NORMAL_TEMPORARY_FAILURE',
+        'UNSPECIFIED',
+        'RECOVERY_ON_TIMER_EXPIRE',
+        'NO_USER_RESPONSE',
+        'UNALLOCATED_NUMBER',
+        'Aborted'
+    ];
+
+    $isFailed = in_array($code, $failedCodes);
+
+    Log::info('Checking if call is failed.', [
+        'lastBridgeHangupCause' => $code, 
+        'is_failed' => $isFailed
+    ]);
+
+    return $isFailed;
+}
+
+/**
+ * Normalize a phone number to standard format.
+ * 
+ * @param string $number
+ * @return string
+ */
+private function normalizePhoneNumber($number)
+{
+    if (empty($number)) {
+        return '';
     }
+    
+    // Remove non-digit characters
+    $number = preg_replace('/\D/', '', $number);
 
-    protected function isFailedCall($code)
-    {
-        $isFailed = in_array($code, [
-            'NO_ANSWER',
-            'USER_BUSY',
-            'CALL_REJECTED',
-            'SUBSCRIBER_ABSENT',
-            'NORMAL_TEMPORARY_FAILURE',
-            'UNSPECIFIED',
-            'RECOVERY_ON_TIMER_EXPIRE',
-            'NO_USER_RESPONSE',
-            'UNALLOCATED_NUMBER',
-            'Aborted'
-        ]);
-
-        Log::info('Checking if call is failed.', ['lastBridgeHangupCause' => $code, 'is_failed' => $isFailed]);
-
-        return $isFailed;
+    // Convert to Kenyan format (254...)
+    if (str_starts_with($number, '0')) {
+        return '254' . substr($number, 1);
+    } elseif (str_starts_with($number, '254')) {
+        return $number;
+    } elseif (str_starts_with($number, '+254')) {
+        return substr($number, 1);
+    } else {
+        return '254' . $number;
     }
-
-    private function normalizePhoneNumber($number)
-    {
-        $number = preg_replace('/\D/', '', $number);
-
-        if (str_starts_with($number, '0')) {
-            return '254' . substr($number, 1);
-        } elseif (str_starts_with($number, '254')) {
-            return $number;
-        } elseif (str_starts_with($number, '+254')) {
-            return substr($number, 1);
-        } else {
-            return '254' . $number;
-        }
-    }
+}
 }
