@@ -259,6 +259,31 @@ class CallFailureService
             ->take(2)
             ->get()
             : collect();
+
+
+            // log orders
+        Log::info('Orders fetched for client.', [
+            'client_id' => $client?->id,
+            'client_name' => $client?->name,
+            'orders' => $orders->map(function ($order) {
+                return [
+                    'id' => $order->id,
+                    'status' => $order->status,
+                    'created_at' => $order->created_at,
+                    'total_amount' => $order->total_price,
+                    'tracking_number' => $order->tracking_no,
+                    'seller' => $order->vendor?->name ?? 'Unknown Seller',
+                    'seller online store' => $order->vendor?->website_url ?? 'Unknown Online Store',
+                    'items' => $order->orderItems->map(function ($item) {
+                        return [
+                            'name' => $item->product_name,
+                            'quantity' => $item->quantity,
+                            'price' => $item->price,
+                        ];
+                    }),
+                ];
+            }),
+        ]);
     
         // Build the message content
         $orderDetails = $orders->isEmpty()
