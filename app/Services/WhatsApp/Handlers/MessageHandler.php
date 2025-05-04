@@ -106,7 +106,7 @@ class MessageHandler
 
         Log::info("Sending message content to AI for interpretation", ['body' => $body]);
         // $aiReply = $this->aiResponder->interpretCustomerQuery($body);
-        $aiReply = $this->aiResponder->interpretCustomerQuery($body);
+        $aiReply = $this->aiResponder->interpretCustomerQuery($body, $recentOrders);
 
 
         if ($aiReply) {
