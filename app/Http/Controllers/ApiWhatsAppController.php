@@ -25,7 +25,8 @@ class ApiWhatsAppController extends Controller
 
     $messages = Message::where(function ($query) use ($waId) {
         $query->where('from', $waId)
-            ->orWhere('to', $waId);
+            ->orWhere('to', $waId)
+            ->orwhere('recipient_phone', $waId);
     })
         ->orderBy('timestamp', 'asc')
         ->get();
