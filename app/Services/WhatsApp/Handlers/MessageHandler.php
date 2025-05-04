@@ -3,6 +3,7 @@
 namespace App\Services\WhatsApp\Handlers;
 
 use App\Models\Message;
+use App\Models\Order;
 use App\Models\User;
 use App\Services\AIResponderService;
 use App\Services\WhatsAppMessageService;
@@ -84,6 +85,29 @@ class MessageHandler
             'message_hash' => $messageHash,
             'response_payload' => $data,
         ]);
+
+
+        // After storing the message, you can try to look up recent orders
+        $orderMatches = Order::whereHas('client', function ($query) use ($waId) {
+            $query->where('phone_number', $waId);
+        })
+        ->orderBy('created_at', 'desc')
+        ->take(3)
+        ->get();
+
+        if ($orderMatches->isNotEmpty()) {
+            $orderSummary = "Here are your recent orders:\n";
+            foreach ($orderMatches as $order) {
+                $orderSummary .= "Order #{$order->id} - Status: {$order->status} - Date: {$order->created_at->format('d M Y')}\n";
+            }
+        } else {
+            $orderSummary = "We couldn't find any recent orders for your number.";
+        }
+
+        // You can then send this summary via WhatsApp
+        $user = User::where('phone', $waId)->first() ?? User::first();
+        $waService = new WhatsAppMessageService($user);
+        $waService->sendMessage($waId . '@c.us', $orderSummary);
 
         $aiReply = $this->aiResponder->interpretCustomerQuery($body);
 
@@ -315,4 +339,8 @@ class MessageHandler
                 return 'Unknown'; // Default status if ack value is unknown
         }
     }
+
+
+
+    
 }

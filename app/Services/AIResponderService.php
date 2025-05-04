@@ -46,4 +46,31 @@ class AIResponderService
     }
 
 
+
+
+/**
+     * Compose a message with context (like order summary) and get a helpful response.
+     *
+     * @param array $context
+     * @return string|null
+     */
+    public function respondToMessageWithContext(array $context): ?string
+    {
+        $prompt = "A customer wrote: \"{$context['message']}\"\n\n";
+
+        if (!empty($context['order_summary'])) {
+            $prompt .= "Here are the customer's order details:\n";
+            foreach ($context['order_summary'] as $order) {
+                $prompt .= "- Order #{$order['order_number']}: {$order['status']} (Delivery: {$order['delivery_date']})\n";
+            }
+        } else {
+            $prompt .= "No matching order was found for their query.\n";
+        }
+
+        $prompt .= "\n\nRespond politely and helpfully to the customer.";
+
+        return $this->interpretCustomerQuery($prompt);
+    }
+
+
 }
