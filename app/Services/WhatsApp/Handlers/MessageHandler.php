@@ -86,38 +86,29 @@ class MessageHandler
             'response_payload' => $data,
         ]);
 
+        // call function to get recent orders
 
-        // After storing the message, you can try to look up recent orders
-        $orderMatches = Order::whereHas('client', function ($query) use ($waId) {
-            $query->where('phone_number', $waId);
-        })
-        ->orderBy('created_at', 'desc')
-        ->take(3)
-        ->get();
+        $recentOrders = $this->getRecentOrdersForPhone($waId);
 
-        if ($orderMatches->isNotEmpty()) {
-            $orderSummary = "Here are your recent orders:\n";
-            foreach ($orderMatches as $order) {
-                $orderSummary .= "Order #{$order->id} - Status: {$order->status} - Date: {$order->created_at->format('d M Y')}\n";
-            }
+        if ($recentOrders->isNotEmpty()) {
+            $orderSummary = $this->formatOrderSummary($recentOrders);
         } else {
             $orderSummary = "We couldn't find any recent orders for your number.";
         }
 
-        // You can then send this summary via WhatsApp
         $user = User::where('phone', $waId)->first() ?? User::first();
         $waService = new WhatsAppMessageService($user);
-        $waService->sendMessage($waId . '@c.us', $orderSummary);
 
+
+        // inlucde $recent orders detaisl to be sent to the AI 
         $aiReply = $this->aiResponder->interpretCustomerQuery($body);
 
         if ($aiReply) {
             $message->update(['ai_interpretation' => $aiReply]);
-
-            $user = User::where('phone', $waId)->first() ?? User::first();
-            $waService = new WhatsAppMessageService($user);
             $waService->sendMessage($waId . '@c.us', $aiReply);
         }
+        
+
 
         return "Message processed";
     }
@@ -207,6 +198,30 @@ class MessageHandler
             'timestamp' => date('Y-m-d H:i:s', $timestamp),
             'direction' => 'outgoing',
         ]);
+
+
+         // call function to get recent orders
+
+        $recentOrders = $this->getRecentOrdersForPhone($from);
+
+        if ($recentOrders->isNotEmpty()) {
+            $orderSummary = $this->formatOrderSummary($recentOrders);
+        } else {
+            $orderSummary = "We couldn't find any recent orders for your number.";
+        }
+
+        $user = User::where('phone', $from)->first() ?? User::first();
+        $waService = new WhatsAppMessageService($user);
+
+
+        // inlucde $recent orders detaisl to be sent to the AI 
+        $aiReply = $this->aiResponder->interpretCustomerQuery($body);
+
+        if ($aiReply) {
+            $message->update(['ai_interpretation' => $aiReply]);
+            $waService->sendMessage($from . '@c.us', $aiReply);
+        }
+        
 
         return "creating a new message.";
     }
@@ -342,5 +357,21 @@ class MessageHandler
 
 
 
-    
+
+
+    private function getRecentOrdersForPhone($phone)
+    {
+        return Order::whereHas('client', function ($query) use ($phone) {
+            $query->where('phone_number', $phone);
+        })->orderBy('created_at', 'desc')->take(3)->get();
+    }
+
+    private function formatOrderSummary($orders)
+    {
+        $summary = "Here are your recent orders:\n";
+        foreach ($orders as $order) {
+            $summary .= "Order #{$order->id} - Status: {$order->status} - Date: {$order->created_at->format('d M Y')}\n";
+        }
+        return $summary;
+    }
 }
