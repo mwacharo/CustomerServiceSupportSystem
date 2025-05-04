@@ -533,7 +533,7 @@ protected function getRecentClientOrders(Client $client)
             return [
                 'id' => $order->id,
                 'status' => $order->status,
-                'created_at' => $order->created_at->format('Y-m-d H:i'),
+                // 'created_at' => $order->created_at->format('Y-m-d H:i'),
                 'total_amount' => $order->total_price,
                 'tracking_number' => $order->tracking_no,
                 'seller' => $order->vendor?->name ?? 'Unknown Seller',
@@ -684,22 +684,35 @@ protected function isFailedCall($code)
  */
 private function normalizePhoneNumber($number)
 {
+    Log::info('Normalizing phone number.', ['original_number' => $number]);
+
     if (empty($number)) {
+        Log::warning('Phone number is empty.');
         return '';
     }
     
     // Remove non-digit characters
     $number = preg_replace('/\D/', '', $number);
+    Log::info('Removed non-digit characters.', ['cleaned_number' => $number]);
 
     // Convert to Kenyan format (254...)
     if (str_starts_with($number, '0')) {
-        return '254' . substr($number, 1);
+        $normalized = '254' . substr($number, 1);
+        Log::info('Converted to Kenyan format (starting with 0).', ['normalized_number' => $normalized]);
+        return $normalized;
     } elseif (str_starts_with($number, '254')) {
+        Log::info('Number already in Kenyan format.', ['normalized_number' => $number]);
         return $number;
     } elseif (str_starts_with($number, '+254')) {
-        return substr($number, 1);
+        $normalized = substr($number, 1);
+        Log::info('Converted to Kenyan format (starting with +254).', ['normalized_number' => $normalized]);
+        return $normalized;
     } else {
-        return '254' . $number;
+        $normalized = '254' . $number;
+        Log::info('Converted to Kenyan format (default case).', ['normalized_number' => $normalized]);
+        return $normalized;
     }
+
+    // inlcude isntance to check 254799806098@c.us such a formart
 }
 }
