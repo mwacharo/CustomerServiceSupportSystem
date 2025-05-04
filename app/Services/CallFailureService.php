@@ -626,11 +626,23 @@ protected function determineUserId(CallHistory $call)
  */
 protected function findClientByPhoneNumber($number)
 {
+    Log::info('Attempting to find client by phone number.', ['phone_number' => $number]);
+
     $normalized = $this->normalizePhoneNumber($number);
 
-    return Client::where('phone_number', $normalized)
+    Log::info('Normalized phone number.', ['normalized' => $normalized]);
+
+    $client = Client::where('phone_number', $normalized)
         ->orWhere('alt_phone_number', $normalized)
         ->first();
+
+    if ($client) {
+        Log::info('Client found.', ['client_id' => $client->id, 'client_name' => $client->name]);
+    } else {
+        Log::info('Client not found.', ['phone_number' => $normalized]);
+    }
+
+    return $client;
 }
 
 /**
