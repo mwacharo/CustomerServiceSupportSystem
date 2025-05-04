@@ -533,7 +533,7 @@ protected function getRecentClientOrders(Client $client)
             return [
                 'id' => $order->id,
                 'status' => $order->status,
-                // 'created_at' => $order->created_at->format('Y-m-d H:i'),
+                 'created_at' => $order->created_at,
                 'total_amount' => $order->total_price,
                 'tracking_number' => $order->tracking_no,
                 'seller' => $order->vendor?->name ?? 'Unknown Seller',
@@ -553,32 +553,61 @@ protected function getRecentClientOrders(Client $client)
  * @param \Illuminate\Database\Eloquent\Collection $orders
  * @return string
  */
+// protected function buildClientMessage(Client $client, $orders)
+// {
+//     if ($orders->isEmpty()) {
+//         return "Hi {$client->name}, we tried reaching you regarding your order with Boxleo Courier & Fulfillment, but couldn't get through. Please reply to confirm your delivery details.";
+//     }
+
+//     $message = "Hi {$client->name}, we are Boxleo Courier & Fulfillment, delivering on behalf of our partner(s):\n\n";
+
+//     foreach ($orders as $order) {
+//         $vendorName = $order->vendor ? $order->vendor->name : 'Unknown';
+//         $vendorStore = $order->vendor && $order->vendor->website_url ? "({$order->vendor->website_url})" : '';
+//         $items = $order->orderItems->map(function ($item) {
+//             return "- {$item->product_name} x{$item->quantity} @ KES {$item->price}";
+//         })->implode("\n");
+
+//         $message .= "Order #{$order->id} ({$order->status})\n";
+//         $message .= "Tracking No: {$order->tracking_no}\n";
+//         $message .= "Seller: {$vendorName} {$vendorStore}\n";
+//         $message .= "Total Price: KES {$order->total_price}\n";
+//         $message .= "Items:\n{$items}\n\n";
+//     }
+
+//     $message .= "Please confirm your delivery address or let us know how we can assist.";
+//     return $message;
+    
+
+// }
+
+
+
 protected function buildClientMessage(Client $client, $orders)
 {
     if ($orders->isEmpty()) {
-        return "Hi {$client->name}, we tried reaching you regarding your order with Boxleo Courier & Fulfillment, but couldn't get through. Please reply to confirm your delivery details.";
+        return "Dear {$client->name},\n\nWe are Boxleo Courier & Fulfillment. We tried reaching you regarding your order but were unable to connect. Please reply with your delivery details or contact us at +254 741 821 113.\n\nBest regards,\nBoxleo Courier & Fulfillment";
     }
 
-    $message = "Hi {$client->name}, we are Boxleo Courier & Fulfillment, delivering on behalf of our partner(s):\n\n";
+    $message = "Dear {$client->name},\n\nBoxleo Courier & Fulfillment is delivering the following orders on behalf of our partner(s):\n\n";
 
     foreach ($orders as $order) {
         $vendorName = $order->vendor ? $order->vendor->name : 'Unknown';
         $vendorStore = $order->vendor && $order->vendor->website_url ? "({$order->vendor->website_url})" : '';
         $items = $order->orderItems->map(function ($item) {
-            return "- {$item->product_name} x{$item->quantity} @ KES {$item->price}";
+            return "- {$item->quantity} units @ KES {$item->price}";
         })->implode("\n");
 
         $message .= "Order #{$order->id} ({$order->status})\n";
-        $message .= "Tracking No: {$order->tracking_no}\n";
+        $message .= "Tracking: {$order->tracking_no}\n";
         $message .= "Seller: {$vendorName} {$vendorStore}\n";
-        $message .= "Total Price: KES {$order->total_price}\n";
+        $message .= "Total: KES {$order->total_price}\n";
         $message .= "Items:\n{$items}\n\n";
     }
 
-    $message .= "Please confirm your delivery address or let us know how we can assist.";
-    return $message;
-    
+    $message .= "Please confirm your delivery address or share any instructions. Contact us at +254 741 821 113.\n\nThank you,\nBoxleo Courier & Fulfillment";
 
+    return $message;
 }
 
 /**
