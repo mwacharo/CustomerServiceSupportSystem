@@ -87,27 +87,34 @@ class MessageHandler
         ]);
 
         // call function to get recent orders
-
+        Log::info("Fetching recent orders for phone", ['phone' => $waId]);
         $recentOrders = $this->getRecentOrdersForPhone($waId);
 
         if ($recentOrders->isNotEmpty()) {
+            Log::info("Recent orders found", ['orders' => $recentOrders->toArray()]);
             $orderSummary = $this->formatOrderSummary($recentOrders);
         } else {
+            Log::info("No recent orders found for phone", ['phone' => $waId]);
             $orderSummary = "We couldn't find any recent orders for your number.";
         }
 
+        Log::info("Fetching user for phone", ['phone' => $waId]);
         $user = User::where('phone', $waId)->first() ?? User::first();
+        Log::info("User fetched", ['user' => $user]);
+
         $waService = new WhatsAppMessageService($user);
 
-
-        // inlucde $recent orders detaisl to be sent to the AI 
+        Log::info("Sending message content to AI for interpretation", ['body' => $body]);
         $aiReply = $this->aiResponder->interpretCustomerQuery($body);
 
         if ($aiReply) {
+            Log::info("AI interpretation received", ['aiReply' => $aiReply]);
             $message->update(['ai_interpretation' => $aiReply]);
             $waService->sendMessage($waId . '@c.us', $aiReply);
+            Log::info("AI reply sent to user", ['phone' => $waId, 'aiReply' => $aiReply]);
+        } else {
+            Log::warning("No AI interpretation received for message", ['body' => $body]);
         }
-        
 
 
         return "Message processed";
@@ -354,8 +361,6 @@ class MessageHandler
                 return 'Unknown'; // Default status if ack value is unknown
         }
     }
-
-
 
 
 
