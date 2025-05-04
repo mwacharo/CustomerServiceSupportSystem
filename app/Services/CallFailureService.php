@@ -558,26 +558,27 @@ protected function buildClientMessage(Client $client, $orders)
     if ($orders->isEmpty()) {
         return "Hi {$client->name}, we tried reaching you regarding your order with Boxleo Courier & Fulfillment, but couldn't get through. Please reply to confirm your delivery details.";
     }
-    
-    $message = "Hi {$client->name}, we attempted to reach you regarding your recent order(s) with Boxleo Courier & Fulfillment:\n\n";
-    
+
+    $message = "Hi {$client->name}, we are Boxleo Courier & Fulfillment, delivering on behalf of our partner(s):\n\n";
+
     foreach ($orders as $order) {
-        $items = $order->orderItems->map(function($item) {
-            return "- {$item->product_name} x{$item->quantity} @ KES {$item->price}";
-        })->implode("\n");
-        
         $vendorName = $order->vendor ? $order->vendor->name : 'Unknown';
         $vendorStore = $order->vendor && $order->vendor->website_url ? "({$order->vendor->website_url})" : '';
-        
+        $items = $order->orderItems->map(function ($item) {
+            return "- {$item->product_name} x{$item->quantity} @ KES {$item->price}";
+        })->implode("\n");
+
         $message .= "Order #{$order->id} ({$order->status})\n";
         $message .= "Tracking No: {$order->tracking_no}\n";
         $message .= "Seller: {$vendorName} {$vendorStore}\n";
+        $message .= "Total Price: KES {$order->total_price}\n";
         $message .= "Items:\n{$items}\n\n";
     }
-    
+
     $message .= "Please confirm your delivery address or let us know how we can assist.";
-    
     return $message;
+    
+
 }
 
 /**
