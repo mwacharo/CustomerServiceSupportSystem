@@ -70,6 +70,19 @@ Try it out live on DigitalOcean:
 - **Database**: MySQL
 - **Server**: Ubuntu on DigitalOcean
 - **Queue & Jobs**: Redis / Supervisor
+---
+
+### 🤖 AI-Powered WhatsApp Integration
+
+This project features an advanced integration of **WhatsApp messaging** with **OpenAI's ChatCompletion API** to provide intelligent, automated responses to customer queries. Key functionalities include:
+
+- **Incoming Messages**: Automatically process customer messages received via WhatsApp.
+- **AI-Driven Responses**: Utilize OpenAI's ChatCompletion to generate accurate and context-aware replies.
+- **Seamless Communication**: Ensure smooth two-way communication between customers and the system.
+- **Customizable AI Logic**: Tailor responses to align with specific business needs and customer expectations.
+
+This integration enhances customer support by providing instant, intelligent assistance, reducing response times, and improving overall user satisfaction.
+
 
 ---
 

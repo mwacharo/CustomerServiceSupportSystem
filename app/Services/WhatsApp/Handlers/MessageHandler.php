@@ -104,7 +104,10 @@ class MessageHandler
 
         $waService = new WhatsAppMessageService($user);
 
+        // Log::info("Sending message content to AI for interpretation", ['body' => $body]);
+
         Log::info("Sending message content to AI for interpretation", ['body' => $body]);
+
         // $aiReply = $this->aiResponder->interpretCustomerQuery($body);
         $aiReply = $this->aiResponder->interpretCustomerQuery($body, $recentOrders->toArray());
 
