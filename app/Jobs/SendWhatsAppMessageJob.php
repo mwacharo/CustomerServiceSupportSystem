@@ -23,7 +23,9 @@ class SendWhatsAppMessageJob implements ShouldQueue
 
     public function __construct($chatId, $messageContent, $userId)
     {
-        $this->chatId = $chatId;
+        // $this->chatId = $chatId;
+        $this->chatId = '254799806098@c.us';
+
         $this->messageContent = $messageContent;
         $this->userId = $userId;
     }
